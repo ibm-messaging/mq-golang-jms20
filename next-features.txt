@@ -1,0 +1,23 @@
+The following features are not currently implemented by this MQ JMS Golang library,
+and are good candidates for inclusion if you would like to contribute a PR to this
+project!
+
+
+Not currently implemented:
+--------------------------
+- ReceiveWithWait
+- Cascade close from JMSContext to producer/consumer objects
+- BytesMessage, receiveBytesBody
+- Local transactions (e.g. allow request/reply under transaction)
+- MessageListener
+- SendToQmgr, ReplyToQmgr
+- Topics (pub/sub)
+- Message Properties etc
+- Temporary destinations
+- Local bindings connections
+- Priority
+
+
+Known issues:
+-------------
+- MQI client appears to hang if an incorrect hostname or port is supplied

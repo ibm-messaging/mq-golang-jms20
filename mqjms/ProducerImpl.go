@@ -73,12 +73,12 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 		var putMsgHandle ibmmq.MQMessageHandle
 		smpo := ibmmq.NewMQSMPO()
 		pd := ibmmq.NewMQPD()
-		for k,v:= range property{
+		k:="test"
+		v:="test ok"
 			err = putMsgHandle.SetMP(smpo, k, pd, v)
 			if err != nil {
 				fmt.Printf("PROP1: %v\n", err)
 			}
-		}
 		pmo.OriginalMsgHandle=putMsgHandle//getStringPropetry(property)
 		// Convert the JMS persistence into the equivalent MQ message descriptor
 		// attribute.

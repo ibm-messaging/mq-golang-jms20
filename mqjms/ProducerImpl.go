@@ -21,7 +21,7 @@ import (
 // sending messages to a queue on an IBM MQ queue manager.
 type ProducerImpl struct {
 	ctx          ContextImpl
-	stringProperty map[string]string
+	stringProperty make(map[string]string)
 	deliveryMode int
 	timeToLive   int
 }

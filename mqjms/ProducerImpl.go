@@ -11,8 +11,9 @@ package mqjms
 
 import (
 	"fmt"
-	"github.com/ibm-messaging/mq-golang/ibmmq"
-	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
+	"github.com/matscus/mq-golang/ibmmq"
+	"github.com/matscus/mq-golang-jms20/jms20subset"
+	"../../mq-golang/ibmmq"
 	"log"
 	"strconv"
 )
@@ -21,6 +22,7 @@ import (
 // sending messages to a queue on an IBM MQ queue manager.
 type ProducerImpl struct {
 	ctx          ContextImpl
+	stringProperty ibmmq.MQMessageHandle
 	deliveryMode int
 	timeToLive   int
 }
@@ -189,4 +191,15 @@ func (producer *ProducerImpl) SetTimeToLive(timeToLive int) jms20subset.JMSProdu
 // Producer.
 func (producer *ProducerImpl) GetTimeToLive() int {
 	return producer.timeToLive
+}
+func (producer ProducerImpl)SetStringProperty(name string,value string)(ibmmq.MQMessageHandle,error){
+	var err error
+	var putMsgHandle ibmmq.MQMessageHandle
+	smpo := ibmmq.NewMQSMPO()
+	pd := ibmmq.NewMQPD()
+	err = putMsgHandle.SetMP(smpo, name, pd, value)
+	if err != nil {
+		fmt.Printf("PROP1: %v\n", err)
+	}
+	return putMsgHandle,err
 }

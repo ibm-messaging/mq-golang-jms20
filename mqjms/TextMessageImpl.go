@@ -12,8 +12,8 @@ package mqjms
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/ibm-messaging/mq-golang/ibmmq"
-	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
+	"github.com/matscus/mq-golang/ibmmq"
+	"github.com/matscus/mq-golang-jms20/jms20subset"
 	"log"
 	"strconv"
 	"strings"

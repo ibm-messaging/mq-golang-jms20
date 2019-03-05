@@ -72,7 +72,7 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 		// Configure the put message options, including asking MQ to allocate a
 		// unique message ID
 		pmo.Options = ibmmq.MQPMO_NO_SYNCPOINT | ibmmq.MQPMO_NEW_MSG_ID
-
+		pmo.OriginalMsgHandle=getStringPropetry()
 		// Convert the JMS persistence into the equivalent MQ message descriptor
 		// attribute.
 		if producer.deliveryMode == jms20subset.DeliveryMode_NON_PERSISTENT {
@@ -194,4 +194,18 @@ func (producer *ProducerImpl) GetTimeToLive() int {
 }
 func (producer ProducerImpl)SetStringProperty(name string,value string){
 	producer.stringProperty["name"]=value
+}
+func getStringPropetry(property map[string]string)ibmmq.MQMessageHandle{
+	var err error
+	var putMsgHandle ibmmq.MQMessageHandle
+	smpo := ibmmq.NewMQSMPO()
+	pd := ibmmq.NewMQPD()
+	for k,v:= range property{
+		err = putMsgHandle.SetMP(smpo, k, pd, v)
+		if err != nil {
+			fmt.Printf("PROP1: %v\n", err)
+		}
+	}
+
+	return putMsgHandle
 }

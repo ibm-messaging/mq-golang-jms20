@@ -191,6 +191,7 @@ func (producer *ProducerImpl) SetTimeToLive(timeToLive int) jms20subset.JMSProdu
 func (producer *ProducerImpl) GetTimeToLive() int {
 	return producer.timeToLive
 }
+
 func (producer ProducerImpl)SetStringProperty(name string,value string){
 	producer.stringProperty["name"]=value
 }

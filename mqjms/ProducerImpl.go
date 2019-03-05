@@ -11,9 +11,8 @@ package mqjms
 
 import (
 	"fmt"
-	"github.com/matscus/mq-golang/ibmmq"
+	"github.com/ibm-messaging/mq-golang/ibmmq"
 	"github.com/matscus/mq-golang-jms20/jms20subset"
-	"../../mq-golang/ibmmq"
 	"log"
 	"strconv"
 )
@@ -72,7 +71,7 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 		// Configure the put message options, including asking MQ to allocate a
 		// unique message ID
 		pmo.Options = ibmmq.MQPMO_NO_SYNCPOINT | ibmmq.MQPMO_NEW_MSG_ID
-		pmo.OriginalMsgHandle=getStringPropetry()
+		pmo.OriginalMsgHandle=getStringPropetry(producer.stringProperty)
 		// Convert the JMS persistence into the equivalent MQ message descriptor
 		// attribute.
 		if producer.deliveryMode == jms20subset.DeliveryMode_NON_PERSISTENT {

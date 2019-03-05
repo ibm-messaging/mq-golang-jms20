@@ -16,7 +16,7 @@ import (
 	"log"
 	"strconv"
 )
-var stringProperty =new(map[string]string)
+
 // ProducerImpl defines a struct that contains the necessary objects for
 // sending messages to a queue on an IBM MQ queue manager.
 type ProducerImpl struct {
@@ -40,7 +40,7 @@ func (producer ProducerImpl) SendString(dest jms20subset.Destination, bodyStr st
 
 // Send a message to the specified IBM MQ queue, using the message options
 // that are defined on this JMSProducer.
-func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.Message) jms20subset.JMSException {
+func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.Message,property map[string]string) jms20subset.JMSException {
 
 	// Set up the basic objects we need to send the message.
 	mqod := ibmmq.NewMQOD()
@@ -70,7 +70,7 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 		// Configure the put message options, including asking MQ to allocate a
 		// unique message ID
 		pmo.Options = ibmmq.MQPMO_NO_SYNCPOINT | ibmmq.MQPMO_NEW_MSG_ID
-		pmo.OriginalMsgHandle=getStringPropetry(stringProperty)
+		pmo.OriginalMsgHandle=getStringPropetry(property)
 		// Convert the JMS persistence into the equivalent MQ message descriptor
 		// attribute.
 		if producer.deliveryMode == jms20subset.DeliveryMode_NON_PERSISTENT {
@@ -191,9 +191,10 @@ func (producer *ProducerImpl) GetTimeToLive() int {
 	return producer.timeToLive
 }
 
-func (producer *ProducerImpl)SetStringProperty(name string,value string){
-	stringProperty[name]=value
-}
+// func (producer *ProducerImpl)SetStringProperty(name string,value string){
+// 	var stringProperty map[string]string
+// 	stringProperty[name]=value
+// }
 func getStringPropetry(property map[string]string)ibmmq.MQMessageHandle{
 	var err error
 	var putMsgHandle ibmmq.MQMessageHandle

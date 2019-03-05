@@ -52,5 +52,4 @@ type JMSProducer interface {
 	// GetTimeToLive returns the time to live (in milliseconds) that will be
 	// applied to messages that are sent using this JMSProducer.
 	GetTimeToLive() int
-	SetStringProperty(name string,value string)
 }

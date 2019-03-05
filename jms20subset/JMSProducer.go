@@ -18,7 +18,7 @@ type JMSProducer interface {
 
 	// Send a message to the specified Destination, using any message options
 	// that are defined on this JMSProducer.
-	Send(dest Destination, msg Message) JMSException
+	Send(dest Destination, msg Message, property map[string]string) JMSException
 
 	// Send a TextMessage with the specified body to the specified Destination
 	// using any message options that are defined on this JMSProducer.

@@ -34,13 +34,13 @@ func (producer ProducerImpl) SendString(dest jms20subset.Destination, bodyStr st
 	msg := producer.ctx.CreateTextMessage()
 	msg.SetText(bodyStr)
 
-	return producer.Send(dest, msg)
+	return producer.Send(dest, msg,nil)
 
 }
 
 // Send a message to the specified IBM MQ queue, using the message options
 // that are defined on this JMSProducer.
-func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.Message,property map[string]string) jms20subset.JMSException {
+func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.Message, property map[string]string) jms20subset.JMSException {
 
 	// Set up the basic objects we need to send the message.
 	mqod := ibmmq.NewMQOD()

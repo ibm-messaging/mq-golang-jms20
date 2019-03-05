@@ -16,12 +16,11 @@ import (
 	"log"
 	"strconv"
 )
-
+var stringProperty =new(map[string]string)
 // ProducerImpl defines a struct that contains the necessary objects for
 // sending messages to a queue on an IBM MQ queue manager.
 type ProducerImpl struct {
 	ctx          ContextImpl
-	stringProperty map[string]string
 	deliveryMode int
 	timeToLive   int
 }
@@ -71,7 +70,7 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 		// Configure the put message options, including asking MQ to allocate a
 		// unique message ID
 		pmo.Options = ibmmq.MQPMO_NO_SYNCPOINT | ibmmq.MQPMO_NEW_MSG_ID
-		pmo.OriginalMsgHandle=getStringPropetry(producer.stringProperty)
+		pmo.OriginalMsgHandle=getStringPropetry(stringProperty)
 		// Convert the JMS persistence into the equivalent MQ message descriptor
 		// attribute.
 		if producer.deliveryMode == jms20subset.DeliveryMode_NON_PERSISTENT {
@@ -193,7 +192,7 @@ func (producer *ProducerImpl) GetTimeToLive() int {
 }
 
 func (producer *ProducerImpl)SetStringProperty(name string,value string){
-	producer.stringProperty["name"]=value
+	stringProperty[name]=value
 }
 func getStringPropetry(property map[string]string)ibmmq.MQMessageHandle{
 	var err error

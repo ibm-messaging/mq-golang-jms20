@@ -192,7 +192,7 @@ func (producer *ProducerImpl) GetTimeToLive() int {
 	return producer.timeToLive
 }
 
-func (producer ProducerImpl)SetStringProperty(name string,value string){
+func (producer *ProducerImpl)SetStringProperty(name string,value string){
 	producer.stringProperty["name"]=value
 }
 func getStringPropetry(property map[string]string)ibmmq.MQMessageHandle{

@@ -18,8 +18,6 @@ import (
 	"github.com/matscus/mq-golang-jms20/jms20subset"
 )
 
-var putMsgHandle ibmmq.MQMessageHandle
-
 // ProducerImpl defines a struct that contains the necessary objects for
 // sending messages to a queue on an IBM MQ queue manager.
 type ProducerImpl struct {
@@ -65,7 +63,7 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 	}
 
 	if err == nil {
-
+		var putMsgHandle ibmmq.MQMessageHandle
 		// Successfully opened the queue, so now prepare to send the message.
 		putmqmd := ibmmq.NewMQMD()
 		pmo := ibmmq.NewMQPMO()

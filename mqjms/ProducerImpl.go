@@ -67,6 +67,13 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 		// Successfully opened the queue, so now prepare to send the message.
 		putmqmd := ibmmq.NewMQMD()
 		pmo := ibmmq.NewMQPMO()
+		if err == nil {
+			cmho := ibmmq.NewMQCMHO()
+			putMsgHandle, err = producer.ctx.qMgr.CrtMH(cmho)
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
 
 		// Configure the put message options, including asking MQ to allocate a
 		// unique message ID

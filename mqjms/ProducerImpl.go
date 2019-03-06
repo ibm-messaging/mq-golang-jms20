@@ -21,9 +21,10 @@ import (
 // ProducerImpl defines a struct that contains the necessary objects for
 // sending messages to a queue on an IBM MQ queue manager.
 type ProducerImpl struct {
-	ctx          ContextImpl
-	deliveryMode int
-	timeToLive   int
+	ctx            ContextImpl
+	stringProperty map[string]string
+	deliveryMode   int
+	timeToLive     int
 }
 
 // Send a TextMessage with the specified body to the specified Destination
@@ -78,7 +79,7 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 		// Configure the put message options, including asking MQ to allocate a
 		// unique message ID
 		pmo.Options = ibmmq.MQPMO_NO_SYNCPOINT | ibmmq.MQPMO_NEW_MSG_ID
-		err = setProperties(putMsgHandle)
+		err = setProperties(putMsgHandle, producer.stringProperty)
 		if err != nil {
 			log.Println("error set params", err)
 		}
@@ -203,27 +204,27 @@ func (producer *ProducerImpl) GetTimeToLive() int {
 	return producer.timeToLive
 }
 
-func setProperties(putMsgHandle ibmmq.MQMessageHandle) error {
+func (produser *ProducerImpl) SetStringProperty(name string, value string) {
+	produser.stringProperty[name] = value
+}
+func setProperties(putMsgHandle ibmmq.MQMessageHandle, property map[string]string) error {
 	var err error
+	var name, value string
 	smpo := ibmmq.NewMQSMPO()
 	pd := ibmmq.NewMQPD()
-	name := "autorization"
-	v1 := "Bearer"
-	err = putMsgHandle.SetMP(smpo, name, pd, v1)
-	if err != nil {
-		fmt.Printf("PROP1: %v\n", err)
-	}
 
-	name = "esfl_methodName"
-	v2 := "getCardList"
-	err = putMsgHandle.SetMP(smpo, name, pd, v2)
-	if err != nil {
-		fmt.Printf("PROP2: %v\n", err)
+	for k, v := range property {
+		name = k
+		value = v
+		err = putMsgHandle.SetMP(smpo, name, pd, value)
+		if err != nil {
+			fmt.Printf("PROP1: %v\n", err)
+		}
 	}
 
 	name = "PROP6DELETED"
-	v6 := 10101
-	err = putMsgHandle.SetMP(smpo, name, pd, v6)
+	value2 := 10101
+	err = putMsgHandle.SetMP(smpo, name, pd, value2)
 	if err != nil {
 		fmt.Println("PROP6: %v\n", err)
 	}
@@ -235,22 +236,3 @@ func setProperties(putMsgHandle ibmmq.MQMessageHandle) error {
 
 	return err
 }
-
-// func (producer *ProducerImpl)SetStringProperty(name string,value string){
-// 	var stringProperty map[string]string
-// 	stringProperty[name]=value
-// }
-// func getStringPropetry(property map[string]string) ibmmq.MQMessageHandle {
-// 	var err error
-
-// 	smpo := ibmmq.NewMQSMPO()
-// 	pd := ibmmq.NewMQPD()
-// 	for k, v := range property {
-// 		err = putMsgHandle.SetMP(smpo, k, pd, v)
-// 		if err != nil {
-// 			fmt.Printf("PROP1: %v\n", err)
-// 		}
-// 	}
-
-// 	return putMsgHandle
-// }

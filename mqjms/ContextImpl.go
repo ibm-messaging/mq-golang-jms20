@@ -41,8 +41,9 @@ func (ctx ContextImpl) CreateProducer() jms20subset.JMSProducer {
 	// Initialise the Producer with the attributes necessary for it to send
 	// messages.
 	producer := ProducerImpl{
-		ctx:          ctx,
-		deliveryMode: jms20subset.DeliveryMode_PERSISTENT,
+		ctx:            ctx,
+		stringProperty: make(map[string]string),
+		deliveryMode:   jms20subset.DeliveryMode_PERSISTENT,
 	}
 
 	return &producer

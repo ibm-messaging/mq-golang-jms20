@@ -11,10 +11,11 @@ package mqjms
 
 import (
 	"errors"
-	"github.com/ibm-messaging/mq-golang/ibmmq"
-	"github.com/matscus/mq-golang-jms20/jms20subset"
 	"strconv"
 	"strings"
+
+	"github.com/ibm-messaging/mq-golang/ibmmq"
+	"github.com/matscus/mq-golang-jms20/jms20subset"
 )
 
 // ConsumerImpl defines a struct that contains the necessary objects for

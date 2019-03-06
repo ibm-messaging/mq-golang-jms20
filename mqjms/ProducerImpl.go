@@ -11,12 +11,15 @@ package mqjms
 
 import (
 	"fmt"
-	"github.com/ibm-messaging/mq-golang/ibmmq"
-	"github.com/matscus/mq-golang-jms20/jms20subset"
 	"log"
 	"strconv"
+
+	"github.com/ibm-messaging/mq-golang/ibmmq"
+	"github.com/matscus/mq-golang-jms20/jms20subset"
 )
+
 var putMsgHandle ibmmq.MQMessageHandle
+
 // ProducerImpl defines a struct that contains the necessary objects for
 // sending messages to a queue on an IBM MQ queue manager.
 type ProducerImpl struct {
@@ -27,14 +30,14 @@ type ProducerImpl struct {
 
 // Send a TextMessage with the specified body to the specified Destination
 // using any message options that are defined on this JMSProducer.
-func (producer ProducerImpl) SendString(dest jms20subset.Destination, bodyStr string) jms20subset.JMSException {
+func (producer ProducerImpl) SendString(dest jms20subset.Destination, bodyStr string, property map[string]string) jms20subset.JMSException {
 
 	// This is essentially just a helper method that avoids the application having
 	// to create its own TextMessage object.
 	msg := producer.ctx.CreateTextMessage()
 	msg.SetText(bodyStr)
 
-	return producer.Send(dest, msg,nil)
+	return producer.Send(dest, msg, property)
 
 }
 
@@ -69,8 +72,8 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 
 		// Configure the put message options, including asking MQ to allocate a
 		// unique message ID
-		pmo.Options = ibmmq.MQPMO_NO_SYNCPOINT | ibmmq.MQPMO_NEW_MSG_ID 
-		pmo.OriginalMsgHandle=getStringPropetry(property)
+		pmo.Options = ibmmq.MQPMO_NO_SYNCPOINT | ibmmq.MQPMO_NEW_MSG_ID
+		pmo.OriginalMsgHandle = getStringPropetry(property)
 		// Convert the JMS persistence into the equivalent MQ message descriptor
 		// attribute.
 		if producer.deliveryMode == jms20subset.DeliveryMode_NON_PERSISTENT {
@@ -195,12 +198,12 @@ func (producer *ProducerImpl) GetTimeToLive() int {
 // 	var stringProperty map[string]string
 // 	stringProperty[name]=value
 // }
-func getStringPropetry(property map[string]string)ibmmq.MQMessageHandle{
+func getStringPropetry(property map[string]string) ibmmq.MQMessageHandle {
 	var err error
-	
+
 	smpo := ibmmq.NewMQSMPO()
 	pd := ibmmq.NewMQPD()
-	for k,v:= range property{
+	for k, v := range property {
 		err = putMsgHandle.SetMP(smpo, k, pd, v)
 		if err != nil {
 			fmt.Printf("PROP1: %v\n", err)

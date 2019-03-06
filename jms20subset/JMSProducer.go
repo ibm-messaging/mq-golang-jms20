@@ -25,7 +25,7 @@ type JMSProducer interface {
 	//
 	// Note that since Golang does not allow multiple functions with the same
 	// name and different parameters we must use a different function name.
-	SendString(dest Destination, body string) JMSException
+	SendString(dest Destination, body string, property map[string]string) JMSException
 
 	// SetDeliveryMode sets the delivery mode of messages sent using this
 	// JMSProducer - for example whether a message is persistent or non-persistent.

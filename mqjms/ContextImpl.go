@@ -10,9 +10,10 @@
 package mqjms
 
 import (
+	"strconv"
+
 	"github.com/ibm-messaging/mq-golang/ibmmq"
 	"github.com/matscus/mq-golang-jms20/jms20subset"
-	"strconv"
 )
 
 // ContextImpl encapsulates the objects necessary to maintain an active

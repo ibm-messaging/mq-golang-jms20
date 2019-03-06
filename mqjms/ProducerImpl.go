@@ -30,20 +30,20 @@ type ProducerImpl struct {
 
 // Send a TextMessage with the specified body to the specified Destination
 // using any message options that are defined on this JMSProducer.
-func (producer ProducerImpl) SendString(dest jms20subset.Destination, bodyStr string, property map[string]string) jms20subset.JMSException {
+func (producer ProducerImpl) SendString(dest jms20subset.Destination, bodyStr string) jms20subset.JMSException {
 
 	// This is essentially just a helper method that avoids the application having
 	// to create its own TextMessage object.
 	msg := producer.ctx.CreateTextMessage()
 	msg.SetText(bodyStr)
 
-	return producer.Send(dest, msg, property)
+	return producer.Send(dest, msg)
 
 }
 
 // Send a message to the specified IBM MQ queue, using the message options
 // that are defined on this JMSProducer.
-func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.Message, property map[string]string) jms20subset.JMSException {
+func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.Message) jms20subset.JMSException {
 
 	// Set up the basic objects we need to send the message.
 	mqod := ibmmq.NewMQOD()
@@ -73,7 +73,7 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 		// Configure the put message options, including asking MQ to allocate a
 		// unique message ID
 		pmo.Options = ibmmq.MQPMO_NO_SYNCPOINT | ibmmq.MQPMO_NEW_MSG_ID
-		pmo.OriginalMsgHandle = getStringPropetry(property)
+		//pmo.OriginalMsgHandle = getStringPropetry(property)
 		// Convert the JMS persistence into the equivalent MQ message descriptor
 		// attribute.
 		if producer.deliveryMode == jms20subset.DeliveryMode_NON_PERSISTENT {

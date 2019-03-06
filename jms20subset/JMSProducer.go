@@ -18,14 +18,14 @@ type JMSProducer interface {
 
 	// Send a message to the specified Destination, using any message options
 	// that are defined on this JMSProducer.
-	Send(dest Destination, msg Message, property map[string]string) JMSException
+	Send(dest Destination, msg Message) JMSException
 
 	// Send a TextMessage with the specified body to the specified Destination
 	// using any message options that are defined on this JMSProducer.
 	//
 	// Note that since Golang does not allow multiple functions with the same
 	// name and different parameters we must use a different function name.
-	SendString(dest Destination, body string, property map[string]string) JMSException
+	SendString(dest Destination, body string) JMSException
 
 	// SetDeliveryMode sets the delivery mode of messages sent using this
 	// JMSProducer - for example whether a message is persistent or non-persistent.

@@ -73,7 +73,11 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 		// Configure the put message options, including asking MQ to allocate a
 		// unique message ID
 		pmo.Options = ibmmq.MQPMO_NO_SYNCPOINT | ibmmq.MQPMO_NEW_MSG_ID
-		//pmo.OriginalMsgHandle = getStringPropetry(property)
+		err = setProperties(putMsgHandle)
+		if err != nil {
+			log.Println("error set params", err)
+		}
+		pmo.OriginalMsgHandle = putMsgHandle
 		// Convert the JMS persistence into the equivalent MQ message descriptor
 		// attribute.
 		if producer.deliveryMode == jms20subset.DeliveryMode_NON_PERSISTENT {
@@ -194,21 +198,54 @@ func (producer *ProducerImpl) GetTimeToLive() int {
 	return producer.timeToLive
 }
 
+func setProperties(putMsgHandle ibmmq.MQMessageHandle) error {
+	var err error
+	smpo := ibmmq.NewMQSMPO()
+	pd := ibmmq.NewMQPD()
+	name := "autorization"
+	v1 := "Bearer"
+	err = putMsgHandle.SetMP(smpo, name, pd, v1)
+	if err != nil {
+		fmt.Printf("PROP1: %v\n", err)
+	}
+
+	name = "esfl_methodName"
+	v2 := "getCardList"
+	err = putMsgHandle.SetMP(smpo, name, pd, v2)
+	if err != nil {
+		fmt.Printf("PROP2: %v\n", err)
+	}
+
+	name = "PROP6DELETED"
+	v6 := 10101
+	err = putMsgHandle.SetMP(smpo, name, pd, v6)
+	if err != nil {
+		fmt.Println("PROP6: %v\n", err)
+	}
+	dmpo := ibmmq.NewMQDMPO()
+	err = putMsgHandle.DltMP(dmpo, name)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return err
+}
+
 // func (producer *ProducerImpl)SetStringProperty(name string,value string){
 // 	var stringProperty map[string]string
 // 	stringProperty[name]=value
 // }
-func getStringPropetry(property map[string]string) ibmmq.MQMessageHandle {
-	var err error
+// func getStringPropetry(property map[string]string) ibmmq.MQMessageHandle {
+// 	var err error
 
-	smpo := ibmmq.NewMQSMPO()
-	pd := ibmmq.NewMQPD()
-	for k, v := range property {
-		err = putMsgHandle.SetMP(smpo, k, pd, v)
-		if err != nil {
-			fmt.Printf("PROP1: %v\n", err)
-		}
-	}
+// 	smpo := ibmmq.NewMQSMPO()
+// 	pd := ibmmq.NewMQPD()
+// 	for k, v := range property {
+// 		err = putMsgHandle.SetMP(smpo, k, pd, v)
+// 		if err != nil {
+// 			fmt.Printf("PROP1: %v\n", err)
+// 		}
+// 	}
 
-	return putMsgHandle
-}
+// 	return putMsgHandle
+// }

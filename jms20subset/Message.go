@@ -47,5 +47,4 @@ type Message interface {
 	// Typical values returned by this method include
 	// jms20subset.DeliveryMode_PERSISTENT and jms20subset.DeliveryMode_NON_PERSISTENT
 	GetJMSDeliveryMode() int
-	GetStringProperty(p string) string
 }

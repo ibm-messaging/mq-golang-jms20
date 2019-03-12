@@ -69,7 +69,7 @@ func (consumer ConsumerImpl) ReceiveNoWait() (jms20subset.Message, jms20subset.J
 		msg = &TextMessageImpl{
 			bodyStr:      msgBodyStr,
 			mqmd:         getmqmd,
-			getMsgHandle: consumer.msgHandle,
+			getMsgHandle: &consumer.msgHandle,
 		}
 
 	} else {

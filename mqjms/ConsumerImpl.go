@@ -192,6 +192,6 @@ func printProperties(getMsgHandle ibmmq.MQMessageHandle) {
 	pd := ibmmq.NewMQPD()
 
 	impo.Options = ibmmq.MQIMPO_CONVERT_VALUE | ibmmq.MQIMPO_INQ_FIRST
-	name, value, _ := getMsgHandle.InqMP(impo, pd, "autorization")
+	name, value, _ := getMsgHandle.InqMP(impo, pd, "esfl_methodName")
 	fmt.Println("test", name, " ", value)
 }

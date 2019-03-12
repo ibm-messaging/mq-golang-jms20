@@ -99,7 +99,7 @@ func (ctx ContextImpl) CreateConsumerWithSelector(dest jms20subset.Destination, 
 		consumer = ConsumerImpl{
 			qObject:      qObject,
 			selector:     selector,
-			getMsgHandle: getMsgHandle,
+			getMsgHandle: &getMsgHandle,
 		}
 
 	} else {

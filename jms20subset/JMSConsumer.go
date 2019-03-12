@@ -26,7 +26,6 @@ type JMSConsumer interface {
 	// and returns its body as a string. If a message is not immediately
 	//available a nil is returned.
 	ReceiveStringBodyNoWait() (*string, JMSException)
-	GetStringProperty(p string) string
 	// Closes the JMSConsumer in order to free up any resources that were
 	// allocated by the provider on behalf of this consumer.
 	Close()

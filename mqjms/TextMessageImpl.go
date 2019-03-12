@@ -64,6 +64,16 @@ func (msg *TextMessageImpl) GetJMSDeliveryMode() int {
 
 	return jmsPersistence
 }
+func (msg *TextMessageImpl) GetStringProperty(p string) (value string) {
+	impo := ibmmq.NewMQIMPO()
+	pd := ibmmq.NewMQPD()
+	impo.Options = ibmmq.MQIMPO_CONVERT_VALUE
+	_, v, _ := msg.getMsgHandle.InqMP(impo, pd, p)
+	if v != nil {
+		value = v.(string)
+	}
+	return value
+}
 
 // GetJMSMessageID extracts the message ID from the native MQ message descriptor.
 func (msg *TextMessageImpl) GetJMSMessageID() string {

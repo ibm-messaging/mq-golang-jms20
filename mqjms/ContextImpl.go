@@ -95,7 +95,6 @@ func (ctx ContextImpl) CreateConsumerWithSelector(dest jms20subset.Destination, 
 	}
 
 	if err == nil {
-
 		// Success - store the necessary objects away for later use to receive
 		// messages.
 		consumer = ConsumerImpl{

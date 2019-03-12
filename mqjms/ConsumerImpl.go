@@ -21,9 +21,8 @@ import (
 // ConsumerImpl defines a struct that contains the necessary objects for
 // receiving messages from a queue on an IBM MQ queue manager.
 type ConsumerImpl struct {
-	qObject      ibmmq.MQObject
-	selector     string
-	getMsgHandle *ibmmq.MQMessageHandle
+	qObject  ibmmq.MQObject
+	selector string
 }
 
 // ReceiveNoWait implements the IBM MQ logic necessary to receive a message from
@@ -48,9 +47,6 @@ func (consumer ConsumerImpl) ReceiveNoWait() (jms20subset.Message, jms20subset.J
 		jmsErr = jms20subset.CreateJMSException("ErrorParsingSelector", "ErrorParsingSelector", err)
 		return nil, jmsErr
 	}
-	gmo.MsgHandle = *consumer.getMsgHandle
-	gmo.Options |= ibmmq.MQGMO_PROPERTIES_IN_HANDLE
-
 	// Use the prepared objects to ask for a message from the queue.
 	datalen, err := consumer.qObject.Get(getmqmd, gmo, buffer)
 
@@ -67,9 +63,8 @@ func (consumer ConsumerImpl) ReceiveNoWait() (jms20subset.Message, jms20subset.J
 		}
 
 		msg = &TextMessageImpl{
-			bodyStr:      msgBodyStr,
-			mqmd:         getmqmd,
-			getMsgHandle: consumer.getMsgHandle,
+			bodyStr: msgBodyStr,
+			mqmd:    getmqmd,
 		}
 
 	} else {

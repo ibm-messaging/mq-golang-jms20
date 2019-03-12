@@ -10,6 +10,7 @@
 package mqjms
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/ibm-messaging/mq-golang/ibmmq"
@@ -84,14 +85,23 @@ func (ctx ContextImpl) CreateConsumerWithSelector(dest jms20subset.Destination, 
 
 	// Invoke the MQ command to open the queue.
 	qObject, err := ctx.qMgr.Open(mqod, openOptions)
+	var getMsgHandle ibmmq.MQMessageHandle
+	if err == nil {
+		cmho := ibmmq.NewMQCMHO()
+		getMsgHandle, err = ctx.qMgr.CrtMH(cmho)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
 
 	if err == nil {
 
 		// Success - store the necessary objects away for later use to receive
 		// messages.
 		consumer = ConsumerImpl{
-			qObject:  qObject,
-			selector: selector,
+			qObject:   qObject,
+			selector:  selector,
+			msgHandle: getMsgHandle,
 		}
 
 	} else {

@@ -67,8 +67,9 @@ func (consumer ConsumerImpl) ReceiveNoWait() (jms20subset.Message, jms20subset.J
 		}
 
 		msg = &TextMessageImpl{
-			bodyStr: msgBodyStr,
-			mqmd:    getmqmd,
+			bodyStr:      msgBodyStr,
+			mqmd:         getmqmd,
+			getMsgHandle: consumer.getMsgHandle,
 		}
 
 	} else {
@@ -96,13 +97,6 @@ func (consumer ConsumerImpl) ReceiveNoWait() (jms20subset.Message, jms20subset.J
 	}
 
 	return msg, jmsErr
-}
-func (consumer *ConsumerImpl) GetStringProperty(p string) string {
-	impo := ibmmq.NewMQIMPO()
-	pd := ibmmq.NewMQPD()
-	impo.Options = ibmmq.MQIMPO_CONVERT_VALUE | ibmmq.MQIMPO_INQ_FIRST
-	_, v, _ := consumer.getMsgHandle.InqMP(impo, pd, p)
-	return v.(string)
 }
 
 // ReceiveStringBodyNoWait implements the IBM MQ logic necessary to receive a

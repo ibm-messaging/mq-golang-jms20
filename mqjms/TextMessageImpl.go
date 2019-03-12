@@ -12,19 +12,21 @@ package mqjms
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/ibm-messaging/mq-golang/ibmmq"
-	"github.com/matscus/mq-golang-jms20/jms20subset"
 	"log"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/ibm-messaging/mq-golang/ibmmq"
+	"github.com/matscus/mq-golang-jms20/jms20subset"
 )
 
 // TextMessageImpl contains the IBM MQ specific attributes necessary to
 // present a message that carries a string.
 type TextMessageImpl struct {
-	bodyStr *string
-	mqmd    *ibmmq.MQMD
+	bodyStr      *string
+	mqmd         *ibmmq.MQMD
+	getMsgHandle ibmmq.MQMessageHandle
 }
 
 // GetText returns the string that is contained in this TextMessage.
@@ -61,6 +63,13 @@ func (msg *TextMessageImpl) GetJMSDeliveryMode() int {
 	}
 
 	return jmsPersistence
+}
+func (msg *TextMessageImpl) GetStringProperty(p string) string {
+	impo := ibmmq.NewMQIMPO()
+	pd := ibmmq.NewMQPD()
+	impo.Options = ibmmq.MQIMPO_CONVERT_VALUE | ibmmq.MQIMPO_INQ_FIRST
+	_, v, _ := msg.getMsgHandle.InqMP(impo, pd, p)
+	return v.(string)
 }
 
 // GetJMSMessageID extracts the message ID from the native MQ message descriptor.
@@ -99,7 +108,7 @@ func (msg *TextMessageImpl) SetJMSReplyTo(dest jms20subset.Destination) jms20sub
 		log.Fatal(jms20subset.CreateJMSException("UnexpectedDestinationType", "UnexpectedDestinationType", nil))
 	}
 
-  // The option to return an error is not currently used.
+	// The option to return an error is not currently used.
 	return nil
 }
 

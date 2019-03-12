@@ -17,7 +17,7 @@ If you're not familiar with IBM MQ then you'll also find the [MQ Essentials tuto
 Note for experienced MQ / JMS developers: This repository provides a JMS style programming interface, but there is no use of Java as part of the implementation. It also does not use the IBM MQ Java client, or IBM MQ JMS client. The implementation is written in Golang and builds upon the [mq-golang](https://github.com/ibm-messaging/mq-golang) module, which itself uses Cgo to invoke the MQ C client library and communicate with the queue manager.
 
 
-# Table of Contents
+# Table of Contents   
 
 * [Code samples](#code-samples)
 * [Getting Started](#getting-started)

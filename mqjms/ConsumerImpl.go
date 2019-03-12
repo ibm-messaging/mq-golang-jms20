@@ -66,11 +66,10 @@ func (consumer ConsumerImpl) ReceiveNoWait() (jms20subset.Message, jms20subset.J
 			msgBodyStr = &strContent
 		}
 		fmt.Print("test1")
-		printProperties(consumer.msgHandle)
 		msg = &TextMessageImpl{
 			bodyStr:      msgBodyStr,
 			mqmd:         getmqmd,
-			getMsgHandle: &consumer.msgHandle,
+			getMsgHandle: consumer.msgHandle,
 		}
 
 	} else {
@@ -186,12 +185,4 @@ func (consumer ConsumerImpl) Close() {
 	}
 
 	return
-}
-func printProperties(getMsgHandle ibmmq.MQMessageHandle) {
-	impo := ibmmq.NewMQIMPO()
-	pd := ibmmq.NewMQPD()
-
-	impo.Options = ibmmq.MQIMPO_CONVERT_VALUE
-	name, value, _ := getMsgHandle.InqMP(impo, pd, "esfl_methodName")
-	fmt.Println("test", name, " ", value)
 }

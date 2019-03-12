@@ -26,7 +26,7 @@ import (
 type TextMessageImpl struct {
 	bodyStr      *string
 	mqmd         *ibmmq.MQMD
-	getMsgHandle *ibmmq.MQMessageHandle
+	getMsgHandle ibmmq.MQMessageHandle
 }
 
 // GetText returns the string that is contained in this TextMessage.

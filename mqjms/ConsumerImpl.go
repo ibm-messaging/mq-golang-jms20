@@ -14,15 +14,16 @@ import (
 	"strconv"
 	"strings"
 
+	"../jms20subset"
 	"github.com/ibm-messaging/mq-golang/ibmmq"
-	"github.com/matscus/mq-golang-jms20/jms20subset"
 )
 
 // ConsumerImpl defines a struct that contains the necessary objects for
 // receiving messages from a queue on an IBM MQ queue manager.
 type ConsumerImpl struct {
-	qObject  ibmmq.MQObject
-	selector string
+	qObject       ibmmq.MQObject
+	messageHandle ibmmq.MQMessageHandle
+	selector      string
 }
 
 // ReceiveNoWait implements the IBM MQ logic necessary to receive a message from
@@ -40,6 +41,9 @@ func (consumer ConsumerImpl) ReceiveNoWait() (jms20subset.Message, jms20subset.J
 
 	// Set the GMO (get message options)
 	gmo.Options = ibmmq.MQGMO_NO_SYNCPOINT | ibmmq.MQGMO_FAIL_IF_QUIESCING
+	//////
+	gmo.MsgHandle = consumer.messageHandle
+	gmo.Options |= ibmmq.MQGMO_PROPERTIES_IN_HANDLE
 
 	// Apply the selector if one has been specified in the Consumer
 	err := applySelector(consumer.selector, getmqmd, gmo)
@@ -63,8 +67,9 @@ func (consumer ConsumerImpl) ReceiveNoWait() (jms20subset.Message, jms20subset.J
 		}
 
 		msg = &TextMessageImpl{
-			bodyStr: msgBodyStr,
-			mqmd:    getmqmd,
+			bodyStr:       msgBodyStr,
+			mqmd:          getmqmd,
+			messageHandle: &consumer.messageHandle,
 		}
 
 	} else {

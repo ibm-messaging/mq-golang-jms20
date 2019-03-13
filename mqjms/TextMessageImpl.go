@@ -11,21 +11,37 @@ package mqjms
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"log"
 	"strconv"
 	"strings"
 	"time"
 
+	"../jms20subset"
 	"github.com/ibm-messaging/mq-golang/ibmmq"
-	"github.com/matscus/mq-golang-jms20/jms20subset"
 )
 
 // TextMessageImpl contains the IBM MQ specific attributes necessary to
 // present a message that carries a string.
 type TextMessageImpl struct {
-	bodyStr *string
-	mqmd    *ibmmq.MQMD
+	bodyStr       *string
+	mqmd          *ibmmq.MQMD
+	messageHandle *ibmmq.MQMessageHandle
+}
+
+func (msg *TextMessageImpl) GetStringProperty(p string) (string, error) {
+	var err error
+	impo := ibmmq.NewMQIMPO()
+	pd := ibmmq.NewMQPD()
+	impo.Options = ibmmq.MQIMPO_CONVERT_VALUE | ibmmq.MQIMPO_INQ_FIRST
+	_, value, _ := msg.messageHandle.InqMP(impo, pd, p)
+	if value != nil {
+		return value.(string), nil
+	} else {
+		err = errors.New("property not found")
+	}
+	return "", err
 }
 
 // GetText returns the string that is contained in this TextMessage.

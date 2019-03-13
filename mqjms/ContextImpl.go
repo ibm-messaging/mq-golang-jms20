@@ -13,8 +13,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"../jms20subset"
 	"github.com/ibm-messaging/mq-golang/ibmmq"
+	"github.com/matscus/mq-golang-jms20/jms20subset"
 )
 
 // ContextImpl encapsulates the objects necessary to maintain an active

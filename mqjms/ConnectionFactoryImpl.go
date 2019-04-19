@@ -97,8 +97,9 @@ func (cf ConnectionFactoryImpl) CreateTLSContext() (jms20subset.JMSContext, jms2
 	// Fill in the required fields in the channel definition structure
 	cd.ChannelName = cf.ChannelName
 	cd.ConnectionName = cf.Hostname + "(" + strconv.Itoa(cf.PortNumber) + ")"
-	cd.SSLCipherSpec = "TLS_RSA_WITH_AES_128_CBC_SHA256"
+	cd.SSLCipherSpec = "TLS_RSA_WITH_AES_256_CBC_SHA256"
 	cd.SSLClientAuth = ibmmq.MQSCA_OPTIONAL
+	sco.KeyRepository = "/var/mqm/qmgrs/QM1/ssl/key"
 
 	// Store the user credentials in an MQCSP, which ensures that long passwords
 	// can be used.

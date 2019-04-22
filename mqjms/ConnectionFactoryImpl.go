@@ -87,7 +87,7 @@ func (cf ConnectionFactoryImpl) CreateContext() (jms20subset.JMSContext, jms20su
 	return ctx, retErr
 
 }
-func (cf ConnectionFactoryImpl) CreateTLSContext() (jms20subset.JMSContext, jms20subset.JMSException) {
+func (cf ConnectionFactoryImpl) CreateTLSContext(keyRepo string) (jms20subset.JMSContext, jms20subset.JMSException) {
 
 	// Allocate the internal structures required to create an connection to IBM MQ.
 	cno := ibmmq.NewMQCNO()
@@ -97,9 +97,9 @@ func (cf ConnectionFactoryImpl) CreateTLSContext() (jms20subset.JMSContext, jms2
 	// Fill in the required fields in the channel definition structure
 	cd.ChannelName = cf.ChannelName
 	cd.ConnectionName = cf.Hostname + "(" + strconv.Itoa(cf.PortNumber) + ")"
-	cd.SSLCipherSpec = "TLS_RSA_WITH_AES_256_CBC_SHA256"
+	//cd.SSLCipherSpec = "TLS_RSA_WITH_AES_256_CBC_SHA256"
 	cd.SSLClientAuth = ibmmq.MQSCA_OPTIONAL
-	sco.KeyRepository = "/var/mqm/qmgrs/QM1/ssl/key"
+	sco.KeyRepository = keyRepo
 
 	// Store the user credentials in an MQCSP, which ensures that long passwords
 	// can be used.

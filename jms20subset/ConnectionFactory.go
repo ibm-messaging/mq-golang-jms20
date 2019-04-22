@@ -19,5 +19,5 @@ type ConnectionFactory interface {
 	// CreateContext creates a connection to the messaging provider using the
 	// configuration parameters that are encapsulated by this ConnectionFactory.
 	CreateContext() (JMSContext, JMSException)
-	CreateTLSContext() (JMSContext, JMSException)
+	CreateTLSContext(key string) (JMSContext, JMSException)
 }

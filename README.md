@@ -110,7 +110,8 @@ assert.Equal(t, "MQRC_NOT_AUTHORIZED", err.GetReason())
 Other sample code can be found in the testcase files as follows. When writing your own applications you will
 generally replace the various "assert" calls that test the successful execution of the application logic with
 your own error handling or logging.
-* Creating a ConnectionFactory - [connectionfactory_test.go](connectionfactory_test.go)
+* Creating a ConnectionFactory that uses a client connection to a remote queue manager - [connectionfactory_test.go](connectionfactory_test.go)
+* Creating a ConnectionFactory that uses a bindings connection to a local queue manager - [local_bindings_test.go](local_bindings_test.go)
 * Send/receive a text string - [sample_sendreceive_test.go](sample_sendreceive_test.go)
 * Send a message as Persistent or NonPersistent - [deliverymode_test.go](deliverymode_test.go)
 * Get by CorrelationID - [getbycorrelid_test.go](getbycorrelid_test.go)
@@ -130,7 +131,7 @@ go test -run TestSampleSendReceiveWithErrorHandling
 The IBM MQ client on which this library depends is supported on Linux and Windows, and is [now available for development use on MacOS](https://developer.ibm.com/messaging/2019/02/05/ibm-mq-macos-toolkit-for-developers/)).
 
 1. Install Golang
-    - This library has been validated with Golang v1.11.4. If you don't have Golang installed on your system you can [download it here](https://golang.org/doc/install) for MacOS, Linux or Windows
+    - This library has been validated with Golang v1.11.4 and v1.12.9. If you don't have Golang installed on your system you can [download it here](https://golang.org/doc/install) for MacOS, Linux or Windows
 2. Install 'dep' to manage the dependent packages
     - See [Installation instructions](https://github.com/golang/dep#installation) for details
 3. Install the MQ Client library

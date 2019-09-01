@@ -30,6 +30,8 @@ func TestLoadCFFromJSON(t *testing.T) {
 		log.Fatal(err)
 	}
 
+	assert.Equal(t, mqjms.TransportType_CLIENT, cf.TransportType)
+
 	// Creates a connection to the queue manager, using defer to close it automatically
 	// at the end of the function (if it was created successfully)
 	context, errCtx := cf.CreateContext()

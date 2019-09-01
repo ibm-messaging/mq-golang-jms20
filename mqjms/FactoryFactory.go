@@ -58,7 +58,7 @@ func CreateConnectionFactoryFromJSON(connectionInfoLocn string, apiKeyLocn strin
 	}
 
 	if apiKeyLocn == "" {
-		apiKeyLocn = os.Getenv("HOME") + "/Downloads/apiKey.json"
+		apiKeyLocn = os.Getenv("HOME") + "/Downloads/applicationApiKey.json"
 	}
 
 	// Attempt to read the connection info file at the specified location.

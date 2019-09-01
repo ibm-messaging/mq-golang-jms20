@@ -193,9 +193,9 @@ The test cases use the `CreateConnectionFactoryFromDefaultJSONFiles` method to o
 - `connection_info.json` contains information like the hostname/port/channel
   - If you are using the MQ on Cloud service you can download a pre-populated file directly from the queue manager details page as [described here](https://cloud.ibm.com/docs/services/mqcloud/mqoc_jms_tls.html#connection_info-json)
   - Otherwise you can insert details of your own queue manager into [this sample file](./config-samples/connection_info.json) and copy it to your `/Downloads` directory
-- `apiKey.json` contains the Application username and password that will be used to connect to your queue manager
+- `applicationApiKey.json` contains the Application username and password that will be used to connect to your queue manager
   - If you are using the MQ on Cloud service you can download a pre-populated file directly from the Application Permissions tab in the service console as [described here](https://cloud.ibm.com/docs/services/mqcloud/mqoc_jms_tls.html#apikey-json)
-  - Otherwise you can insert details of your own queue manager into [this sample file](./config-samples/apiKey.json) and copy it to your `/Downloads` directory
+  - Otherwise you can insert details of your own queue manager into [this sample file](./config-samples/applicationApiKey.json) and copy it to your `/Downloads` directory
 
 Once you have added the details of your queue manager and user credentials into the two JSON files and placed them in your `/Downloads` directory you are ready to run the test, which is done in the same way as any other Go tests.
 

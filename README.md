@@ -110,7 +110,8 @@ assert.Equal(t, "MQRC_NOT_AUTHORIZED", err.GetReason())
 Other sample code can be found in the testcase files as follows. When writing your own applications you will
 generally replace the various "assert" calls that test the successful execution of the application logic with
 your own error handling or logging.
-* Creating a ConnectionFactory - [connectionfactory_test.go](connectionfactory_test.go)
+* Creating a ConnectionFactory that uses a client connection to a remote queue manager - [connectionfactory_test.go](connectionfactory_test.go)
+* Creating a ConnectionFactory that uses a bindings connection to a local queue manager - [local_bindings_test.go](local_bindings_test.go)
 * Send/receive a text string - [sample_sendreceive_test.go](sample_sendreceive_test.go)
 * Send a message as Persistent or NonPersistent - [deliverymode_test.go](deliverymode_test.go)
 * Get by CorrelationID - [getbycorrelid_test.go](getbycorrelid_test.go)
@@ -130,7 +131,7 @@ go test -run TestSampleSendReceiveWithErrorHandling
 The IBM MQ client on which this library depends is supported on Linux and Windows, and is [now available for development use on MacOS](https://developer.ibm.com/messaging/2019/02/05/ibm-mq-macos-toolkit-for-developers/)).
 
 1. Install Golang
-    - This library has been validated with Golang v1.11.4. If you don't have Golang installed on your system you can [download it here](https://golang.org/doc/install) for MacOS, Linux or Windows
+    - This library has been validated with Golang v1.11.4 and v1.12.9. If you don't have Golang installed on your system you can [download it here](https://golang.org/doc/install) for MacOS, Linux or Windows
 2. Install 'dep' to manage the dependent packages
     - See [Installation instructions](https://github.com/golang/dep#installation) for details
 3. Install the MQ Client library
@@ -193,9 +194,9 @@ The test cases use the `CreateConnectionFactoryFromDefaultJSONFiles` method to o
 - `connection_info.json` contains information like the hostname/port/channel
   - If you are using the MQ on Cloud service you can download a pre-populated file directly from the queue manager details page as [described here](https://cloud.ibm.com/docs/services/mqcloud/mqoc_jms_tls.html#connection_info-json)
   - Otherwise you can insert details of your own queue manager into [this sample file](./config-samples/connection_info.json) and copy it to your `/Downloads` directory
-- `apiKey.json` contains the Application username and password that will be used to connect to your queue manager
+- `applicationApiKey.json` contains the Application username and password that will be used to connect to your queue manager
   - If you are using the MQ on Cloud service you can download a pre-populated file directly from the Application Permissions tab in the service console as [described here](https://cloud.ibm.com/docs/services/mqcloud/mqoc_jms_tls.html#apikey-json)
-  - Otherwise you can insert details of your own queue manager into [this sample file](./config-samples/apiKey.json) and copy it to your `/Downloads` directory
+  - Otherwise you can insert details of your own queue manager into [this sample file](./config-samples/applicationApiKey.json) and copy it to your `/Downloads` directory
 
 Once you have added the details of your queue manager and user credentials into the two JSON files and placed them in your `/Downloads` directory you are ready to run the test, which is done in the same way as any other Go tests.
 

@@ -12,8 +12,8 @@ package mqjms
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/ibm-messaging/mq-golang/ibmmq"
 	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
+	"github.com/ibm-messaging/mq-golang/ibmmq"
 	"log"
 	"strconv"
 	"strings"
@@ -99,7 +99,7 @@ func (msg *TextMessageImpl) SetJMSReplyTo(dest jms20subset.Destination) jms20sub
 		log.Fatal(jms20subset.CreateJMSException("UnexpectedDestinationType", "UnexpectedDestinationType", nil))
 	}
 
-  // The option to return an error is not currently used.
+	// The option to return an error is not currently used.
 	return nil
 }
 

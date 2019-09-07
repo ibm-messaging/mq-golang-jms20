@@ -30,6 +30,15 @@ type ConnectionFactoryImpl struct {
 	Password    string
 
 	TransportType int // Default to TransportType_CLIENT (0)
+
+	// Equivalent to SSLCipherSpec and SSLClientAuth in the MQI client, however
+	// the names have been updated here to reflect that SSL protocols have all
+	// been discredited.
+	TLSCipherSpec string
+	TLSClientAuth string // Default to TLSClientAuth_NONE
+
+	KeyRepository    string
+	CertificateLabel string
 }
 
 // CreateContext implements the JMS method to create a connection to an IBM MQ
@@ -49,6 +58,34 @@ func (cf ConnectionFactoryImpl) CreateContext() (jms20subset.JMSContext, jms20su
 		cd.ChannelName = cf.ChannelName
 		cd.ConnectionName = cf.Hostname + "(" + strconv.Itoa(cf.PortNumber) + ")"
 		cno.ClientConn = cd
+
+		// Fill in the fields relating to TLS channel connections
+		if cf.TLSCipherSpec != "" {
+			cd.SSLCipherSpec = cf.TLSCipherSpec
+		}
+
+		switch cf.TLSClientAuth {
+		case TLSClientAuth_REQUIRED:
+			cd.SSLClientAuth = ibmmq.MQSCA_REQUIRED
+		case TLSClientAuth_NONE:
+		case "":
+			cd.SSLClientAuth = ibmmq.MQSCA_OPTIONAL
+		default:
+			cd.SSLClientAuth = -1 // Trigger an error message
+		}
+
+		// Set up the reference to the key repository file, if it has been specified.
+		if cf.KeyRepository != "" {
+			sco := ibmmq.NewMQSCO()
+			sco.KeyRepository = cf.KeyRepository
+
+			if cf.CertificateLabel != "" {
+				sco.CertificateLabel = cf.CertificateLabel
+			}
+
+			cno.SSLConfig = sco
+
+		}
 
 	} else if cf.TransportType == TransportType_BINDINGS {
 

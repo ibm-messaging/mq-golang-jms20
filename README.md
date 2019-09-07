@@ -112,6 +112,7 @@ generally replace the various "assert" calls that test the successful execution 
 your own error handling or logging.
 * Creating a ConnectionFactory that uses a client connection to a remote queue manager - [connectionfactory_test.go](connectionfactory_test.go)
 * Creating a ConnectionFactory that uses a bindings connection to a local queue manager - [local_bindings_test.go](local_bindings_test.go)
+* Create a connection using anonymous (one-way) TLS encryption or mutual TLS authentication - [tls_connections_test.go](tls_connections_test.go)
 * Send/receive a text string - [sample_sendreceive_test.go](sample_sendreceive_test.go)
 * Send a message as Persistent or NonPersistent - [deliverymode_test.go](deliverymode_test.go)
 * Get by CorrelationID - [getbycorrelid_test.go](getbycorrelid_test.go)

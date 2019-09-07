@@ -16,3 +16,11 @@ const TransportType_CLIENT int = 0
 // Used to configure the TransportType property of the ConnectionFactory,
 // to use a local bindings connection to the queue manager
 const TransportType_BINDINGS int = 1
+
+// Used to configure the TLSClientAuth property to indicate that a client
+// certificate should not be sent.
+const TLSClientAuth_NONE string = "NONE"
+
+// Used to configure the TLSClientAuth property to indicate that a client
+// certificate must be sent to the queue manager, as part of mutual TLS.
+const TLSClientAuth_REQUIRED string = "REQUIRED"

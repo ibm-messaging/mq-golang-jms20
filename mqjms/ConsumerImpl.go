@@ -29,16 +29,42 @@ type ConsumerImpl struct {
 // message to be received.
 func (consumer ConsumerImpl) ReceiveNoWait() (jms20subset.Message, jms20subset.JMSException) {
 
+	gmo := ibmmq.NewMQGMO()
+	return consumer.receiveInternal(gmo)
+
+}
+
+// Receive(waitMillis) returns a message if one is available, or otherwise
+// waits for up to the specified number of milliseconds for one to become
+// available. A value of zero or less indicates to wait indefinitely.
+func (consumer ConsumerImpl) Receive(waitMillis int32) (jms20subset.Message, jms20subset.JMSException) {
+
+	if waitMillis <= 0 {
+		waitMillis = ibmmq.MQWI_UNLIMITED
+	}
+
+	gmo := ibmmq.NewMQGMO()
+	gmo.Options |= ibmmq.MQGMO_WAIT
+	gmo.WaitInterval = waitMillis
+
+	return consumer.receiveInternal(gmo)
+
+}
+
+// Internal method to provide common functionality across the different types
+// of receive.
+func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Message, jms20subset.JMSException) {
+
 	// Prepare objects to be used in receiving the message.
 	var msg jms20subset.Message
 	var jmsErr jms20subset.JMSException
 
 	getmqmd := ibmmq.NewMQMD()
-	gmo := ibmmq.NewMQGMO()
 	buffer := make([]byte, 32768)
 
 	// Set the GMO (get message options)
-	gmo.Options = ibmmq.MQGMO_NO_SYNCPOINT | ibmmq.MQGMO_FAIL_IF_QUIESCING
+	gmo.Options |= ibmmq.MQGMO_NO_SYNCPOINT
+	gmo.Options |= ibmmq.MQGMO_FAIL_IF_QUIESCING
 
 	// Apply the selector if one has been specified in the Consumer
 	err := applySelector(consumer.selector, getmqmd, gmo)
@@ -105,6 +131,36 @@ func (consumer ConsumerImpl) ReceiveStringBodyNoWait() (*string, jms20subset.JMS
 
 	// Get a message from the queue if one is available.
 	msg, jmsErr := consumer.ReceiveNoWait()
+
+	// If we receive a message without any errors
+	if jmsErr == nil && msg != nil {
+
+		switch msg := msg.(type) {
+		case jms20subset.TextMessage:
+			msgBodyStrPtr = msg.GetText()
+		default:
+			jmsErr = jms20subset.CreateJMSException(
+				"Received message is not a TextMessage", "MQJMS6068", nil)
+		}
+
+	}
+
+	return msgBodyStrPtr, jmsErr
+
+}
+
+// ReceiveStringBody implements the IBM MQ logic necessary to receive a
+// message from a Destination and return its body as a string.
+//
+// If no message is available the method blocks up to the specified number
+// of milliseconds for one to become available.
+func (consumer ConsumerImpl) ReceiveStringBody(waitMillis int32) (*string, jms20subset.JMSException) {
+
+	var msgBodyStrPtr *string
+	var jmsErr jms20subset.JMSException
+
+	// Get a message from the queue if one is available.
+	msg, jmsErr := consumer.Receive(waitMillis)
 
 	// If we receive a message without any errors
 	if jmsErr == nil && msg != nil {

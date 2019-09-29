@@ -5,7 +5,6 @@ project!
 
 Not currently implemented:
 --------------------------
-- ReceiveWithWait
 - Cascade close from JMSContext to producer/consumer objects
 - BytesMessage, receiveBytesBody
 - Local transactions (e.g. allow request/reply under transaction)

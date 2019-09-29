@@ -24,8 +24,20 @@ type JMSConsumer interface {
 
 	// ReceiveStringBodyNoWait receives the next message for this JMSConsumer
 	// and returns its body as a string. If a message is not immediately
-	//available a nil is returned.
+	// available a nil is returned.
 	ReceiveStringBodyNoWait() (*string, JMSException)
+
+	// Receive(waitMillis) returns a message if one is available, or otherwise
+	// waits for up to the specified number of milliseconds for one to become
+	// available. A value of zero or less indicates to wait indefinitely.
+	Receive(waitMillis int32) (Message, JMSException)
+
+	// ReceiveStringBody returns the body of a message as a string if one is
+	// available. If a message is not immediately available the method will
+	// block for up to the specified number of milliseconds to wait for one
+	// to become available. A value of zero or less indicates to wait
+	// indefinitely.
+	ReceiveStringBody(waitMillis int32) (*string, JMSException)
 
 	// Closes the JMSConsumer in order to free up any resources that were
 	// allocated by the provider on behalf of this consumer.

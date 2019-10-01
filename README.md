@@ -35,7 +35,7 @@ in this JMS 2.0 style interface in Golang. Note that there are additional workin
 ### Send and receive a message containing a text string
 (from [sample_sendreceive_test.go](sample_sendreceive_test.go))
 Note that for illustration purposes this sample only has limited error handling, which you should never do in production application code! Please see the TestSampleSendReceiveWithErrorHandling function for an equivalent sample that demonstrates good practice for error handling.
-```
+```golang
 // Create a ConnectionFactory using details stored in some external property files
 cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
 if cfErr != nil {
@@ -79,14 +79,14 @@ if rcvBody != nil {
 
 ### Send a non-persistent message
 (from [deliverymode_test.go](deliverymode_test.go))
-```
+```golang
 msgBody = "My non-persistent message"
 err3 := context.CreateProducer().SetDeliveryMode(jms20subset.DeliveryMode_NON_PERSISTENT).SendString(queue, msgBody)
 ```
 
 ### Error handling
 (from [sample_errorhandling_test.go](sample_errorhandling_test.go))
-```
+```golang
 // Create a ConnectionFactory using some property files
 cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
 assert.Nil(t, cfErr)
@@ -122,7 +122,7 @@ your own error handling or logging.
 * Handle error codes returned by the queue manager - [sample_errorhandling_test.go](sample_errorhandling_test.go)
 
 As normal with Go, you can run any individual testcase by executing a command such as;
-```
+```bash
 go test -run TestSampleSendReceiveWithErrorHandling
 ```
 
@@ -142,7 +142,7 @@ The IBM MQ client on which this library depends is supported on Linux and Window
       - Simply unzip the archive and make a note of the installation location. For ease of configuration you may wish to unzip the archive into the default install IBM MQ location for your platform
       - Note that v9.1.1 (CD) or higher of the MQ client library is required as it includes header files that are not present in v9.1.0 LTS or below.
 4. Git clone this project to download this JMS style implementation onto your workstation
-  ```
+  ```bash
   # Update and set the GOPATH variable to match your workspace
   export GOPATH=/home/myuser/workspace
 
@@ -159,7 +159,7 @@ The IBM MQ client on which this library depends is supported on Linux and Window
 ### Configuring your environment
 
 First you must configure your command console environment as described in the [mq-golang Getting Started instructions](https://github.com/ibm-messaging/mq-golang#getting-started) so that the necessary flags are set;
-```
+```bash
 # Configure your Go environment variables (update to match your own setup)
 export GOROOT=/usr/local/go
 export GOPATH=/home/myuser/workspace
@@ -171,20 +171,20 @@ export CGO_LDFLAGS_ALLOW="-Wl,-rpath.*"
 
 
 **If your client install is not located in the default installation location**, for example `/opt/mqm` then you also need to set the follow environment variables to point at your installation location. For example on Linux or MacOS;
-```
+```bash
 export MQ_INSTALLATION_PATH=$HOME/9.1.1.0-IBM-MQC-Redist-LinuxX64
 export CGO_CFLAGS="-I$MQ_INSTALLATION_PATH/inc"
 export CGO_LDFLAGS="-L$MQ_INSTALLATION_PATH/lib64 -Wl,-rpath,$MQ_INSTALLATION_PATH/lib64"
 ```
 
 Download the Golang modules on which this project depends by running the dep command;
-```
+```bash
 cd $GOPATH/src/github.com/ibm-messaging/mq-golang-jms20/
 dep ensure
 ```
 
 Confirm the settings are correct by compiling the MQ JMS Golang package, for example as follows; (no errors will be shown if successful)
-```
+```bash
 cd $GOPATH/src/github.com/ibm-messaging/mq-golang-jms20/mqjms/
 go build
 ```
@@ -203,7 +203,7 @@ The test cases use the `CreateConnectionFactoryFromDefaultJSONFiles` method to o
 Once you have added the details of your queue manager and user credentials into the two JSON files and placed them in your `/Downloads` directory you are ready to run the test, which is done in the same way as any other Go tests.
 
 Note that the tests require the queues `DEV.QUEUE.1` and `DEV.QUEUE.2` to be defined on your queue manager, be empty of messages and be accessible to the application username you are using. This will be the case by default for queue managers provisioned through the MQ on Cloud service, but may require manual configuration for queue managers you have created through other means.
-```
+```bash
 > cd $GOPATH/src/github.com/ibm-messaging/mq-golang-jms20/
 > go test -v
 
@@ -218,10 +218,9 @@ ok  	github.com/ibm-messaging/mq-golang-jms20	11.308s
 
 ### Writing your own Golang application that talks to IBM MQ
 Writing your own application to talk to IBM MQ is simple - as shown in the [sample_sendreceive_test.go](sample_sendreceive_test.go) sample. Simply import this module into your source file, and get started!
-```
+```golang
 import (
 	"github.com/ibm-messaging/mq-golang-jms20/mqjms"
-
 )
 ```
 
@@ -234,7 +233,7 @@ The first thing you'll need to do is create a ConnectionFactory object so that y
 2. Create a new ConnectionFactory object and set the variables in your application code
     - This is a quick and easy way to get started, but less desirable for production quality applications
     - You can hardcode the values in your source file, or perhaps look them up from environment variables as shown below
-```
+```golang
 cf := mqjms.ConnectionFactoryImpl{
   QMName:      "QM_ONE",
   Hostname:    "random.hostname.com",

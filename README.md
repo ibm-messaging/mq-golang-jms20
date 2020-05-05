@@ -137,7 +137,7 @@ The IBM MQ client on which this library depends is supported on Linux and Window
 
 3. Install the MQ Client library
     - If you have a full MQ server with a queue manager installed on your machine then you already have the client library
-    - If you don't have a queue manager installed on your machine then you can download the "redistributable client" library for IBM MQ 9.1.1 CD or higher for [Linux](https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist/9.1.1.0-IBM-MQC-Redist-LinuxX64.tar.gz), [Windows](https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist/9.1.1.0-IBM-MQC-Redist-Win64.zip) or [MacOS](https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/mactoolkit/IBM-MQ-Toolkit-Mac-x64-9.1.1.0.tar.gz)
+    - If you don't have a queue manager installed on your machine then you can download the "redistributable client" library for IBM MQ 9.1.1 CD or higher for [Linux](https://www14.software.ibm.com/cgi-bin/weblap/lap.pl?popup=Y&li_formnum=L-APIG-BM7GDH&accepted_url=https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist/9.1.5.0-IBM-MQC-Redist-LinuxX64.tar.gz), [Windows](https://www14.software.ibm.com/cgi-bin/weblap/lap.pl?popup=Y&li_formnum=L-APIG-BM7GDH&accepted_url=https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist/9.1.5.0-IBM-MQC-Redist-Win64.zip) or [MacOS](https://ibm.biz/mqdevmacclient)
       - Simply unzip the archive and make a note of the installation location. For ease of configuration you may wish to unzip the archive into the default install IBM MQ location for your platform
       - Note that v9.1.1 (CD) or higher of the MQ client library is required as it includes header files that are not present in v9.1.0 LTS or below.
 4. Git clone this project to download this JMS style implementation onto your workstation
@@ -153,7 +153,7 @@ The IBM MQ client on which this library depends is supported on Linux and Window
     - You can also deploy a queue manager using one of the following simple approaches
       - Select the Lite plan to deploy a free queue manager using the [IBM MQ on Cloud service](https://cloud.ibm.com/catalog/services/mq) (IBM SaaS offering)
       - Deploy IBM MQ for Developers for free in a container using the sample Docker container as described in the [Ready, Set, Connect - Docker tutorial](https://developer.ibm.com/messaging/learn-mq/mq-tutorials/mq-connect-to-queue-manager/#docker)
-      - Install IBM MQ for Developers for free on [Windows](https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev911_windows.zip), [Linux](https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev911_linux_x86-64.tar.gz) or [Ubuntu](https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev911_ubuntu_x86-64.tar.gz)
+      - Install IBM MQ for Developers for free on [Windows](https://ibm.biz/mqdevwindows), [Linux](https://ibm.biz/mqdevlinuxrpm) or [Ubuntu](https://ibm.biz/mqdevubuntu)
 
 ### Configuring your environment
 
@@ -170,7 +170,7 @@ export CGO_LDFLAGS_ALLOW="-Wl,-rpath.*"
 
 **If your client install is not located in the default installation location**, for example `/opt/mqm` then you also need to set the follow environment variables to point at your installation location. For example on Linux or MacOS;
 ```bash
-export MQ_INSTALLATION_PATH=$HOME/9.1.1.0-IBM-MQC-Redist-LinuxX64
+export MQ_INSTALLATION_PATH=$HOME/9.1.5.0-IBM-MQC-Redist-LinuxX64
 export CGO_CFLAGS="-I$MQ_INSTALLATION_PATH/inc"
 export CGO_LDFLAGS="-L$MQ_INSTALLATION_PATH/lib64 -Wl,-rpath,$MQ_INSTALLATION_PATH/lib64"
 ```

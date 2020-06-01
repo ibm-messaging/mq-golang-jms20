@@ -12,7 +12,7 @@ package mqjms
 import (
 	"fmt"
 	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
-	"github.com/ibm-messaging/mq-golang/ibmmq"
+	ibmmq "github.com/ibm-messaging/mq-golang/v5/ibmmq"
 	"log"
 	"strconv"
 )

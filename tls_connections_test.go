@@ -48,7 +48,8 @@ func TestAnonymousTLSConnection(t *testing.T) {
 		defer context.Close()
 	}
 
-	if errCtx != nil && errCtx.GetReason() == "MQRC_UNKNOWN_CHANNEL_NAME" {
+	if errCtx != nil && (errCtx.GetReason() == "MQRC_UNKNOWN_CHANNEL_NAME" ||
+		errCtx.GetReason() == "MQRC_CHANNEL_CONFIG_ERROR") {
 		// See ./tls-samples/README.md for details on how to configure the required channel.
 		fmt.Println("Skipping TestAnonymousTLSConnection as required channel is not defined.")
 		return
@@ -92,7 +93,8 @@ func TestMutualTLSConnection(t *testing.T) {
 		defer context.Close()
 	}
 
-	if errCtx != nil && errCtx.GetReason() == "MQRC_UNKNOWN_CHANNEL_NAME" {
+	if errCtx != nil && (errCtx.GetReason() == "MQRC_UNKNOWN_CHANNEL_NAME" ||
+		errCtx.GetReason() == "MQRC_CHANNEL_CONFIG_ERROR") {
 		// See ./tls-samples/README.md for details on how to configure the required channel.
 		fmt.Println("Skipping TestMutualTLSConnection as required channel is not defined.")
 		return

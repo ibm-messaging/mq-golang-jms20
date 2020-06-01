@@ -133,7 +133,7 @@ go test -run TestSampleSendReceiveWithErrorHandling
 The IBM MQ client on which this library depends is supported on Linux and Windows, and is [now available for development use on MacOS](https://developer.ibm.com/messaging/2019/02/05/ibm-mq-macos-toolkit-for-developers/)).
 
 1. Install Golang
-    - This library has been validated with Golang v1.11.4 and v1.12.9. If you don't have Golang installed on your system you can [download it here](https://golang.org/doc/install) for MacOS, Linux or Windows
+    - This library has been validated with Golang v1.13.11. If you don't have Golang installed on your system you can [download it here](https://golang.org/doc/install) for MacOS, Linux or Windows
 
 3. Install the MQ Client library
     - If you have a full MQ server with a queue manager installed on your machine then you already have the client library

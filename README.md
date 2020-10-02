@@ -130,7 +130,7 @@ go test -run TestSampleSendReceiveWithErrorHandling
 ## Getting started
 
 ### Installing the pre-requisites
-The IBM MQ client on which this library depends is supported on Linux and Windows, and is [now available for development use on MacOS](https://developer.ibm.com/messaging/2019/02/05/ibm-mq-macos-toolkit-for-developers/)).
+The IBM MQ client on which this library depends is supported on Linux and Windows, and is [now available for development use on MacOS](https://developer.ibm.com/components/ibm-mq/tutorials/mq-macos-dev/)).
 
 1. Install Golang
     - This library has been validated with Golang v1.13.11. If you don't have Golang installed on your system you can [download it here](https://golang.org/doc/install) for MacOS, Linux or Windows
@@ -152,7 +152,7 @@ The IBM MQ client on which this library depends is supported on Linux and Window
     - If you have an existing queue manager then you can continue to use that
     - You can also deploy a queue manager using one of the following simple approaches
       - Select the Lite plan to deploy a free queue manager using the [IBM MQ on Cloud service](https://cloud.ibm.com/catalog/services/mq) (IBM SaaS offering)
-      - Deploy IBM MQ for Developers for free in a container using the sample Docker container as described in the [Ready, Set, Connect - Docker tutorial](https://developer.ibm.com/messaging/learn-mq/mq-tutorials/mq-connect-to-queue-manager/#docker)
+      - Deploy IBM MQ for Developers for free in a container using the sample Docker container as described in the [Ready, Set, Connect - Docker tutorial](https://developer.ibm.com/tutorials/mq-connect-app-queue-manager-containers/)
       - Install IBM MQ for Developers for free on [Windows](https://ibm.biz/mqdevwindows), [Linux](https://ibm.biz/mqdevlinuxrpm) or [Ubuntu](https://ibm.biz/mqdevubuntu)
 
 ### Configuring your environment
@@ -170,7 +170,7 @@ export CGO_LDFLAGS_ALLOW="-Wl,-rpath.*"
 
 **If your client install is not located in the default installation location**, for example `/opt/mqm` then you also need to set the follow environment variables to point at your installation location. For example on Linux or MacOS;
 ```bash
-export MQ_INSTALLATION_PATH=$HOME/9.1.5.0-IBM-MQC-Redist-LinuxX64
+export MQ_INSTALLATION_PATH=$HOME/9.2.0.0-IBM-MQC-Redist-LinuxX64
 export CGO_CFLAGS="-I$MQ_INSTALLATION_PATH/inc"
 export CGO_LDFLAGS="-L$MQ_INSTALLATION_PATH/lib64 -Wl,-rpath,$MQ_INSTALLATION_PATH/lib64"
 ```
@@ -186,10 +186,10 @@ This project includes a series of tests that validate the successful operation o
 
 The test cases use the `CreateConnectionFactoryFromDefaultJSONFiles` method to obtain details of a queue manager to connect to from two JSON files in your `/Downloads` directory;
 - `connection_info.json` contains information like the hostname/port/channel
-  - If you are using the MQ on Cloud service you can download a pre-populated file directly from the queue manager details page as [described here](https://cloud.ibm.com/docs/services/mqcloud/mqoc_jms_tls.html#connection_info-json)
+  - If you are using the MQ on Cloud service you can download a pre-populated file directly from the queue manager details page as [described here](https://cloud.ibm.com/docs/mqcloud?topic=mqcloud-mqoc_jms_tls#connection_info-json)
   - Otherwise you can insert details of your own queue manager into [this sample file](./config-samples/connection_info.json) and copy it to your `/Downloads` directory
 - `applicationApiKey.json` contains the Application username and password that will be used to connect to your queue manager
-  - If you are using the MQ on Cloud service you can download a pre-populated file directly from the Application Permissions tab in the service console as [described here](https://cloud.ibm.com/docs/services/mqcloud/mqoc_jms_tls.html#apikey-json)
+  - If you are using the MQ on Cloud service you can download a pre-populated file directly from the Application Permissions tab in the service console as [described here](https://cloud.ibm.com/docs/mqcloud?topic=mqcloud-mqoc_jms_tls#apikey-json)
   - Otherwise you can insert details of your own queue manager into [this sample file](./config-samples/applicationApiKey.json) and copy it to your `/Downloads` directory
 
 Once you have added the details of your queue manager and user credentials into the two JSON files and placed them in your `/Downloads` directory you are ready to run the test, which is done in the same way as any other Go tests.
@@ -256,7 +256,7 @@ areas where the exact spelling has diverged a little from the Java form.
   * JMS 2.0 makes use of java.lang.AutoCloseable to automatically close objects
   * Golang doesn't have a direct equivalent so we recommend using "defer" to ensure that objects are automatically closed when the function completes
 * Method overloading
-  * JMS 2.0 makes extensive use of method overloading in Java to define multiple methods with the same name but different parameters (for example the five different "send" methods on a [JMSProducer](https://github.com/eclipse-ee4j/jms-api/blob/master/src/main/java/javax/jms/JMSProducer.java#L87))
+  * JMS 2.0 makes extensive use of method overloading in Java to define multiple methods with the same name but different parameters (for example the five different "send" methods on a [JMSProducer](https://github.com/eclipse-ee4j/jms-api/blob/master/api/src/main/java/jakarta/jms/JMSProducer.java#L87))
   * Golang doesn't allow method overloading so we have introduced slightly different methods names, such as Send and SendString in the [Golang JMSProducer object](./jms20subset/JMSProducer.go)
 * Generics
   * Similarly, JMS 2.0 has used Generics in Java to allow you to receive a [message body directly without casting](https://javaee.github.io/jms-spec/pages/JMS20MeansLessCode#receiving-synchronously-can-receive-mesage-payload-directly)

@@ -6,15 +6,16 @@
 //
 // SPDX-License-Identifier: EPL-2.0
 
-//
+// Package mqjms provides the implementation of the JMS style Golang interfaces to communicate with IBM MQ.
 package mqjms
 
 import (
 	"fmt"
-	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
-	ibmmq "github.com/ibm-messaging/mq-golang/v5/ibmmq"
 	"log"
 	"strconv"
+
+	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
+	ibmmq "github.com/ibm-messaging/mq-golang/v5/ibmmq"
 )
 
 // ProducerImpl defines a struct that contains the necessary objects for
@@ -25,7 +26,7 @@ type ProducerImpl struct {
 	timeToLive   int
 }
 
-// Send a TextMessage with the specified body to the specified Destination
+// SendString sends a TextMessage with the specified body to the specified Destination
 // using any message options that are defined on this JMSProducer.
 func (producer ProducerImpl) SendString(dest jms20subset.Destination, bodyStr string) jms20subset.JMSException {
 

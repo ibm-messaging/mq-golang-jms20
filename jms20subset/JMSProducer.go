@@ -7,7 +7,7 @@
 //
 // SPDX-License-Identifier: EPL-2.0
 
-//
+// Package jms20subset provides interfaces for messaging applications in the style of the Java Message Service (JMS) API.
 package jms20subset
 
 // JMSProducer is a simple object used to send messages on behalf of a

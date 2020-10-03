@@ -6,15 +6,16 @@
 //
 // SPDX-License-Identifier: EPL-2.0
 
-//
+// Package mqjms provides the implementation of the JMS style Golang interfaces to communicate with IBM MQ.
 package mqjms
 
 import (
 	"errors"
-	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
-	ibmmq "github.com/ibm-messaging/mq-golang/v5/ibmmq"
 	"strconv"
 	"strings"
+
+	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
+	ibmmq "github.com/ibm-messaging/mq-golang/v5/ibmmq"
 )
 
 // ConsumerImpl defines a struct that contains the necessary objects for
@@ -34,7 +35,7 @@ func (consumer ConsumerImpl) ReceiveNoWait() (jms20subset.Message, jms20subset.J
 
 }
 
-// Receive(waitMillis) returns a message if one is available, or otherwise
+// Receive with waitMillis returns a message if one is available, or otherwise
 // waits for up to the specified number of milliseconds for one to become
 // available. A value of zero or less indicates to wait indefinitely.
 func (consumer ConsumerImpl) Receive(waitMillis int32) (jms20subset.Message, jms20subset.JMSException) {
@@ -199,7 +200,7 @@ func applySelector(selector string, getmqmd *ibmmq.MQMD, gmo *ibmmq.MQGMO) error
 	if strings.TrimSpace(clauseSplits[0]) != "JMSCorrelationID" {
 		// Currently we only support correlID selectors, so error out quickly
 		// if we see anything else.
-		return errors.New("Only selectors on JMSCorrelationID are currently supported.")
+		return errors.New("Only selectors on JMSCorrelationID are currently supported")
 	}
 
 	// Trim the value.
@@ -227,7 +228,7 @@ func applySelector(selector string, getmqmd *ibmmq.MQMD, gmo *ibmmq.MQGMO) error
 	return nil
 }
 
-// Closes the JMSConsumer, releasing any resources that were allocated on
+// Close closes the JMSConsumer, releasing any resources that were allocated on
 // behalf of that consumer.
 func (consumer ConsumerImpl) Close() {
 

@@ -7,7 +7,7 @@
 //
 // SPDX-License-Identifier: EPL-2.0
 
-//
+// Package jms20subset provides interfaces for messaging applications in the style of the Java Message Service (JMS) API.
 package jms20subset
 
 // Queue encapsulates a provider-specific queue name through which an

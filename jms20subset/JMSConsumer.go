@@ -7,7 +7,7 @@
 //
 // SPDX-License-Identifier: EPL-2.0
 
-//
+// Package jms20subset provides interfaces for messaging applications in the style of the Java Message Service (JMS) API.
 package jms20subset
 
 // JMSConsumer provides the ability for an application to receive messages

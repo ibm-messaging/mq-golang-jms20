@@ -10,10 +10,11 @@
 package main
 
 import (
+	"testing"
+
 	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
 	"github.com/ibm-messaging/mq-golang-jms20/mqjms"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 /*
@@ -70,16 +71,16 @@ func TestRequestReply(t *testing.T) {
 
 	// Get the generated MessageID from the sent message, so that we
 	// can receive the response message using it later
-	msgId := sentMsg.GetJMSMessageID()
-	assert.NotEqual(t, "", msgId)
-	assert.Equal(t, 48, len(msgId))
+	msgID := sentMsg.GetJMSMessageID()
+	assert.NotEqual(t, "", msgID)
+	assert.Equal(t, 48, len(msgID))
 
 	// "Another application" will consume the request message and sent
 	// the reply message
 	replyToMessage(t, cf, requestQueue)
 
 	// Receive the reply message, selecting by CorrelID
-	replyConsumer, rConErr3 := context.CreateConsumerWithSelector(replyQueue, "JMSCorrelationID = '"+msgId+"'")
+	replyConsumer, rConErr3 := context.CreateConsumerWithSelector(replyQueue, "JMSCorrelationID = '"+msgID+"'")
 	assert.Nil(t, rConErr3)
 	if replyConsumer != nil {
 		defer replyConsumer.Close()
@@ -92,7 +93,7 @@ func TestRequestReply(t *testing.T) {
 	switch msg := respMsg.(type) {
 	case jms20subset.TextMessage:
 		assert.Equal(t, "ReplyMsg", *msg.GetText())
-		assert.Equal(t, msgId, msg.GetJMSCorrelationID())
+		assert.Equal(t, msgID, msg.GetJMSCorrelationID())
 	default:
 		assert.Fail(t, "Got something other than a text message")
 	}
@@ -120,8 +121,8 @@ func replyToMessage(t *testing.T, cf jms20subset.ConnectionFactory, requestQueue
 	}
 	reqMsg, err := requestConsumer.ReceiveNoWait()
 	assert.Nil(t, err)
-	reqMsgId := reqMsg.GetJMSMessageID()
-	assert.NotEqual(t, "", reqMsgId)
+	reqMsgID := reqMsg.GetJMSMessageID()
+	assert.NotEqual(t, "", reqMsgID)
 
 	// Get the replyTo queue and request MsgID
 	replyDest := reqMsg.GetJMSReplyTo()
@@ -131,7 +132,7 @@ func replyToMessage(t *testing.T, cf jms20subset.ConnectionFactory, requestQueue
 	replyMsgBody := "ReplyMsg"
 	replyMsg := rrContext.CreateTextMessageWithString(replyMsgBody)
 	assert.Equal(t, "", replyMsg.GetJMSCorrelationID())
-	replyMsg.SetJMSCorrelationID(reqMsgId)
+	replyMsg.SetJMSCorrelationID(reqMsgID)
 	assert.NotEqual(t, "", replyMsg.GetJMSCorrelationID())
 
 	// Send the reply message back to the original application

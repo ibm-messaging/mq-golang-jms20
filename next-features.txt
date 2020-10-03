@@ -5,7 +5,6 @@ project!
 
 Not currently implemented:
 --------------------------
-- Cascade close from JMSContext to producer/consumer objects
 - BytesMessage, receiveBytesBody
 - Local transactions (e.g. allow request/reply under transaction)
 - MessageListener
@@ -15,6 +14,10 @@ Not currently implemented:
 - Temporary destinations
 - Priority
 
+Client capabilities for participating in Uniform Clusters;
+- CCDT to allow listing queue managers
+- Set APPLTag to name the logical application
+- Auto reconnect (any) + MQCNO_RECONNECT_QMGR 
 
 Known issues:
 -------------

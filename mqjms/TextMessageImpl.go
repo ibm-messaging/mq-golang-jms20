@@ -192,14 +192,14 @@ func (msg *TextMessageImpl) GetJMSCorrelationID() string {
 		// to turn it back into a string.
 		realLength := len(correlIDBytes)
 		if realLength > 0 {
-			for correlIdBytes[realLength-1] == 0 {
+			for correlIDBytes[realLength-1] == 0 {
 				realLength--
 			}
 		}
 
 		// Attempt to decode the content back into a string.
 		dst := make([]byte, hex.DecodedLen(realLength))
-		n, err := hex.Decode(dst, correlIdBytes[0:realLength])
+		n, err := hex.Decode(dst, correlIDBytes[0:realLength])
 
 		if err == nil {
 			// The decode back to a string was successful so pass back that plain
@@ -210,7 +210,7 @@ func (msg *TextMessageImpl) GetJMSCorrelationID() string {
 
 			// An error occurred while decoding to a plain text string, so encode
 			// the bytes that we have into a raw string representation themselves.
-			correlID = hex.EncodeToString(correlIdBytes)
+			correlID = hex.EncodeToString(correlIDBytes)
 		}
 
 	}

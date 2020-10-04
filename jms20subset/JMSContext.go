@@ -7,8 +7,14 @@
 //
 // SPDX-License-Identifier: EPL-2.0
 
-//
+// Package jms20subset provides interfaces for messaging applications in the style of the Java Message Service (JMS) API.
 package jms20subset
+
+// JMSContextAUTOACKNOWLEDGE is used to specify a sessionMode that automatically acknowledge message transmission.
+const JMSContextAUTOACKNOWLEDGE int = 1
+
+// JMSContextSESSIONTRANSACTED is used to specify a sessionMode that requires manual commit/rollback of transactions.
+const JMSContextSESSIONTRANSACTED int = 0
 
 // JMSContext represents a connection to the messaging provider, and
 // provides the capability for applications to create Producer and Consumer
@@ -53,6 +59,12 @@ type JMSContext interface {
 	// Note that since Golang does not allow multiple functions with the same
 	// name and different parameters we must use a different function name.
 	CreateTextMessageWithString(txt string) TextMessage
+
+	// Commit confirms all messages sent/received during this transaction.
+	Commit()
+
+	// Rollback releases all messages sent/received during this transaction.
+	Rollback()
 
 	// Closes the connection to the messaging provider.
 	//

@@ -6,13 +6,14 @@
 //
 // SPDX-License-Identifier: EPL-2.0
 
-// Implementation of the JMS style Golang interfaces to communicate with IBM MQ.
+// Package mqjms provides the implementation of the JMS style Golang interfaces to communicate with IBM MQ.
 package mqjms
 
 import (
+	"strconv"
+
 	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
 	ibmmq "github.com/ibm-messaging/mq-golang/v5/ibmmq"
-	"strconv"
 )
 
 // ConnectionFactoryImpl defines a struct that contains attributes for
@@ -44,6 +45,12 @@ type ConnectionFactoryImpl struct {
 // CreateContext implements the JMS method to create a connection to an IBM MQ
 // queue manager.
 func (cf ConnectionFactoryImpl) CreateContext() (jms20subset.JMSContext, jms20subset.JMSException) {
+	return cf.CreateContextWithSessionMode(jms20subset.JMSContextAUTOACKNOWLEDGE)
+}
+
+// CreateContextWithSessionMode implements the JMS method to create a connection to an IBM MQ
+// queue manager using the specified session mode.
+func (cf ConnectionFactoryImpl) CreateContextWithSessionMode(sessionMode int) (jms20subset.JMSContext, jms20subset.JMSException) {
 
 	// Allocate the internal structures required to create an connection to IBM MQ.
 	cno := ibmmq.NewMQCNO()
@@ -118,7 +125,8 @@ func (cf ConnectionFactoryImpl) CreateContext() (jms20subset.JMSContext, jms20su
 		// Connection was created successfully, so we wrap the MQI object into
 		// a new ContextImpl and return it to the caller.
 		ctx = ContextImpl{
-			qMgr: qMgr,
+			qMgr:        qMgr,
+			sessionMode: sessionMode,
 		}
 
 	} else {

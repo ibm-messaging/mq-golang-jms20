@@ -21,6 +21,7 @@ import (
 // ConsumerImpl defines a struct that contains the necessary objects for
 // receiving messages from a queue on an IBM MQ queue manager.
 type ConsumerImpl struct {
+	ctx      ContextImpl
 	qObject  ibmmq.MQObject
 	selector string
 }
@@ -63,8 +64,14 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 	getmqmd := ibmmq.NewMQMD()
 	buffer := make([]byte, 32768)
 
+	// Calculate the syncpoint value
+	syncpointSetting := ibmmq.MQGMO_NO_SYNCPOINT
+	if consumer.ctx.sessionMode == jms20subset.JMSContextSESSIONTRANSACTED {
+		syncpointSetting = ibmmq.MQGMO_SYNCPOINT
+	}
+
 	// Set the GMO (get message options)
-	gmo.Options |= ibmmq.MQGMO_NO_SYNCPOINT
+	gmo.Options |= syncpointSetting
 	gmo.Options |= ibmmq.MQGMO_FAIL_IF_QUIESCING
 
 	// Apply the selector if one has been specified in the Consumer

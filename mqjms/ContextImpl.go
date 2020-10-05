@@ -90,6 +90,7 @@ func (ctx ContextImpl) CreateConsumerWithSelector(dest jms20subset.Destination, 
 		// Success - store the necessary objects away for later use to receive
 		// messages.
 		consumer = ConsumerImpl{
+			ctx:      ctx,
 			qObject:  qObject,
 			selector: selector,
 		}

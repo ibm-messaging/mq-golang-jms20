@@ -118,6 +118,7 @@ your own error handling or logging.
 * Send a message as Persistent or NonPersistent - [deliverymode_test.go](deliverymode_test.go)
 * Get by CorrelationID - [getbycorrelid_test.go](getbycorrelid_test.go)
 * Request/reply messaging pattern - [requestreply_test.go](requestreply_test.go)
+* Send and receive under a local transaction - [local_transaction_test.go](local_transaction_test.go)
 * Sending a message that expires after a period of time - [timetolive_test.go](timetolive_test.go)
 * Handle error codes returned by the queue manager - [sample_errorhandling_test.go](sample_errorhandling_test.go)
 

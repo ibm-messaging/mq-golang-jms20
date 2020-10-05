@@ -6,19 +6,21 @@
 //
 // SPDX-License-Identifier: EPL-2.0
 
-//
+// Package mqjms provides the implementation of the JMS style Golang interfaces to communicate with IBM MQ.
 package mqjms
 
 import (
+	"strconv"
+
 	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
 	ibmmq "github.com/ibm-messaging/mq-golang/v5/ibmmq"
-	"strconv"
 )
 
 // ContextImpl encapsulates the objects necessary to maintain an active
 // connection to an IBM MQ queue manager.
 type ContextImpl struct {
-	qMgr ibmmq.MQQueueManager
+	qMgr        ibmmq.MQQueueManager
+	sessionMode int
 }
 
 // CreateQueue implements the logic necessary to create a provider-specific
@@ -53,7 +55,7 @@ func (ctx ContextImpl) CreateConsumer(dest jms20subset.Destination) (jms20subset
 	return ctx.CreateConsumerWithSelector(dest, "")
 }
 
-// CreateConsumer creates a consumer object that allows an application to
+// CreateConsumerWithSelector creates a consumer object that allows an application to
 // receive messages that match the specified selector from the given Destination.
 func (ctx ContextImpl) CreateConsumerWithSelector(dest jms20subset.Destination, selector string) (jms20subset.JMSConsumer, jms20subset.JMSException) {
 
@@ -88,6 +90,7 @@ func (ctx ContextImpl) CreateConsumerWithSelector(dest jms20subset.Destination, 
 		// Success - store the necessary objects away for later use to receive
 		// messages.
 		consumer = ConsumerImpl{
+			ctx:      ctx,
 			qObject:  qObject,
 			selector: selector,
 		}
@@ -110,7 +113,7 @@ func (ctx ContextImpl) CreateTextMessage() jms20subset.TextMessage {
 	return &TextMessageImpl{}
 }
 
-// CreateTextMessage is a JMS standard mechanism for creating a TextMessage
+// CreateTextMessageWithString is a JMS standard mechanism for creating a TextMessage
 // and initialise it with the chosen text string.
 func (ctx ContextImpl) CreateTextMessageWithString(txt string) jms20subset.TextMessage {
 	return &TextMessageImpl{
@@ -118,9 +121,30 @@ func (ctx ContextImpl) CreateTextMessageWithString(txt string) jms20subset.TextM
 	}
 }
 
+// Commit confirms all messages that were sent under this transaction.
+func (ctx ContextImpl) Commit() {
+
+	if (ibmmq.MQQueueManager{}) != ctx.qMgr {
+		ctx.qMgr.Cmit()
+	}
+
+}
+
+// Rollback releases all messages that were sent under this transaction.
+func (ctx ContextImpl) Rollback() {
+
+	if (ibmmq.MQQueueManager{}) != ctx.qMgr {
+		ctx.qMgr.Back()
+	}
+
+}
+
 // Close this connection to the MQ queue manager, and release any resources
 // that were allocated to support this connection.
 func (ctx ContextImpl) Close() {
+
+	// JMS semantics are to roll back an active transaction on Close.
+	ctx.Rollback()
 
 	if (ibmmq.MQQueueManager{}) != ctx.qMgr {
 		ctx.qMgr.Disc()

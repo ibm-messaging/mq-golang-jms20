@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: EPL-2.0
 
-//
+// Package mqjms provides the implementation of the JMS style Golang interfaces to communicate with IBM MQ.
 package mqjms
 
 import (

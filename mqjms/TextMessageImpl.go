@@ -6,18 +6,19 @@
 //
 // SPDX-License-Identifier: EPL-2.0
 
-//
+// Package mqjms provides the implementation of the JMS style Golang interfaces to communicate with IBM MQ.
 package mqjms
 
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
-	ibmmq "github.com/ibm-messaging/mq-golang/v5/ibmmq"
 	"log"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
+	ibmmq "github.com/ibm-messaging/mq-golang/v5/ibmmq"
 )
 
 // TextMessageImpl contains the IBM MQ specific attributes necessary to
@@ -65,16 +66,16 @@ func (msg *TextMessageImpl) GetJMSDeliveryMode() int {
 
 // GetJMSMessageID extracts the message ID from the native MQ message descriptor.
 func (msg *TextMessageImpl) GetJMSMessageID() string {
-	msgIdStr := ""
+	msgIDStr := ""
 
 	// Extract the MsgId field from the MQ message descriptor if one exists.
 	// Note that if there is no MQMD then there is no messageID to return.
 	if msg.mqmd != nil && msg.mqmd.MsgId != nil {
-		msgIdBytes := msg.mqmd.MsgId
-		msgIdStr = hex.EncodeToString(msgIdBytes)
+		msgIDBytes := msg.mqmd.MsgId
+		msgIDStr = hex.EncodeToString(msgIDBytes)
 	}
 
-	return msgIdStr
+	return msgIDStr
 }
 
 // SetJMSReplyTo uses the specified Destination object to configure the reply
@@ -182,23 +183,23 @@ func (msg *TextMessageImpl) GetJMSCorrelationID() string {
 	if msg.mqmd != nil && msg.mqmd.CorrelId != nil {
 
 		// Get hold of the bytes representation of the correlation ID.
-		correlIdBytes := msg.mqmd.CorrelId
+		correlIDBytes := msg.mqmd.CorrelId
 
 		// We want to be able to give back the same content the application
 		// originally gave us, which could either be an encoded set of bytes, or
 		// alternative a plain text string.
 		// Here we identify any padding zero bytes to trim off so that we can try
 		// to turn it back into a string.
-		realLength := len(correlIdBytes)
+		realLength := len(correlIDBytes)
 		if realLength > 0 {
-			for correlIdBytes[realLength-1] == 0 {
+			for correlIDBytes[realLength-1] == 0 {
 				realLength--
 			}
 		}
 
 		// Attempt to decode the content back into a string.
 		dst := make([]byte, hex.DecodedLen(realLength))
-		n, err := hex.Decode(dst, correlIdBytes[0:realLength])
+		n, err := hex.Decode(dst, correlIDBytes[0:realLength])
 
 		if err == nil {
 			// The decode back to a string was successful so pass back that plain
@@ -209,7 +210,7 @@ func (msg *TextMessageImpl) GetJMSCorrelationID() string {
 
 			// An error occurred while decoding to a plain text string, so encode
 			// the bytes that we have into a raw string representation themselves.
-			correlID = hex.EncodeToString(correlIdBytes)
+			correlID = hex.EncodeToString(correlIDBytes)
 		}
 
 	}

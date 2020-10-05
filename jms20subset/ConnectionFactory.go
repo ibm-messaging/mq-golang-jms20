@@ -7,7 +7,7 @@
 //
 // SPDX-License-Identifier: EPL-2.0
 
-// Interfaces for messaging applications in the style of the Java Message Service (JMS) API.
+// Package jms20subset provides interfaces for messaging applications in the style of the Java Message Service (JMS) API.
 package jms20subset
 
 // ConnectionFactory defines a Golang interface which provides similar
@@ -18,5 +18,12 @@ type ConnectionFactory interface {
 
 	// CreateContext creates a connection to the messaging provider using the
 	// configuration parameters that are encapsulated by this ConnectionFactory.
+	//
+	// Defaults to sessionMode of JMSContextAUTOACKNOWLEDGE
 	CreateContext() (JMSContext, JMSException)
+
+	// CreateContextWithSessionMode creates a connection to the messaging provider using the
+	// configuration parameters that are encapsulated by this ConnectionFactory,
+	// and the specified session mode.
+	CreateContextWithSessionMode(sessionMode int) (JMSContext, JMSException)
 }

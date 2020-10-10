@@ -97,8 +97,8 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 		}
 
 		msg = &TextMessageImpl{
-			bodyStr: msgBodyStr,
-			mqmd:    getmqmd,
+			bodyStr:     msgBodyStr,
+			MessageImpl: MessageImpl{mqmd: getmqmd},
 		}
 
 	} else {

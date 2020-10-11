@@ -60,6 +60,10 @@ type JMSContext interface {
 	// name and different parameters we must use a different function name.
 	CreateTextMessageWithString(txt string) TextMessage
 
+	// CreateBytesMessage creates a message object that is used to send a slice
+	// of bytes from one application to another.
+	CreateBytesMessage() BytesMessage
+
 	// Commit confirms all messages sent/received during this transaction.
 	Commit()
 

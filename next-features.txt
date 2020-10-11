@@ -5,7 +5,6 @@ project!
 
 Not currently implemented:
 --------------------------
-- BytesMessage, receiveBytesBody
 - MessageListener
 - SendToQmgr, ReplyToQmgr
 - Topics (pub/sub)

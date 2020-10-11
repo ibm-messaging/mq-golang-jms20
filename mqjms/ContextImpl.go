@@ -121,6 +121,11 @@ func (ctx ContextImpl) CreateTextMessageWithString(txt string) jms20subset.TextM
 	}
 }
 
+// CreateBytesMessage is a JMS standard mechanism for creating a BytesMessage.
+func (ctx ContextImpl) CreateBytesMessage() jms20subset.BytesMessage {
+	return &BytesMessageImpl{}
+}
+
 // Commit confirms all messages that were sent under this transaction.
 func (ctx ContextImpl) Commit() {
 

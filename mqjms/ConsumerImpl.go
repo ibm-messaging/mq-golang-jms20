@@ -87,18 +87,35 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 	if err == nil {
 
 		// Message received successfully (without error).
-		// Currently we only support TextMessage, so extract the content of the
-		// message and populate it into a text string.
-		var msgBodyStr *string
+		// Determine on the basis of the format field what sort of message to create.
 
-		if datalen > 0 {
-			strContent := strings.TrimSpace(string(buffer[:datalen]))
-			msgBodyStr = &strContent
-		}
+		if getmqmd.Format == ibmmq.MQFMT_STRING {
 
-		msg = &TextMessageImpl{
-			bodyStr:     msgBodyStr,
-			MessageImpl: MessageImpl{mqmd: getmqmd},
+			var msgBodyStr *string
+
+			if datalen > 0 {
+				strContent := strings.TrimSpace(string(buffer[:datalen]))
+				msgBodyStr = &strContent
+			}
+
+			msg = &TextMessageImpl{
+				bodyStr:     msgBodyStr,
+				MessageImpl: MessageImpl{mqmd: getmqmd},
+			}
+
+		} else {
+
+			if datalen == 0 {
+				buffer = []byte{}
+			}
+
+			trimmedBuffer := buffer[0:datalen]
+
+			// Not a string, so fall back to BytesMessage
+			msg = &BytesMessageImpl{
+				bodyBytes:   &trimmedBuffer,
+				MessageImpl: MessageImpl{mqmd: getmqmd},
+			}
 		}
 
 	} else {

@@ -116,14 +116,21 @@ func (ctx ContextImpl) CreateTextMessage() jms20subset.TextMessage {
 // CreateTextMessageWithString is a JMS standard mechanism for creating a TextMessage
 // and initialise it with the chosen text string.
 func (ctx ContextImpl) CreateTextMessageWithString(txt string) jms20subset.TextMessage {
-	return &TextMessageImpl{
-		bodyStr: &txt,
-	}
+	msg := TextMessageImpl{}
+	msg.SetText(txt)
+	return &msg
 }
 
 // CreateBytesMessage is a JMS standard mechanism for creating a BytesMessage.
 func (ctx ContextImpl) CreateBytesMessage() jms20subset.BytesMessage {
 	return &BytesMessageImpl{}
+}
+
+// CreateBytesMessageWithBytes is a JMS standard mechanism for creating a BytesMessage.
+func (ctx ContextImpl) CreateBytesMessageWithBytes(bytes []byte) jms20subset.BytesMessage {
+	msg := BytesMessageImpl{}
+	msg.WriteBytes(bytes)
+	return &msg
 }
 
 // Commit confirms all messages that were sent under this transaction.

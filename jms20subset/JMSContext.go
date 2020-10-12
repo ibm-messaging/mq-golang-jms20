@@ -64,6 +64,10 @@ type JMSContext interface {
 	// of bytes from one application to another.
 	CreateBytesMessage() BytesMessage
 
+	// CreateBytesMessageWithBytes creates a message object that is used to send a slice
+	// of bytes from one application to another.
+	CreateBytesMessageWithBytes(bytes []byte) BytesMessage
+
 	// Commit confirms all messages sent/received during this transaction.
 	Commit()
 

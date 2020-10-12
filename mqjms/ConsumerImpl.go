@@ -165,7 +165,7 @@ func (consumer ConsumerImpl) ReceiveStringBodyNoWait() (*string, jms20subset.JMS
 			msgBodyStrPtr = msg.GetText()
 		default:
 			jmsErr = jms20subset.CreateJMSException(
-				"Received message is not a TextMessage", "MQJMS6068", nil)
+				"MQJMS_DIR_MIN_NOTTEXT", "MQJMS6068", nil)
 		}
 
 	}
@@ -195,12 +195,71 @@ func (consumer ConsumerImpl) ReceiveStringBody(waitMillis int32) (*string, jms20
 			msgBodyStrPtr = msg.GetText()
 		default:
 			jmsErr = jms20subset.CreateJMSException(
-				"Received message is not a TextMessage", "MQJMS6068", nil)
+				"MQJMS_DIR_MIN_NOTTEXT", "MQJMS6068", nil)
 		}
 
 	}
 
 	return msgBodyStrPtr, jmsErr
+
+}
+
+// ReceiveBytesBodyNoWait implements the IBM MQ logic necessary to receive a
+// message from a Destination and return its body as a slice of bytes.
+//
+// If no message is immediately available to be returned then a nil is returned.
+func (consumer ConsumerImpl) ReceiveBytesBodyNoWait() (*[]byte, jms20subset.JMSException) {
+
+	var msgBodyPtr *[]byte
+	var jmsErr jms20subset.JMSException
+
+	// Get a message from the queue if one is available.
+	msg, jmsErr := consumer.ReceiveNoWait()
+
+	// If we receive a message without any errors
+	if jmsErr == nil && msg != nil {
+
+		switch msg := msg.(type) {
+		case jms20subset.BytesMessage:
+			msgBodyPtr = msg.ReadBytes()
+		default:
+			jmsErr = jms20subset.CreateJMSException(
+				"MQJMS_DIR_MIN_NOTBYTES", "MQJMS6068", nil)
+		}
+
+	}
+
+	return msgBodyPtr, jmsErr
+
+}
+
+// ReceiveBytesBody implements the IBM MQ logic necessary to receive a
+// message from a Destination and return its body as a slice of bytes.
+//
+// If no message is available the method blocks up to the specified number
+// of milliseconds for one to become available.
+func (consumer ConsumerImpl) ReceiveBytesBody(waitMillis int32) (*[]byte, jms20subset.JMSException) {
+
+	var msgBodyPtr *[]byte
+	var jmsErr jms20subset.JMSException
+
+	// Get a message from the queue if one is available.
+	msg, jmsErr := consumer.Receive(waitMillis)
+
+	// If we receive a message without any errors
+	if jmsErr == nil && msg != nil {
+
+		switch msg := msg.(type) {
+		case jms20subset.BytesMessage:
+			msgBodyPtr = msg.ReadBytes()
+		default:
+			jmsErr = jms20subset.CreateJMSException(
+				"MQJMS_DIR_MIN_NOTBYTES", "MQJMS6068", nil)
+		}
+
+	}
+
+	return msgBodyPtr, jmsErr
 
 }
 

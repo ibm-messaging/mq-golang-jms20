@@ -39,6 +39,19 @@ func (producer ProducerImpl) SendString(dest jms20subset.Destination, bodyStr st
 
 }
 
+// SendBytes sends a BytesMessage with the specified body to the specified Destination
+// using any message options that are defined on this JMSProducer.
+func (producer ProducerImpl) SendBytes(dest jms20subset.Destination, body []byte) jms20subset.JMSException {
+
+	// This is essentially just a helper method that avoids the application having
+	// to create its own TextMessage object.
+	msg := producer.ctx.CreateBytesMessage()
+	msg.WriteBytes(body)
+
+	return producer.Send(dest, msg)
+
+}
+
 // Send a message to the specified IBM MQ queue, using the message options
 // that are defined on this JMSProducer.
 func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.Message) jms20subset.JMSException {

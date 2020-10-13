@@ -10,10 +10,13 @@
 package main
 
 import (
+	"fmt"
+	"reflect"
+	"testing"
+
 	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
 	"github.com/ibm-messaging/mq-golang-jms20/mqjms"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 /*
@@ -82,6 +85,7 @@ func TestGetByCorrelID(t *testing.T) {
 	case jms20subset.TextMessage:
 		assert.Equal(t, myMsgThreeStr, *msg.GetText())
 	default:
+		fmt.Println(reflect.TypeOf(gotCorrelMsg))
 		assert.Fail(t, "Got something other than a text message")
 	}
 

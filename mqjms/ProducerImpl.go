@@ -39,6 +39,19 @@ func (producer ProducerImpl) SendString(dest jms20subset.Destination, bodyStr st
 
 }
 
+// SendBytes sends a BytesMessage with the specified body to the specified Destination
+// using any message options that are defined on this JMSProducer.
+func (producer ProducerImpl) SendBytes(dest jms20subset.Destination, body []byte) jms20subset.JMSException {
+
+	// This is essentially just a helper method that avoids the application having
+	// to create its own TextMessage object.
+	msg := producer.ctx.CreateBytesMessage()
+	msg.WriteBytes(body)
+
+	return producer.Send(dest, msg)
+
+}
+
 // Send a message to the specified IBM MQ queue, using the message options
 // that are defined on this JMSProducer.
 func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.Message) jms20subset.JMSException {
@@ -89,8 +102,7 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 		var buffer []byte
 
 		// We have a "Message" object and can use a switch to safely convert it
-		// to the sub-types in order to convert it appropriately into an MQ message
-		// object.
+		// to the implementation type in order to extract generic MQ message
 		switch typedMsg := msg.(type) {
 		case *TextMessageImpl:
 
@@ -100,20 +112,35 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 				putmqmd = typedMsg.mqmd
 			}
 
+			// Store the Put MQMD so that we can later retrieve "out" fields like MsgId
+			typedMsg.mqmd = putmqmd
+
 			// Set up this MQ message to contain the string from the JMS message.
-			putmqmd.Format = "MQSTR"
+			putmqmd.Format = ibmmq.MQFMT_STRING
 			msgStr := typedMsg.GetText()
 			if msgStr != nil {
 				buffer = []byte(*msgStr)
 			}
 
+		case *BytesMessageImpl:
+
+			// If the message already has an MQMD then use that (for example it might
+			// contain ReplyTo information)
+			if typedMsg.mqmd != nil {
+				putmqmd = typedMsg.mqmd
+			}
+
 			// Store the Put MQMD so that we can later retrieve "out" fields like MsgId
 			typedMsg.mqmd = putmqmd
+
+			// Set up this MQ message to contain the bytes from the JMS message.
+			putmqmd.Format = ibmmq.MQFMT_NONE
+			buffer = *typedMsg.ReadBytes()
 
 		default:
 			// This "should never happen"(!) apart from in situations where we are
 			// part way through adding support for a new message type to this library.
-			log.Fatal(jms20subset.CreateJMSException("UnexpectedMessageType", "UnexpectedMessageType", nil))
+			log.Fatal(jms20subset.CreateJMSException("UnexpectedMessageType", "UnexpectedMessageType-send1", nil))
 		}
 
 		// If the producer has a TTL specified then apply it to the put MQMD so

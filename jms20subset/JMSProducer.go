@@ -27,6 +27,13 @@ type JMSProducer interface {
 	// name and different parameters we must use a different function name.
 	SendString(dest Destination, body string) JMSException
 
+	// Send a BytesMessage with the specified body to the specified Destination
+	// using any message options that are defined on this JMSProducer.
+	//
+	// Note that since Golang does not allow multiple functions with the same
+	// name and different parameters we must use a different function name.
+	SendBytes(dest Destination, body []byte) JMSException
+
 	// SetDeliveryMode sets the delivery mode of messages sent using this
 	// JMSProducer - for example whether a message is persistent or non-persistent.
 	//

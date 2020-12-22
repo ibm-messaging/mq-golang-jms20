@@ -11,10 +11,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/ibm-messaging/mq-golang-jms20/mqjms"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/ibm-messaging/mq-golang-jms20/mqjms"
+	"github.com/stretchr/testify/assert"
 )
 
 /*
@@ -22,7 +23,13 @@ import (
  * opposed to a remote client connection.
  *
  * Assumes a locally running queue manager called QM1, with a defined local
- * queue called LOCAL.QUEUE
+ * queue called DEV.QUEUE.1
+ *
+ * Note: if you wish to prove that conclusively that the connection is being
+ * made using bindings then one approach is to create a unique queue name such
+ * as MY.LOCAL.QUEUE that exists only on the local queue manager, and update the
+ * string name below to match - so that it cannot be confused with any other
+ * queue manager that you might be able to connect to as a client.
  */
 func TestLocalBindingsConnect(t *testing.T) {
 
@@ -51,7 +58,7 @@ func TestLocalBindingsConnect(t *testing.T) {
 	assert.NotNil(t, context)
 
 	// Equivalent to a JNDI lookup or other declarative definition
-	queue := context.CreateQueue("LOCAL.QUEUE")
+	queue := context.CreateQueue("DEV.QUEUE.1")
 
 	// Set up the consumer ready to receive messages.
 	consumer, conErr := context.CreateConsumer(queue)

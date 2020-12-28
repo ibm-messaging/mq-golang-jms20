@@ -10,10 +10,11 @@
 package main
 
 import (
+	"testing"
+
 	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
 	"github.com/ibm-messaging/mq-golang-jms20/mqjms"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 /*
@@ -21,7 +22,7 @@ import (
  */
 func TestTextMessageBody(t *testing.T) {
 
-	// Loads CF parameters from connection_info.json and apiKey.json in the Downloads directory
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
 	assert.Nil(t, cfErr)
 
@@ -46,7 +47,7 @@ func TestTextMessageBody(t *testing.T) {
  */
 func TestTextMessageNilBody(t *testing.T) {
 
-	// Loads CF parameters from connection_info.json and apiKey.json in the Downloads directory
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
 	assert.Nil(t, cfErr)
 
@@ -93,7 +94,7 @@ func TestTextMessageNilBody(t *testing.T) {
  */
 func TestTextMessageEmptyBody(t *testing.T) {
 
-	// Loads CF parameters from connection_info.json and apiKey.json in the Downloads directory
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
 	assert.Nil(t, cfErr)
 

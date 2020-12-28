@@ -186,15 +186,15 @@ go build
 ### Verify the installation by executing the tests
 This project includes a series of tests that validate the successful operation of the Golang JMS style client library.
 
-The test cases use the `CreateConnectionFactoryFromDefaultJSONFiles` method to obtain details of a queue manager to connect to from two JSON files in your `/Downloads` directory;
+The test cases use the `CreateConnectionFactoryFromDefaultJSONFiles` method to obtain details of a queue manager to connect to from two JSON files in your `$HOME/Downloads` directory;
 - `connection_info.json` contains information like the hostname/port/channel
   - If you are using the MQ on Cloud service you can download a pre-populated file directly from the queue manager details page as [described here](https://cloud.ibm.com/docs/mqcloud?topic=mqcloud-mqoc_jms_tls#connection_info-json)
-  - Otherwise you can insert details of your own queue manager into [this sample file](./config-samples/connection_info.json) and copy it to your `/Downloads` directory
+  - Otherwise you can insert details of your own queue manager into [this sample file](./config-samples/connection_info.json) and copy it to your `$HOME/Downloads` directory
 - `applicationApiKey.json` contains the Application username and password that will be used to connect to your queue manager
   - If you are using the MQ on Cloud service you can download a pre-populated file directly from the Application Permissions tab in the service console as [described here](https://cloud.ibm.com/docs/mqcloud?topic=mqcloud-mqoc_jms_tls#apikey-json)
-  - Otherwise you can insert details of your own queue manager into [this sample file](./config-samples/applicationApiKey.json) and copy it to your `/Downloads` directory
+  - Otherwise you can insert details of your own queue manager into [this sample file](./config-samples/applicationApiKey.json) and copy it to your `$HOME/Downloads` directory
 
-Once you have added the details of your queue manager and user credentials into the two JSON files and placed them in your `/Downloads` directory you are ready to run the test, which is done in the same way as any other Go tests.
+Once you have added the details of your queue manager and user credentials into the two JSON files and placed them in your `$HOME/Downloads` directory you are ready to run the test, which is done in the same way as any other Go tests.
 
 Note that the tests require the queues `DEV.QUEUE.1` and `DEV.QUEUE.2` to be defined on your queue manager, be empty of messages and be accessible to the application username you are using. This will be the case by default for queue managers provisioned through the MQ on Cloud service, but may require manual configuration for queue managers you have created through other means.
 ```bash

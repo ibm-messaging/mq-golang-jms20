@@ -22,7 +22,7 @@ import (
  */
 func TestBytesMessageBody(t *testing.T) {
 
-	// Loads CF parameters from connection_info.json and apiKey.json in the Downloads directory
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
 	assert.Nil(t, cfErr)
 
@@ -53,7 +53,7 @@ func TestBytesMessageBody(t *testing.T) {
  */
 func TestBytesMessageNilBody(t *testing.T) {
 
-	// Loads CF parameters from connection_info.json and apiKey.json in the Downloads directory
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
 	assert.Nil(t, cfErr)
 
@@ -99,7 +99,7 @@ func TestBytesMessageNilBody(t *testing.T) {
  */
 func TestBytesMessageWithBody(t *testing.T) {
 
-	// Loads CF parameters from connection_info.json and apiKey.json in the Downloads directory
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
 	assert.Nil(t, cfErr)
 
@@ -148,7 +148,7 @@ func TestBytesMessageWithBody(t *testing.T) {
  */
 func TestBytesMessageInitWithBytes(t *testing.T) {
 
-	// Loads CF parameters from connection_info.json and apiKey.json in the Downloads directory
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
 	assert.Nil(t, cfErr)
 
@@ -196,7 +196,7 @@ func TestBytesMessageInitWithBytes(t *testing.T) {
  */
 func TestBytesMessageProducerSendBytes(t *testing.T) {
 
-	// Loads CF parameters from connection_info.json and apiKey.json in the Downloads directory
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
 	assert.Nil(t, cfErr)
 
@@ -241,7 +241,7 @@ func TestBytesMessageProducerSendBytes(t *testing.T) {
  */
 func TestBytesMessageConsumerReceiveBytesBodyNoWait(t *testing.T) {
 
-	// Loads CF parameters from connection_info.json and apiKey.json in the Downloads directory
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
 	assert.Nil(t, cfErr)
 
@@ -284,7 +284,7 @@ func TestBytesMessageConsumerReceiveBytesBodyNoWait(t *testing.T) {
  */
 func TestBytesMessageConsumerReceiveBytesBody(t *testing.T) {
 
-	// Loads CF parameters from connection_info.json and apiKey.json in the Downloads directory
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
 	assert.Nil(t, cfErr)
 
@@ -328,7 +328,7 @@ func TestBytesMessageConsumerReceiveBytesBody(t *testing.T) {
  */
 func TestBytesMessageConsumerMixedMessageErrors(t *testing.T) {
 
-	// Loads CF parameters from connection_info.json and apiKey.json in the Downloads directory
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
 	assert.Nil(t, cfErr)
 

@@ -24,7 +24,7 @@ import (
  */
 func TestGetByCorrelID(t *testing.T) {
 
-	// Loads CF parameters from connection_info.json and apiKey.json in the Downloads directory
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
 	assert.Nil(t, cfErr)
 
@@ -96,7 +96,7 @@ func TestGetByCorrelID(t *testing.T) {
  */
 func TestSelectorParsing(t *testing.T) {
 
-	// Loads CF parameters from connection_info.json and apiKey.json in the Downloads directory
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
 	assert.Nil(t, cfErr)
 
@@ -163,7 +163,7 @@ func TestSelectorParsing(t *testing.T) {
  */
 func TestCorrelIDParsing(t *testing.T) {
 
-	// Loads CF parameters from connection_info.json and apiKey.json in the Downloads directory
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
 	assert.Nil(t, cfErr)
 

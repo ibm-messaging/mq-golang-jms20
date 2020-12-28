@@ -10,10 +10,11 @@
 package main
 
 import (
-	"github.com/ibm-messaging/mq-golang-jms20/mqjms"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/ibm-messaging/mq-golang-jms20/mqjms"
+	"github.com/stretchr/testify/assert"
 )
 
 /*
@@ -21,7 +22,7 @@ import (
  */
 func TestReceiveWait(t *testing.T) {
 
-	// Loads CF parameters from connection_info.json and apiKey.json in the Downloads directory
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
 	assert.Nil(t, cfErr)
 
@@ -80,7 +81,7 @@ func TestReceiveWait(t *testing.T) {
 
 func TestReceiveStringBodyWait(t *testing.T) {
 
-	// Loads CF parameters from connection_info.json and apiKey.json in the Downloads directory
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
 	assert.Nil(t, cfErr)
 

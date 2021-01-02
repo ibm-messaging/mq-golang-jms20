@@ -10,11 +10,12 @@
 package main
 
 import (
-	"github.com/ibm-messaging/mq-golang-jms20/mqjms"
-	"github.com/stretchr/testify/assert"
 	"log"
 	"os"
 	"testing"
+
+	"github.com/ibm-messaging/mq-golang-jms20/mqjms"
+	"github.com/stretchr/testify/assert"
 )
 
 /*
@@ -23,7 +24,7 @@ import (
  */
 func TestLoadCFFromJSON(t *testing.T) {
 
-	// Loads CF parameters from connection_info.json and apiKey.json in the Downloads directory
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, err := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
 
 	if err != nil {

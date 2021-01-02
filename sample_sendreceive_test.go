@@ -11,9 +11,10 @@ package main
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/ibm-messaging/mq-golang-jms20/mqjms"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 /*
@@ -153,7 +154,7 @@ func TestSampleSendReceiveWithLimitedErrorHandling(t *testing.T) {
  */
 func TestReceiveNoWaitWithoutMessage(t *testing.T) {
 
-	// Loads CF parameters from connection_info.json and apiKey.json in the Downloads directory
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
 	if cfErr != nil {
 		fmt.Println(cfErr)

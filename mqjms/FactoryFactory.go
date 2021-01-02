@@ -23,7 +23,7 @@ import (
 //
 // This method reads the following files;
 //   - $HOME/Downloads/connection_info.json   for host/port/channel information
-//   - $HOME/Downloads/apiKey.json            for username/password information
+//   - $HOME/Downloads/applicationApiKey.json for username/password information
 //
 // If your queue manager is hosted on the IBM MQ on Cloud service then you can
 // download these two files directly from the IBM Cloud service console.
@@ -42,7 +42,7 @@ func CreateConnectionFactoryFromDefaultJSONFiles() (cf ConnectionFactoryImpl, er
 // the file as the two parameters. If empty string is provided then the default
 // location and name is assumed as follows;
 //   - $HOME/Downloads/connection_info.json   for host/port/channel information
-//   - $HOME/Downloads/apiKey.json            for username/password information
+//   - $HOME/Downloads/applicationApiKey.json            for username/password information
 //
 // If your queue manager is hosted on the IBM MQ on Cloud service then you can
 // download these two files directly from the IBM Cloud service console.

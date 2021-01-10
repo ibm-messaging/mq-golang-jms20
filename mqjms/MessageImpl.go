@@ -258,3 +258,19 @@ func (msg *MessageImpl) GetJMSTimestamp() int64 {
 
 	return timestamp
 }
+
+// GetApplName retrieves the PutApplName field from the MQMD.
+// This method is not exposed on the JMS style interface and is mainly for testing purposes.
+func (msg MessageImpl) GetApplName() string {
+	applName := ""
+
+	// Note that if there is no MQMD then there is no correlID stored.
+	if msg.mqmd != nil {
+
+		// Get hold of the bytes representation of the correlation ID.
+		applName = msg.mqmd.PutApplName
+
+	}
+
+	return applName
+}

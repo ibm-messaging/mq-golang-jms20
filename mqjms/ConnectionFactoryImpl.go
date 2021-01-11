@@ -40,6 +40,9 @@ type ConnectionFactoryImpl struct {
 
 	KeyRepository    string
 	CertificateLabel string
+
+	// Allthough only available per MQ 9.1.2 it looks like a good idea to have this present in MQ-JMS
+	ApplName	string
 }
 
 // CreateContext implements the JMS method to create a connection to an IBM MQ
@@ -93,6 +96,9 @@ func (cf ConnectionFactoryImpl) CreateContextWithSessionMode(sessionMode int) (j
 			cno.SSLConfig = sco
 
 		}
+
+		// Fill in the optional (possible since MQ 9.1.2) application name
+		cno.ApplName = cf.ApplName
 
 	} else if cf.TransportType == TransportType_BINDINGS {
 

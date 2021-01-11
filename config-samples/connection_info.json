@@ -2,5 +2,6 @@
  "queueManagerName": "QM1",
  "hostname": "myqm1.myserver.com",
  "listenerPort": 31234,
- "applicationChannelName": "CLOUD.APP.SVRCONN"
+ "applicationChannelName": "CLOUD.APP.SVRCONN",
+ "applicationName": "example"
 }

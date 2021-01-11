@@ -14,7 +14,6 @@ Not currently implemented:
 
 Client capabilities for participating in Uniform Clusters;
 - CCDT to allow listing queue managers
-- Set APPLTag to name the logical application
 - Auto reconnect (any) + MQCNO_RECONNECT_QMGR 
 
 Known issues:

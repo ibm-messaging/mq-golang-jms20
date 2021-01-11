@@ -23,7 +23,7 @@ import (
 //
 // This method reads the following files;
 //   - $HOME/Downloads/connection_info.json   for host/port/channel information
-//   - $HOME/Downloads/apiKey.json            for username/password information
+//   - $HOME/Downloads/applicationApiKey.json for username/password information
 //
 // If your queue manager is hosted on the IBM MQ on Cloud service then you can
 // download these two files directly from the IBM Cloud service console.
@@ -42,7 +42,7 @@ func CreateConnectionFactoryFromDefaultJSONFiles() (cf ConnectionFactoryImpl, er
 // the file as the two parameters. If empty string is provided then the default
 // location and name is assumed as follows;
 //   - $HOME/Downloads/connection_info.json   for host/port/channel information
-//   - $HOME/Downloads/apiKey.json            for username/password information
+//   - $HOME/Downloads/applicationApiKey.json for username/password information
 //
 // If your queue manager is hosted on the IBM MQ on Cloud service then you can
 // download these two files directly from the IBM Cloud service console.
@@ -110,10 +110,8 @@ func CreateConnectionFactoryFromJSON(connectionInfoLocn string, apiKeyLocn strin
 		return ConnectionFactoryImpl{}, errChannel
 	}
 
-	appName, errAppName := parseStringValueFromJSON("applicationName", connInfoMap, connectionInfoLocn)
-	if errAppName != nil {
-		return ConnectionFactoryImpl{}, errAppName
-	}
+	// app name is an optional field so we silently ignore if it is not present
+	appName, _ = parseStringValueFromJSON("applicationName", connInfoMap, connectionInfoLocn)
 
 	// Now unmarshall and parse out the values from the api key file (that
 	// contains the username/password credentials).
@@ -145,7 +143,7 @@ func CreateConnectionFactoryFromJSON(connectionInfoLocn string, apiKeyLocn strin
 		ChannelName: appChannel,
 		UserName:    username,
 		Password:    password,
-		ApplName:	 appName,
+		ApplName:    appName,
 	}
 
 	// Give the populated ConnectionFactory back to the caller.

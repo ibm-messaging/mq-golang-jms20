@@ -42,7 +42,7 @@ type ConnectionFactoryImpl struct {
 	CertificateLabel string
 
 	// Allthough only available per MQ 9.1.2 it looks like a good idea to have this present in MQ-JMS
-	ApplName	string
+	ApplName string
 }
 
 // CreateContext implements the JMS method to create a connection to an IBM MQ

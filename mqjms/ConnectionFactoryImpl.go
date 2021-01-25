@@ -43,6 +43,9 @@ type ConnectionFactoryImpl struct {
 
 	// Allthough only available per MQ 9.1.2 it looks like a good idea to have this present in MQ-JMS
 	ApplName string
+
+	// Controls the size of the buffer used when receiving a message (default is 32kb if not set)
+	ReceiveBufferSize int
 }
 
 // CreateContext implements the JMS method to create a connection to an IBM MQ
@@ -131,8 +134,9 @@ func (cf ConnectionFactoryImpl) CreateContextWithSessionMode(sessionMode int) (j
 		// Connection was created successfully, so we wrap the MQI object into
 		// a new ContextImpl and return it to the caller.
 		ctx = ContextImpl{
-			qMgr:        qMgr,
-			sessionMode: sessionMode,
+			qMgr:              qMgr,
+			sessionMode:       sessionMode,
+			receiveBufferSize: cf.ReceiveBufferSize,
 		}
 
 	} else {

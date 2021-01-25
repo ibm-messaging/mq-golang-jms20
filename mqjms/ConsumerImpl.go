@@ -62,7 +62,14 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 	var jmsErr jms20subset.JMSException
 
 	getmqmd := ibmmq.NewMQMD()
-	buffer := make([]byte, 32768)
+
+	myBufferSize := 32769
+
+	if consumer.ctx.receiveBufferSize > 0 {
+		myBufferSize = consumer.ctx.receiveBufferSize
+	}
+
+	buffer := make([]byte, myBufferSize)
 
 	// Calculate the syncpoint value
 	syncpointSetting := ibmmq.MQGMO_NO_SYNCPOINT

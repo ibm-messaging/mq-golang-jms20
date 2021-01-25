@@ -19,8 +19,9 @@ import (
 // ContextImpl encapsulates the objects necessary to maintain an active
 // connection to an IBM MQ queue manager.
 type ContextImpl struct {
-	qMgr        ibmmq.MQQueueManager
-	sessionMode int
+	qMgr              ibmmq.MQQueueManager
+	sessionMode       int
+	receiveBufferSize int
 }
 
 // CreateQueue implements the logic necessary to create a provider-specific

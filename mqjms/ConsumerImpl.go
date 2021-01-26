@@ -63,7 +63,7 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 
 	getmqmd := ibmmq.NewMQMD()
 
-	myBufferSize := 32769
+	myBufferSize := 32768
 
 	if consumer.ctx.receiveBufferSize > 0 {
 		myBufferSize = consumer.ctx.receiveBufferSize

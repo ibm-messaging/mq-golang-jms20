@@ -181,8 +181,13 @@ export CGO_LDFLAGS="-L$MQ_INSTALLATION_PATH/lib64 -Wl,-rpath,$MQ_INSTALLATION_PA
 
 Confirm the settings are correct by compiling the MQ JMS Golang package, for example as follows; (no errors will be shown if successful)
 ```bash
+# Check that the source files compile successfully
 cd $GOPATH/src/github.com/ibm-messaging/mq-golang-jms20/mqjms/
 go build
+
+# If you want to install the compiled module into your path for later use
+# you can do so by running
+go install
 ```
 
 ### Verify the installation by executing the tests

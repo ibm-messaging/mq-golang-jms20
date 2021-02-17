@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: golang-app
+spec:
+  containers:
+    - name: golang-app
+      image: uk.icr.io/golang-sample/golang-app:1.0
+  restartPolicy: OnFailure
+  imagePullSecrets:
+    - name: all-icr-io

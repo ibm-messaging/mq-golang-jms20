@@ -35,4 +35,3 @@
  COPY --chown=0:0 --from=builder /opt/mqm /opt/mqm
  USER $APP_USER
  CMD ["./openshift-app-sample"]
- #CMD ["/bin/bash"]

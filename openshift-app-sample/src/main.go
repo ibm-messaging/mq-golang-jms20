@@ -12,6 +12,8 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
+	"strconv"
 
 	"github.com/ibm-messaging/mq-golang-jms20/mqjms"
 )
@@ -19,13 +21,24 @@ import (
 func main() {
 	fmt.Println("Beginning world!!!")
 
+	fmt.Println("host: ", os.Getenv("HOSTNAME"))
+	fmt.Println("port: ", os.Getenv("PORT"))
+	fmt.Println("qm: ", os.Getenv("QMNAME"))
+	fmt.Println("channel: ", os.Getenv("CHANNELNAME"))
+
+	fmt.Println("user: ", os.Getenv("USERNAME"))
+	fmt.Println("pw: ", os.Getenv("PASSWORD"))
+
+	portNum, _ := strconv.Atoi(os.Getenv("PORT"))
+
+	// Initialise the attributes of the CF in whatever way you like
 	cf := mqjms.ConnectionFactoryImpl{
-		QMName:      "QM1",
-		Hostname:    "myhostname.com",
-		PortNumber:  1414,
-		ChannelName: "SYSTEM.DEF.SVRCONN",
-		UserName:    "username",
-		Password:    "password",
+		QMName:      os.Getenv("QMNAME"),
+		Hostname:    os.Getenv("HOSTNAME"),
+		PortNumber:  portNum,
+		ChannelName: os.Getenv("CHANNELNAME"),
+		UserName:    os.Getenv("USERNAME"),
+		Password:    os.Getenv("PASSWORD"),
 	}
 
 	// Creates a connection to the queue manager, using defer to close it automatically

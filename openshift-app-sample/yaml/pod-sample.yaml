@@ -5,7 +5,12 @@ metadata:
 spec:
   containers:
     - name: golang-app
-      image: uk.icr.io/golang-sample/golang-app:1.2
+      image: uk.icr.io/golang-sample/golang-app:1.3
+      envFrom:
+      - configMapRef:
+          name: qmgr-details
+      - secretRef:
+          name: qmgr-credentials
   restartPolicy: OnFailure
   imagePullSecrets:
     - name: all-icr-io

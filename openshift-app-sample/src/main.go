@@ -50,6 +50,8 @@ func main() {
 
 	if errCtx != nil {
 		log.Fatal(errCtx)
+	} else {
+		fmt.Println("  -- Connection successful")
 	}
 
 	fmt.Println("Ending world!!!")

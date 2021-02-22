@@ -5,7 +5,7 @@ metadata:
 spec:
   containers:
     - name: golang-app
-      image: uk.icr.io/golang-sample/golang-app:1.6
+      image: uk.icr.io/golang-sample/golang-app:1.0
       envFrom:
       - configMapRef:
           name: qmgr-details

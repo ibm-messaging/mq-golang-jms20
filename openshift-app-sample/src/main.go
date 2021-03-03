@@ -21,14 +21,6 @@ import (
 func main() {
 	fmt.Println("Beginning world!!!")
 
-	fmt.Println("host: ", os.Getenv("HOSTNAME"))
-	fmt.Println("port: ", os.Getenv("PORT"))
-	fmt.Println("qm: ", os.Getenv("QMNAME"))
-	fmt.Println("channel: ", os.Getenv("CHANNELNAME"))
-
-	fmt.Println("user: ", os.Getenv("USERNAME"))
-	fmt.Println("pw: ", os.Getenv("PASSWORD"))
-
 	portNum, _ := strconv.Atoi(os.Getenv("PORT"))
 
 	// Initialise the attributes of the CF in whatever way you like

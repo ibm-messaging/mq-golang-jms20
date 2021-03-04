@@ -1,13 +1,13 @@
-# IBM MQ Golang application tutorial for OpenShift
+# IBM MQ Golang application sample for OpenShift
 This sample provides a working template that you can use to build your own Golang
 application container image that runs in Red Hat OpenShift under the most secure
-"Restricted SCC" and uses the
+"Restricted SCC" and uses either the
 [IBM MQ Golang](https://github.com/ibm-messaging/mq-golang) or
 [IBM MQ Golang JMS](https://github.com/ibm-messaging/mq-golang-jms20) libraries to connect
 to an IBM MQ queue manager.
 
 You can build and run your application using the following simple steps;
-1. Modify the application file to add your code
+1. Modify the sample application code to add your business logic
 2. Build the application into a Docker container image locally
 3. Push the container image to your OpenShift cluster
 4. Configure the variables and run the application!
@@ -17,7 +17,7 @@ Let's get started!
 
 
 ## Step 1: Modify the application file to add your code
-Add your application logic into the [main.go](./src/main.go) file using either the
+Add your application logic into the [openshift-app-sample/src/main.go](./src/main.go) file using either the
 [IBM MQ Golang](https://github.com/ibm-messaging/mq-golang) or
 [IBM MQ Golang JMS](https://github.com/ibm-messaging/mq-golang-jms20) interfaces depending
 on your preference.
@@ -28,8 +28,11 @@ messages at the bottom of the function.
 
 
 ## Step 2: Build the application into a Docker container image locally
-Open a command shell to the same directory as this readme file and execute the following command;
+Open a command shell to the same directory as the Dockerfile and execute the following command;
 ```bash
+# Make sure you are in the directory where the Dockerfile is
+cd $YOUR_GITHUB_PATH/ibm-messaging/mq-golang-jms20/openshift-app-sample
+
 # Run the dockerfile build to create the container image
 docker build -t golang-app -f Dockerfile .
 ```
@@ -88,4 +91,4 @@ Now run the application!
 oc apply -f ./yaml/pod-sample.yaml --as=my-service-account
 ```
 
-Congratulations - and happy messaging!
+Congratulations on running your MQ Golang application in OpenShift - and happy messaging!

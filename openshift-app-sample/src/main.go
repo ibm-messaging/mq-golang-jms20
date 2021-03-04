@@ -44,6 +44,9 @@ func main() {
 		log.Fatal(errCtx)
 	} else {
 		fmt.Println("  -- Connection successful")
+
+		// TODO - Add your application code here!
+
 	}
 
 	fmt.Println("Ending world!!!")

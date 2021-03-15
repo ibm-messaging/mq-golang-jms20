@@ -12,6 +12,11 @@ You can build and run your application using the following simple steps;
 3. Push the container image to your OpenShift cluster
 4. Configure the variables and run the application!
 
+For a detailed step-by-step description of how this application sample was created and
+what led to the various pieces of configuration you can also see the blog post
+[Step-by-step guide to building a Golang JMS application for IBM MQ in Cloud Pak for Integration + OpenShift](https://community.ibm.com/community/user/integration/blogs/matt-roberts1/2021/03/12/mq-golangjms-openshift), however
+it is not required to read the blog post in order to use this sample application.
+
 
 Let's get started!
 

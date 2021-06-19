@@ -30,7 +30,8 @@ func (ctx ContextImpl) CreateQueue(queueName string) jms20subset.Queue {
 
 	// Store the name of the queue
 	queue := QueueImpl{
-		queueName: queueName,
+		queueName:       queueName,
+		putAsyncAllowed: jms20subset.Destination_PUT_ASYNC_ALLOWED_AS_DEST,
 	}
 
 	return queue

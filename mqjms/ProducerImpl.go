@@ -91,6 +91,11 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 		// unique message ID
 		pmo.Options = syncpointSetting | ibmmq.MQPMO_NEW_MSG_ID
 
+		// Is async put has been requested then apply the appropriate PMO option
+		if dest.GetPutAsyncAllowed() == jms20subset.Destination_PUT_ASYNC_ALLOWED_ENABLED {
+			pmo.Options |= ibmmq.MQPMO_ASYNC_RESPONSE
+		}
+
 		// Convert the JMS persistence into the equivalent MQ message descriptor
 		// attribute.
 		if producer.deliveryMode == jms20subset.DeliveryMode_NON_PERSISTENT {

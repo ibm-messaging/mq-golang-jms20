@@ -138,20 +138,46 @@ func (ctx ContextImpl) CreateBytesMessageWithBytes(bytes []byte) jms20subset.Byt
 }
 
 // Commit confirms all messages that were sent under this transaction.
-func (ctx ContextImpl) Commit() {
+func (ctx ContextImpl) Commit() jms20subset.JMSException {
+
+	var retErr jms20subset.JMSException
 
 	if (ibmmq.MQQueueManager{}) != ctx.qMgr {
-		ctx.qMgr.Cmit()
+		err := ctx.qMgr.Cmit()
+
+		if err != nil {
+
+			rcInt := int(err.(*ibmmq.MQReturn).MQRC)
+			errCode := strconv.Itoa(rcInt)
+			reason := ibmmq.MQItoString("RC", rcInt)
+			retErr = jms20subset.CreateJMSException(reason, errCode, err)
+
+		}
+
 	}
 
+	return retErr
 }
 
 // Rollback releases all messages that were sent under this transaction.
-func (ctx ContextImpl) Rollback() {
+func (ctx ContextImpl) Rollback() jms20subset.JMSException {
+
+	var retErr jms20subset.JMSException
 
 	if (ibmmq.MQQueueManager{}) != ctx.qMgr {
-		ctx.qMgr.Back()
+		err := ctx.qMgr.Back()
+
+		if err != nil {
+
+			rcInt := int(err.(*ibmmq.MQReturn).MQRC)
+			errCode := strconv.Itoa(rcInt)
+			reason := ibmmq.MQItoString("RC", rcInt)
+			retErr = jms20subset.CreateJMSException(reason, errCode, err)
+
+		}
 	}
+
+	return retErr
 
 }
 

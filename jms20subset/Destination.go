@@ -26,6 +26,10 @@ type Destination interface {
 	// SetPutAsyncAllowed controls whether asynchronous put is allowed for this
 	// destination.
 	//
+	// See also ConnectionFactoryImpl.SendCheckCount to control the frequency with
+	// which checks will be made for errors. Default of 0 (zero) means no error checks
+	// will be made for errors during async put.
+	//
 	// Permitted values are:
 	//  * Destination_PUT_ASYNC_ALLOWED_ENABLED - enables async put
 	//  * Destination_PUT_ASYNC_ALLOWED_DISABLED - disables async put

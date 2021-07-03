@@ -46,6 +46,15 @@ type ConnectionFactoryImpl struct {
 
 	// Controls the size of the buffer used when receiving a message (default is 32kb if not set)
 	ReceiveBufferSize int
+
+	// SetCheckCount defines the number of messages that will be asynchronously put using
+	// this Context between checks for errors. For example a value of 10 will cause an error
+	// check to be triggered once for every 10 messages.
+	//
+	// See also Destination#SetPutAsyncAllowed(int)
+	//
+	// Default of 0 (zero) means that no checks are made for asynchronous put calls.
+	SendCheckCount int
 }
 
 // CreateContext implements the JMS method to create a connection to an IBM MQ
@@ -131,12 +140,20 @@ func (cf ConnectionFactoryImpl) CreateContextWithSessionMode(sessionMode int) (j
 
 	if err == nil {
 
+		// Initialize the countInc value to 1 so that if CheckCount is enabled (>0)
+		// then an error check will be made after the first message - to catch any
+		// failures quickly.
+		countInc := new(int)
+		*countInc = 1
+
 		// Connection was created successfully, so we wrap the MQI object into
 		// a new ContextImpl and return it to the caller.
 		ctx = ContextImpl{
 			qMgr:              qMgr,
 			sessionMode:       sessionMode,
 			receiveBufferSize: cf.ReceiveBufferSize,
+			sendCheckCount:    cf.SendCheckCount,
+			sendCheckCountInc: countInc,
 		}
 
 	} else {

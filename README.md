@@ -124,6 +124,7 @@ your own error handling or logging.
 * Handle error codes returned by the queue manager - [sample_errorhandling_test.go](sample_errorhandling_test.go)
 * Set the application name (ApplName) on connections - [applname_test.go](applname_test.go)
 * Receive messages over 32kb in size by setting the receive buffer size - [largemessage_test.go](largemessage_test.go)
+* Asynchronous put - [asyncput_test.go](asyncput_test.go)
 
 As normal with Go, you can run any individual testcase by executing a command such as;
 ```bash

@@ -22,6 +22,8 @@ type ContextImpl struct {
 	qMgr              ibmmq.MQQueueManager
 	sessionMode       int
 	receiveBufferSize int
+	sendCheckCount    int
+	sendCheckCountInc *int // Internal counter to keep track of async-put messages sent
 }
 
 // CreateQueue implements the logic necessary to create a provider-specific

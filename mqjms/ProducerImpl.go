@@ -160,6 +160,66 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 		// Any Err that occurs will be handled below.
 		err = qObject.Put(putmqmd, pmo, buffer)
 
+		// If the user has enabled async-put and requested non-zero send check
+		// count then this is the point at which we carry out the check for errors.
+		//
+		// Note that if there is already an error returned from Put then just pass that back to
+		// the user (only go into this if err is nil).
+		if dest.GetPutAsyncAllowed() == jms20subset.Destination_PUT_ASYNC_ALLOWED_ENABLED &&
+			syncpointSetting == ibmmq.MQPMO_NO_SYNCPOINT &&
+			producer.ctx.sendCheckCount > 0 &&
+			err == nil {
+
+			// Decrement the counter to indicate that a message has been put
+			*producer.ctx.sendCheckCountInc--
+
+			// If we have reached zero then it is time to do an error check.
+			//
+			// Note that the counter is initialized to 1 (in ConnectionFactoryImpl.go) when
+			// first configured so that we carry out an error check after the first message
+			// in order to catch any errors quickly. After that the check takes place at the
+			// interval the user requested in ConnectionFactoryImpl.SendCheckCount
+			if *producer.ctx.sendCheckCountInc == 0 {
+
+				// Reset the counter back to the check interval so that we wait until
+				// the necessary number of messages have been sent before running the
+				// next error check.
+				*producer.ctx.sendCheckCountInc = producer.ctx.sendCheckCount
+
+				// Invoke the Stat call agains the queue manager to check for errors.
+				sts := ibmmq.NewMQSTS()
+				statErr := producer.ctx.qMgr.Stat(ibmmq.MQSTAT_TYPE_ASYNC_ERROR, sts)
+
+				if statErr != nil {
+
+					// Problem occurred invoking the Stat call, pass this back to
+					// the user.
+					err = statErr
+
+				} else {
+
+					// If there are any Warnings or Failurs then we have found a problem that
+					// needs to be reported to the user.
+					if sts.PutWarningCount+sts.PutFailureCount > 0 {
+
+						// sts.Reason contains the detail of the first failure
+						errCode2 := strconv.Itoa(int(sts.CompCode))
+						reason2 := ibmmq.MQItoString("RC", int(sts.Reason))
+						linkedErr := jms20subset.CreateJMSException(reason2, errCode2, nil)
+
+						// Create an error that describes what has failed.
+						reason := fmt.Sprintf("%d failures and %d warnings for asynchronous message put", sts.PutFailureCount, sts.PutWarningCount)
+						errCode := "AsyncPutFailure"
+						retErr = jms20subset.CreateJMSException(reason, errCode, linkedErr)
+
+					}
+
+				}
+
+			}
+
+		}
+
 	}
 
 	// Note that the following block handles errors for both opening the queue

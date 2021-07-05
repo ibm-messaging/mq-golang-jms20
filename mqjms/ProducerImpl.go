@@ -160,7 +160,7 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 		// Any Err that occurs will be handled below.
 		err = qObject.Put(putmqmd, pmo, buffer)
 
-		// If the user has enabled async-put and requested non-zero send check
+		// If the user is using non-transactional async-put and requested non-zero send check
 		// count then this is the point at which we carry out the check for errors.
 		//
 		// Note that if there is already an error returned from Put then just pass that back to
@@ -198,19 +198,11 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 
 				} else {
 
-					// If there are any Warnings or Failurs then we have found a problem that
+					// If there are any Warnings or Failures then we have found a problem that
 					// needs to be reported to the user.
 					if sts.PutWarningCount+sts.PutFailureCount > 0 {
 
-						// sts.Reason contains the detail of the first failure
-						errCode2 := strconv.Itoa(int(sts.CompCode))
-						reason2 := ibmmq.MQItoString("RC", int(sts.Reason))
-						linkedErr := jms20subset.CreateJMSException(reason2, errCode2, nil)
-
-						// Create an error that describes what has failed.
-						reason := fmt.Sprintf("%d failures and %d warnings for asynchronous message put", sts.PutFailureCount, sts.PutWarningCount)
-						errCode := "AsyncPutFailure"
-						retErr = jms20subset.CreateJMSException(reason, errCode, linkedErr)
+						retErr = populateAsyncPutError(sts)
 
 					}
 
@@ -218,6 +210,25 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 
 			}
 
+		}
+
+		// If the user is using transactional async-put of persistent messages then we need to
+		// inform the ContextImpl object that an async-put message has been sent, so that it can
+		// check for failures when the Commit call is made.
+		//
+		// No error checks are made for non-persistent async put messages under a transaction,
+		// and the application does not receive any feedback whether those messages arrived safely.
+		//
+		// Note that if there is already an error returned from Put then just pass that back to
+		// the user (only go into this if err is nil).
+		if dest.GetPutAsyncAllowed() == jms20subset.Destination_PUT_ASYNC_ALLOWED_ENABLED &&
+			syncpointSetting == ibmmq.MQPMO_SYNCPOINT &&
+			putmqmd.Persistence == ibmmq.MQPER_PERSISTENT &&
+			*producer.ctx.sendCheckCountInc != ContextImpl_TRANSACTED_ASYNCPUT_ACTIVE &&
+			err == nil {
+
+			// Set the flag to indicate the a transacted async put has taken place.
+			*producer.ctx.sendCheckCountInc = ContextImpl_TRANSACTED_ASYNCPUT_ACTIVE
 		}
 
 	}
@@ -234,6 +245,22 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 	}
 
 	return retErr
+
+}
+
+// populateAsyncPutError is a common function used in several places to generate a
+// consistent error message in response to failures during asynchronous put operations.
+func populateAsyncPutError(sts *ibmmq.MQSTS) jms20subset.JMSException {
+
+	// sts.Reason contains the detail of the first failure
+	errCode2 := strconv.Itoa(int(sts.CompCode))
+	reason2 := ibmmq.MQItoString("RC", int(sts.Reason))
+	linkedErr := jms20subset.CreateJMSException(reason2, errCode2, nil)
+
+	// Create an error that describes what has failed.
+	reason := fmt.Sprintf("%d failures and %d warnings for asynchronous message put", sts.PutFailureCount, sts.PutWarningCount)
+	errCode := "AsyncPutFailure"
+	return jms20subset.CreateJMSException(reason, errCode, linkedErr)
 
 }
 

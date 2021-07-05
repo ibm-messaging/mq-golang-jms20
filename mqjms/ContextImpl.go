@@ -147,10 +147,42 @@ func (ctx ContextImpl) Commit() jms20subset.JMSException {
 
 		if err != nil {
 
+			linkedErr := err
+
+			// Check whether this failure could be due to async put failures
+			if *ctx.sendCheckCountInc == ContextImpl_TRANSACTED_ASYNCPUT_ACTIVE {
+
+				// One or more async put messages have been sent under a transaction so we
+				// need to check now whether they were successful or not.
+
+				// Invoke the Stat call agains the queue manager to check for errors.
+				sts := ibmmq.NewMQSTS()
+				statErr := ctx.qMgr.Stat(ibmmq.MQSTAT_TYPE_ASYNC_ERROR, sts)
+
+				if statErr != nil {
+
+					// Problem occurred invoking the Stat call, pass this back to
+					// the user.
+					err = statErr
+
+				} else {
+
+					// If there are any Warnings or Failures then we have found a problem that
+					// needs to be reported to the user.
+					if sts.PutWarningCount+sts.PutFailureCount > 0 {
+
+						linkedErr = populateAsyncPutError(sts)
+
+					}
+
+				}
+
+			}
+
 			rcInt := int(err.(*ibmmq.MQReturn).MQRC)
 			errCode := strconv.Itoa(rcInt)
 			reason := ibmmq.MQItoString("RC", rcInt)
-			retErr = jms20subset.CreateJMSException(reason, errCode, err)
+			retErr = jms20subset.CreateJMSException(reason, errCode, linkedErr)
 
 		}
 
@@ -193,3 +225,7 @@ func (ctx ContextImpl) Close() {
 	}
 
 }
+
+// ContextImpl_TRANSACTED_ASYNCPUT_ACTIVE is an internal constant that indicates that
+// a transacted asynchronous put has taken place.
+const ContextImpl_TRANSACTED_ASYNCPUT_ACTIVE int = -100

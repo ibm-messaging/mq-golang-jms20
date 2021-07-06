@@ -22,6 +22,8 @@ type ContextImpl struct {
 	qMgr              ibmmq.MQQueueManager
 	sessionMode       int
 	receiveBufferSize int
+	sendCheckCount    int
+	sendCheckCountInc *int // Internal counter to keep track of async-put messages sent
 }
 
 // CreateQueue implements the logic necessary to create a provider-specific
@@ -30,7 +32,8 @@ func (ctx ContextImpl) CreateQueue(queueName string) jms20subset.Queue {
 
 	// Store the name of the queue
 	queue := QueueImpl{
-		queueName: queueName,
+		queueName:       queueName,
+		putAsyncAllowed: jms20subset.Destination_PUT_ASYNC_ALLOWED_AS_DEST,
 	}
 
 	return queue
@@ -135,20 +138,78 @@ func (ctx ContextImpl) CreateBytesMessageWithBytes(bytes []byte) jms20subset.Byt
 }
 
 // Commit confirms all messages that were sent under this transaction.
-func (ctx ContextImpl) Commit() {
+func (ctx ContextImpl) Commit() jms20subset.JMSException {
+
+	var retErr jms20subset.JMSException
 
 	if (ibmmq.MQQueueManager{}) != ctx.qMgr {
-		ctx.qMgr.Cmit()
+		err := ctx.qMgr.Cmit()
+
+		if err != nil {
+
+			linkedErr := err
+
+			// Check whether this failure could be due to async put failures
+			if *ctx.sendCheckCountInc == ContextImpl_TRANSACTED_ASYNCPUT_ACTIVE {
+
+				// One or more async put messages have been sent under a transaction so we
+				// need to check now whether they were successful or not.
+
+				// Invoke the Stat call agains the queue manager to check for errors.
+				sts := ibmmq.NewMQSTS()
+				statErr := ctx.qMgr.Stat(ibmmq.MQSTAT_TYPE_ASYNC_ERROR, sts)
+
+				if statErr != nil {
+
+					// Problem occurred invoking the Stat call, pass this back to
+					// the user.
+					err = statErr
+
+				} else {
+
+					// If there are any Warnings or Failures then we have found a problem that
+					// needs to be reported to the user.
+					if sts.PutWarningCount+sts.PutFailureCount > 0 {
+
+						linkedErr = populateAsyncPutError(sts)
+
+					}
+
+				}
+
+			}
+
+			rcInt := int(err.(*ibmmq.MQReturn).MQRC)
+			errCode := strconv.Itoa(rcInt)
+			reason := ibmmq.MQItoString("RC", rcInt)
+			retErr = jms20subset.CreateJMSException(reason, errCode, linkedErr)
+
+		}
+
 	}
 
+	return retErr
 }
 
 // Rollback releases all messages that were sent under this transaction.
-func (ctx ContextImpl) Rollback() {
+func (ctx ContextImpl) Rollback() jms20subset.JMSException {
+
+	var retErr jms20subset.JMSException
 
 	if (ibmmq.MQQueueManager{}) != ctx.qMgr {
-		ctx.qMgr.Back()
+		err := ctx.qMgr.Back()
+
+		if err != nil {
+
+			rcInt := int(err.(*ibmmq.MQReturn).MQRC)
+			errCode := strconv.Itoa(rcInt)
+			reason := ibmmq.MQItoString("RC", rcInt)
+			retErr = jms20subset.CreateJMSException(reason, errCode, err)
+
+		}
 	}
+
+	return retErr
 
 }
 
@@ -164,3 +225,7 @@ func (ctx ContextImpl) Close() {
 	}
 
 }
+
+// ContextImpl_TRANSACTED_ASYNCPUT_ACTIVE is an internal constant that indicates that
+// a transacted asynchronous put has taken place.
+const ContextImpl_TRANSACTED_ASYNCPUT_ACTIVE int = -100

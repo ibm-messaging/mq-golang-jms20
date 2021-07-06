@@ -3,6 +3,7 @@ github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/ibm-messaging/mq-golang v1.0.1-0.20190820103725-19b946c185a8 h1:kUwSXeftVen12FRnShG+Ykhb2Kd6Cd/DbpWwbYal7j0=
 github.com/ibm-messaging/mq-golang v1.0.1-0.20190820103725-19b946c185a8/go.mod h1:qjsZDb7m1oKnbPeDma2JVJTKgyCA91I4bcJ1qHY+gcA=
 github.com/ibm-messaging/mq-golang v3.0.0+incompatible h1:Yc3c8emAyveT54uNDRMkgvS+EBAHeLNWHkc3hk5x+IY=
+github.com/ibm-messaging/mq-golang v3.0.0+incompatible/go.mod h1:qjsZDb7m1oKnbPeDma2JVJTKgyCA91I4bcJ1qHY+gcA=
 github.com/ibm-messaging/mq-golang/v5 v5.0.0 h1:9J8bsDoCo60rbSgB7ZAURPG3L5Kpr+F8dYNOwQ7Qnnk=
 github.com/ibm-messaging/mq-golang/v5 v5.0.0/go.mod h1:ywCwmYbJOU/E0rl+z4GiNoxVMty68O+LVO39a1VMXrE=
 github.com/ibm-messaging/mq-golang/v5 v5.1.2 h1:u0e1Vce2TNqJpH088vF77rDMsnMRWnGaOIlxZo4DMZc=

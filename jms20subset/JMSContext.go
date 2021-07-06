@@ -69,10 +69,10 @@ type JMSContext interface {
 	CreateBytesMessageWithBytes(bytes []byte) BytesMessage
 
 	// Commit confirms all messages sent/received during this transaction.
-	Commit()
+	Commit() JMSException
 
 	// Rollback releases all messages sent/received during this transaction.
-	Rollback()
+	Rollback() JMSException
 
 	// Closes the connection to the messaging provider.
 	//

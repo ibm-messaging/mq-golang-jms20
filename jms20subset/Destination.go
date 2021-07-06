@@ -22,4 +22,36 @@ type Destination interface {
 	// is automatically implemented by every object, so we need to define at least
 	// one method here in order to make it meet the JMS style semantics.
 	GetDestinationName() string
+
+	// SetPutAsyncAllowed controls whether asynchronous put is allowed for this
+	// destination.
+	//
+	// See also ConnectionFactoryImpl.SendCheckCount to control the frequency with
+	// which checks will be made for errors. Default of 0 (zero) means no error checks
+	// will be made for errors during async put.
+	//
+	// Permitted values are:
+	//  * Destination_PUT_ASYNC_ALLOWED_ENABLED - enables async put
+	//  * Destination_PUT_ASYNC_ALLOWED_DISABLED - disables async put
+	//  * Destination_PUT_ASYNC_ALLOWED_AS_DEST - delegate to queue configuration (default)
+	SetPutAsyncAllowed(paa int) Queue
+
+	// GetPutAsyncAllowed returns whether asynchronous put is configured for this
+	// destination.
+	//
+	// Returned value is one of:
+	//  * Destination_PUT_ASYNC_ALLOWED_ENABLED - async put is enabled
+	//  * Destination_PUT_ASYNC_ALLOWED_DISABLED - async put is disabled
+	//  * Destination_PUT_ASYNC_ALLOWED_AS_DEST - delegated to queue configuration (default)
+	GetPutAsyncAllowed() int
 }
+
+// Destination_PUT_ASYNC_ALLOWED_ENABLED is used to enable messages being sent asynchronously.
+const Destination_PUT_ASYNC_ALLOWED_ENABLED int = 1
+
+// Destination_PUT_ASYNC_ALLOWED_DISABLED is used to disable messages being sent asynchronously.
+const Destination_PUT_ASYNC_ALLOWED_DISABLED int = 0
+
+// Destination_PUT_ASYNC_ALLOWED_AS_DEST allows the async message behaviour to be controlled by
+// the queue on the queue manager.
+const Destination_PUT_ASYNC_ALLOWED_AS_DEST int = -1

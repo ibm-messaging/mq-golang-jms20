@@ -15,14 +15,11 @@ package jms20subset
 // specifies the identity of a queue to the JMS API functions.
 type Queue interface {
 
+	// Encapsulate the root Destination type so that this interface "inherits" the
+	// accessors for standard attributes that apply to all destination types
+	Destination
+
 	// GetQueueName returns the provider-specific name of the queue that is
 	// represented by this object.
 	GetQueueName() string
-
-	// GetDestinationName returns the provider-specific name of the queue that is
-	// represented by this object.
-	//
-	// This method is implemented to allow us to consider the Queue interface
-	// as a specialization of the Destination interface.
-	GetDestinationName() string
 }

@@ -19,6 +19,7 @@ type JMSException interface {
 	GetReason() string
 	GetErrorCode() string
 	GetLinkedError() error
+	Error() string
 }
 
 // JMSExceptionImpl is a struct that implements the JMSException interface

@@ -1,3 +1,4 @@
 mq-golang-jms20.test
 vendor
 .DS_Store
+.idea

@@ -10,6 +10,7 @@
 package main
 
 import (
+	"strconv"
 	"testing"
 	"time"
 
@@ -299,7 +300,7 @@ func getStringOver32kb() string {
 	// Build a text string which is over 32KB (in a not very efficient way!)
 	// First snippet is 100 chars long.
 	txt100chars := "The quick brown fox jumped over the lazy dog into the flowing river that rushed over the cliff edge."
-	txt1300chars := string(time.Now().UnixNano()) + txt100chars + txt100chars + txt100chars + txt100chars + txt100chars +
+	txt1300chars := strconv.FormatInt(time.Now().UnixNano(), 10) + txt100chars + txt100chars + txt100chars + txt100chars + txt100chars +
 		txt100chars + txt100chars + txt100chars + txt100chars + txt100chars +
 		txt100chars + txt100chars + txt100chars
 

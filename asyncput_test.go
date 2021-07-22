@@ -296,7 +296,7 @@ func TestAsyncPutCheckCountWithFailure(t *testing.T) {
 
 		// Messages will start to fail at number 25 but we don't get an error until
 		// the next check which takes place at 30.
-		if i == 0 && errSend != nil && errSend.GetReason() == "MQRC_UNKNOWN_OBJECT_NAME" {
+		if i == 0 && isUnknownObjectName(errSend) {
 
 			fmt.Println("Skipping TestAsyncPutCheckCountWithFailure as queue " + QUEUE_25_NAME + " is not defined.")
 			queueExists = false
@@ -575,18 +575,18 @@ func TestAsyncPutTransactedCheckCountWithFailure(t *testing.T) {
 
 		errSend2 := producer.Send(asyncQueue, msg)
 
-		// Skip the test if the destination does not exist on this queue manager.
-		if i == 0 && errSend2 != nil && errSend2.GetReason() == "MQRC_UNKNOWN_OBJECT_NAME" {
-
-			fmt.Println("Skipping TestAsyncPutTransactedCheckCountWithFailure as queue " + QUEUE_25_NAME + " is not defined.")
-			queueExists = false
-			break // Stop the loop at this point as we know it won't change.
-
-		}
-
 		// In the Transacted case the response from Send is always Nil, because any errors
 		// will be reflected on the Commit call.
 		assert.Nil(t, errSend2)
+
+		// Skip the test if the destination does not exist on this queue manager.
+		if i == 0 {
+			if err := transactedContext.Commit(); isUnknownObjectName(err) {
+				fmt.Println("Skipping TestAsyncPutTransactedCheckCountWithFailure as queue " + QUEUE_25_NAME + " is not defined.")
+				queueExists = false
+				break // Stop the loop at this point as we know it won't change.
+			}
+		}
 
 		if i%10 == 0 {
 			commitErr := transactedContext.Commit()
@@ -695,15 +695,6 @@ func TestAsyncPutTransactedNonPersistentCheckCountWithFailure(t *testing.T) {
 
 		errSend2 := producer.Send(asyncQueue, msg)
 
-		// Skip the test if the destination does not exist on this queue manager.
-		if i == 0 && errSend2 != nil && errSend2.GetReason() == "MQRC_UNKNOWN_OBJECT_NAME" {
-
-			fmt.Println("Skipping TestAsyncPutTransactedNonPersistentCheckCountWithFailure as queue " + QUEUE_25_NAME + " is not defined.")
-			queueExists = false
-			break // Stop the loop at this point as we know it won't change.
-
-		}
-
 		// In the Transacted case the response from Send is always Nil, because any errors
 		// will be reflected on the Commit call.
 		assert.Nil(t, errSend2)
@@ -717,12 +708,19 @@ func TestAsyncPutTransactedNonPersistentCheckCountWithFailure(t *testing.T) {
 		}
 	}
 
+	// ----------------------------------
+	// Receive the messages back again to tidy the queue back to a clean state
+	consumer, errCons := transactedContext.CreateConsumer(asyncQueue)
+
+	// Skip the test if the destination does not exist on this queue manager.
+	if isUnknownObjectName(errCons) {
+		fmt.Println("Skipping TestAsyncPutTransactedNonPersistentCheckCountWithFailure as queue " + QUEUE_25_NAME + " is not defined.")
+		queueExists = false
+	}
+
 	// If the queue exists then tidy up the messages we sent.
 	if queueExists {
 
-		// ----------------------------------
-		// Receive the messages back again to tidy the queue back to a clean state
-		consumer, errCons := transactedContext.CreateConsumer(asyncQueue)
 		assert.Nil(t, errCons)
 		if consumer != nil {
 			defer consumer.Close()
@@ -742,4 +740,16 @@ func TestAsyncPutTransactedNonPersistentCheckCountWithFailure(t *testing.T) {
 
 		transactedContext.Commit()
 	}
+}
+
+func isUnknownObjectName(exception jms20subset.JMSException) bool {
+	if exception != nil {
+		if exception.GetReason() == "MQRC_UNKNOWN_OBJECT_NAME" {
+			return true
+		}
+		if err, ok := exception.GetLinkedError().(jms20subset.JMSExceptionImpl); ok {
+			return err.GetReason() == "MQRC_UNKNOWN_OBJECT_NAME" || isUnknownObjectName(err)
+		}
+	}
+	return false
 }

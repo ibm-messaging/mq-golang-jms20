@@ -202,4 +202,9 @@ func TestCorrelIDParsing(t *testing.T) {
 	msg.SetJMSCorrelationID(testCorrel)
 	assert.Equal(t, testCorrel, msg.GetJMSCorrelationID())
 
+	// Empty correlationID
+	testCorrel = "000000000000000000000000000000000000000000000000"
+	msg.SetJMSCorrelationID(testCorrel)
+	assert.Equal(t, "", msg.GetJMSCorrelationID())
+
 }

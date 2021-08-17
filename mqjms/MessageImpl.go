@@ -175,10 +175,8 @@ func (msg *MessageImpl) GetJMSCorrelationID() string {
 		// Here we identify any padding zero bytes to trim off so that we can try
 		// to turn it back into a string.
 		realLength := len(correlIDBytes)
-		if realLength > 0 {
-			for correlIDBytes[realLength-1] == 0 {
-				realLength--
-			}
+		for realLength > 0 && correlIDBytes[realLength-1] == 0 {
+			realLength--
 		}
 
 		// Attempt to decode the content back into a string.

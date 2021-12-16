@@ -24,7 +24,8 @@ import (
 // MessageImpl contains the IBM MQ specific attributes that are
 // common to all types of message.
 type MessageImpl struct {
-	mqmd *ibmmq.MQMD
+	mqmd      *ibmmq.MQMD
+	msgHandle *ibmmq.MQMessageHandle
 }
 
 // GetJMSDeliveryMode extracts the persistence setting from this message
@@ -259,7 +260,7 @@ func (msg *MessageImpl) GetJMSTimestamp() int64 {
 
 // GetApplName retrieves the PutApplName field from the MQMD.
 // This method is not exposed on the JMS style interface and is mainly for testing purposes.
-func (msg MessageImpl) GetApplName() string {
+func (msg *MessageImpl) GetApplName() string {
 	applName := ""
 
 	// Note that if there is no MQMD then there is no correlID stored.
@@ -271,4 +272,39 @@ func (msg MessageImpl) GetApplName() string {
 	}
 
 	return applName
+}
+
+func (msg *MessageImpl) SetStringProperty(name string, value string) jms20subset.JMSException {
+	var retErr jms20subset.JMSException
+
+	smpo := ibmmq.NewMQSMPO()
+	pd := ibmmq.NewMQPD()
+
+	linkedErr := msg.msgHandle.SetMP(smpo, name, pd, value)
+
+	if linkedErr != nil {
+		rcInt := int(linkedErr.(*ibmmq.MQReturn).MQRC)
+		errCode := strconv.Itoa(rcInt)
+		reason := ibmmq.MQItoString("RC", rcInt)
+		retErr = jms20subset.CreateJMSException(reason, errCode, linkedErr)
+	}
+
+	return retErr
+}
+
+func (msg *MessageImpl) GetStringProperty(name string) *string {
+
+	var valueStr string
+	impo := ibmmq.NewMQIMPO()
+	pd := ibmmq.NewMQPD()
+
+	_, value, _ := msg.msgHandle.InqMP(impo, pd, name)
+
+	switch valueTyped := value.(type) {
+	case string:
+		valueStr = valueTyped
+	default:
+		// TODO - other conversions
+	}
+	return &valueStr
 }

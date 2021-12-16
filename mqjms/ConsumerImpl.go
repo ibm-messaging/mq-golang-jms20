@@ -81,6 +81,12 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 	gmo.Options |= syncpointSetting
 	gmo.Options |= ibmmq.MQGMO_FAIL_IF_QUIESCING
 
+	// Include the message properties in the msgHandle
+	gmo.Options |= ibmmq.MQGMO_PROPERTIES_IN_HANDLE
+	cmho := ibmmq.NewMQCMHO()
+	thisMsgHandle, _ := consumer.ctx.qMgr.CrtMH(cmho)
+	gmo.MsgHandle = thisMsgHandle
+
 	// Apply the selector if one has been specified in the Consumer
 	err := applySelector(consumer.selector, getmqmd, gmo)
 	if err != nil {
@@ -106,8 +112,11 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 			}
 
 			msg = &TextMessageImpl{
-				bodyStr:     msgBodyStr,
-				MessageImpl: MessageImpl{mqmd: getmqmd},
+				bodyStr: msgBodyStr,
+				MessageImpl: MessageImpl{
+					mqmd:      getmqmd,
+					msgHandle: &thisMsgHandle,
+				},
 			}
 
 		} else {
@@ -120,8 +129,11 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 
 			// Not a string, so fall back to BytesMessage
 			msg = &BytesMessageImpl{
-				bodyBytes:   &trimmedBuffer,
-				MessageImpl: MessageImpl{mqmd: getmqmd},
+				bodyBytes: &trimmedBuffer,
+				MessageImpl: MessageImpl{
+					mqmd:      getmqmd,
+					msgHandle: &thisMsgHandle,
+				},
 			}
 		}
 

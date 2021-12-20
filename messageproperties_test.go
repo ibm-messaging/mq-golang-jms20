@@ -56,15 +56,30 @@ func TestStringPropertyTextMsg(t *testing.T) {
 	propValue := "myValue"
 
 	// Test the empty value before the property is set.
-	// TODO - it would be nicer if this was nil rather than empty string, however it
-	//   doesn't look like that is supported by the mq-golang library itself.
-	assert.Equal(t, "", *txtMsg.GetStringProperty(propName))
+	assert.Nil(t, txtMsg.GetStringProperty(propName))
 
 	// Test the ability to set properties before the message is sent.
-	retErr := txtMsg.SetStringProperty(propName, propValue)
+	retErr := txtMsg.SetStringProperty(propName, &propValue)
 	assert.Nil(t, retErr)
 	assert.Equal(t, propValue, *txtMsg.GetStringProperty(propName))
 	assert.Equal(t, msgBody, *txtMsg.GetText())
+
+	// Send an empty string property as well
+	emptyPropName := "myEmptyString"
+	emptyPropValue := ""
+	retErr = txtMsg.SetStringProperty(emptyPropName, &emptyPropValue)
+	assert.Nil(t, retErr)
+	assert.Equal(t, emptyPropValue, *txtMsg.GetStringProperty(emptyPropName))
+
+	// Set a property then try to unset it by setting to nil
+	unsetPropName := "mySendThenRemovedString"
+	unsetPropValue := "someValueThatWillBeOverwritten"
+	retErr = txtMsg.SetStringProperty(unsetPropName, &unsetPropValue)
+	assert.Nil(t, retErr)
+	assert.Equal(t, unsetPropValue, *txtMsg.GetStringProperty(unsetPropName))
+	retErr = txtMsg.SetStringProperty(unsetPropName, nil)
+	assert.Nil(t, retErr)
+	assert.Nil(t, txtMsg.GetStringProperty(unsetPropName))
 
 	// Set up objects for send/receive
 	queue := context.CreateQueue("DEV.QUEUE.1")
@@ -92,6 +107,13 @@ func TestStringPropertyTextMsg(t *testing.T) {
 	// Check property is available on received message.
 	assert.Equal(t, propValue, *rcvMsg.GetStringProperty(propName))
 
+	// Check the empty string property.
+	assert.Equal(t, emptyPropValue, *rcvMsg.GetStringProperty(emptyPropName))
+
+	// Properties that are not set should return nil
+	assert.Nil(t, rcvMsg.GetStringProperty("nonExistentProperty"))
+	assert.Nil(t, rcvMsg.GetStringProperty(unsetPropName))
+
 }
 
 /*
@@ -117,7 +139,7 @@ func TestStringPropertyTextMessageNilBody(t *testing.T) {
 
 	propName := "myProperty2"
 	propValue := "myValue2"
-	retErr := msg.SetStringProperty(propName, propValue)
+	retErr := msg.SetStringProperty(propName, &propValue)
 	assert.Nil(t, retErr)
 
 	// Now send the message and get it back again, to check that it roundtripped.
@@ -172,12 +194,12 @@ func TestStringPropertyTextMessageEmptyBody(t *testing.T) {
 
 	propAName := "myPropertyA"
 	propAValue := "myValueA"
-	retErr := msg.SetStringProperty(propAName, propAValue)
+	retErr := msg.SetStringProperty(propAName, &propAValue)
 	assert.Nil(t, retErr)
 
 	propBName := "myPropertyB"
 	propBValue := "myValueB"
-	retErr = msg.SetStringProperty(propBName, propBValue)
+	retErr = msg.SetStringProperty(propBName, &propBValue)
 	assert.Nil(t, retErr)
 
 	// Now send the message and get it back again.

@@ -48,6 +48,8 @@ type Message interface {
 	// jms20subset.DeliveryMode_PERSISTENT and jms20subset.DeliveryMode_NON_PERSISTENT
 	GetJMSDeliveryMode() int
 
-	SetStringProperty(name string, value string) JMSException
+	SetStringProperty(name string, value *string) JMSException
+
+	// Returns string property, or nil if the property is not set.
 	GetStringProperty(name string) *string
 }

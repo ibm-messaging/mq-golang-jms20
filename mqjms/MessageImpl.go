@@ -274,13 +274,26 @@ func (msg *MessageImpl) GetApplName() string {
 	return applName
 }
 
-func (msg *MessageImpl) SetStringProperty(name string, value string) jms20subset.JMSException {
+func (msg *MessageImpl) SetStringProperty(name string, value *string) jms20subset.JMSException {
 	var retErr jms20subset.JMSException
 
-	smpo := ibmmq.NewMQSMPO()
-	pd := ibmmq.NewMQPD()
+	var linkedErr error
 
-	linkedErr := msg.msgHandle.SetMP(smpo, name, pd, value)
+	if value != nil {
+		// Looking to set a value
+		var valueStr string
+		valueStr = *value
+
+		smpo := ibmmq.NewMQSMPO()
+		pd := ibmmq.NewMQPD()
+
+		linkedErr = msg.msgHandle.SetMP(smpo, name, pd, valueStr)
+	} else {
+		// Looking to unset a value
+		dmpo := ibmmq.NewMQDMPO()
+
+		linkedErr = msg.msgHandle.DltMP(dmpo, name)
+	}
 
 	if linkedErr != nil {
 		rcInt := int(linkedErr.(*ibmmq.MQReturn).MQRC)
@@ -298,13 +311,59 @@ func (msg *MessageImpl) GetStringProperty(name string) *string {
 	impo := ibmmq.NewMQIMPO()
 	pd := ibmmq.NewMQPD()
 
-	_, value, _ := msg.msgHandle.InqMP(impo, pd, name)
+	_, value, err := msg.msgHandle.InqMP(impo, pd, name)
 
-	switch valueTyped := value.(type) {
-	case string:
-		valueStr = valueTyped
-	default:
-		// TODO - other conversions
+	if err == nil {
+		switch valueTyped := value.(type) {
+		case string:
+			valueStr = valueTyped
+		default:
+			// TODO - other conversions
+		}
+	} else {
+
+		mqret := err.(*ibmmq.MQReturn)
+		if mqret.MQRC == ibmmq.MQRC_PROPERTY_NOT_AVAILABLE {
+			// This indicates that the requested property does not exist.
+			// valueStr will remain with its default value of nil
+			return nil
+		} else {
+			// Err was not nil
+			fmt.Println(err) // TODO - finish error handling
+		}
 	}
 	return &valueStr
+}
+
+func (msg *MessageImpl) propertyExists(name string) bool {
+
+	impo := ibmmq.NewMQIMPO()
+	pd := ibmmq.NewMQPD()
+
+	impo.Options = ibmmq.MQIMPO_CONVERT_VALUE | ibmmq.MQIMPO_INQ_FIRST
+	for propsToRead := true; propsToRead; {
+
+		gotName, gotValue, err := msg.msgHandle.InqMP(impo, pd, "%")
+		impo.Options = ibmmq.MQIMPO_CONVERT_VALUE | ibmmq.MQIMPO_INQ_NEXT
+		if err != nil {
+			mqret := err.(*ibmmq.MQReturn)
+			if mqret.MQRC != ibmmq.MQRC_PROPERTY_NOT_AVAILABLE {
+				fmt.Println(err)
+			} else {
+				// Read all properties
+				return false
+			}
+
+			propsToRead = false
+		} else if gotName == name {
+			// Found the matching property name (shortcut)
+			return true
+		} else {
+			fmt.Printf("no property match to '%s' - gotName: '%s' gotValue '%v' \n", name, gotName, gotValue)
+		}
+
+	}
+
+	// Went through all properties and didn't find a match
+	return false
 }

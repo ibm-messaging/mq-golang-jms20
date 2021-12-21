@@ -28,6 +28,9 @@ import (
  * https://github.com/eclipse-ee4j/messaging/blob/master/api/src/main/java/jakarta/jms/Message.java#L1119
  *
  * JMS: PropertyExists, ClearProperties, GetPropertyNames
+ *         boolean propertyExists(String name) throws JMSException;
+ *         void clearProperties() throws JMSException;
+ *         Enumeration getPropertyNames() throws JMSException;
  */
 
 /*
@@ -113,6 +116,313 @@ func TestStringPropertyTextMsg(t *testing.T) {
 	// Properties that are not set should return nil
 	assert.Nil(t, rcvMsg.GetStringProperty("nonExistentProperty"))
 	assert.Nil(t, rcvMsg.GetStringProperty(unsetPropName))
+
+}
+
+/*
+ * Test the Exists and GetNames functions for message properties
+ */
+func TestPropertyExistsGetNames(t *testing.T) {
+
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
+	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
+	assert.Nil(t, cfErr)
+
+	// Creates a connection to the queue manager, using defer to close it automatically
+	// at the end of the function (if it was created successfully)
+	context, ctxErr := cf.CreateContext()
+	assert.Nil(t, ctxErr)
+	if context != nil {
+		defer context.Close()
+	}
+
+	// Create a TextMessage and check that we can populate it
+	msgBody := "ExistsGetNames-test"
+	txtMsg := context.CreateTextMessage()
+	txtMsg.SetText(msgBody)
+
+	propName := "myProperty"
+	propValue := "myValue"
+
+	// Test the empty value before the property is set.
+	assert.Nil(t, txtMsg.GetStringProperty(propName))
+	propExists, propErr := txtMsg.PropertyExists(propName)
+	assert.Nil(t, propErr)
+	assert.False(t, propExists)
+	allPropNames, getNamesErr := txtMsg.GetPropertyNames()
+	assert.Nil(t, getNamesErr)
+	assert.Equal(t, 0, len(allPropNames))
+
+	// Test the ability to set properties before the message is sent.
+	retErr := txtMsg.SetStringProperty(propName, &propValue)
+	assert.Nil(t, retErr)
+	assert.Equal(t, propValue, *txtMsg.GetStringProperty(propName))
+	propExists, propErr = txtMsg.PropertyExists(propName)
+	assert.Nil(t, propErr)
+	assert.True(t, propExists) // now exists
+	allPropNames, getNamesErr = txtMsg.GetPropertyNames()
+	assert.Nil(t, getNamesErr)
+	assert.Equal(t, 1, len(allPropNames))
+	assert.Equal(t, propName, allPropNames[0])
+
+	propName2 := "myPropertyTwo"
+	propValue2 := "myValueTwo"
+	retErr = txtMsg.SetStringProperty(propName2, &propValue2)
+	assert.Nil(t, retErr)
+	assert.Equal(t, propValue2, *txtMsg.GetStringProperty(propName2))
+	propExists, propErr = txtMsg.PropertyExists(propName2)
+	assert.Nil(t, propErr)
+	assert.True(t, propExists) // now exists
+	// Check the first property again to be sure
+	propExists, propErr = txtMsg.PropertyExists(propName)
+	assert.Nil(t, propErr)
+	assert.True(t, propExists) // now exists
+	allPropNames, getNamesErr = txtMsg.GetPropertyNames()
+	assert.Nil(t, getNamesErr)
+	assert.Equal(t, 2, len(allPropNames))
+	assert.Equal(t, propName, allPropNames[0])
+	assert.Equal(t, propName2, allPropNames[1])
+
+	// Set a property then try to unset it by setting to nil
+	unsetPropName := "mySendThenRemovedString"
+	unsetPropValue := "someValueThatWillBeOverwritten"
+	retErr = txtMsg.SetStringProperty(unsetPropName, &unsetPropValue)
+	assert.Nil(t, retErr)
+	assert.Equal(t, unsetPropValue, *txtMsg.GetStringProperty(unsetPropName))
+	propExists, propErr = txtMsg.PropertyExists(unsetPropName)
+	assert.Nil(t, propErr)
+	assert.True(t, propExists)
+	allPropNames, getNamesErr = txtMsg.GetPropertyNames()
+	assert.Nil(t, getNamesErr)
+	assert.Equal(t, 3, len(allPropNames))
+	retErr = txtMsg.SetStringProperty(unsetPropName, nil)
+	assert.Nil(t, retErr)
+	assert.Nil(t, txtMsg.GetStringProperty(unsetPropName))
+	propExists, propErr = txtMsg.PropertyExists(unsetPropName)
+	assert.Nil(t, propErr)
+	assert.False(t, propExists)
+	allPropNames, getNamesErr = txtMsg.GetPropertyNames()
+	assert.Nil(t, getNamesErr)
+	assert.Equal(t, 2, len(allPropNames))
+
+	// Set up objects for send/receive
+	queue := context.CreateQueue("DEV.QUEUE.1")
+	consumer, errCons := context.CreateConsumer(queue)
+	if consumer != nil {
+		defer consumer.Close()
+	}
+	assert.Nil(t, errCons)
+
+	// Now send the message and get it back again, to check that it roundtripped.
+	errSend := context.CreateProducer().SetTimeToLive(10000).Send(queue, txtMsg)
+	assert.Nil(t, errSend)
+
+	rcvMsg, errRvc := consumer.ReceiveNoWait()
+	assert.Nil(t, errRvc)
+	assert.NotNil(t, rcvMsg)
+
+	switch msg := rcvMsg.(type) {
+	case jms20subset.TextMessage:
+		assert.Equal(t, msgBody, *msg.GetText())
+	default:
+		assert.Fail(t, "Got something other than a text message")
+	}
+
+	// Check property is available on received message.
+	propExists, propErr = rcvMsg.PropertyExists(propName)
+	assert.Nil(t, propErr)
+	assert.True(t, propExists) // now exists
+
+	propExists, propErr = rcvMsg.PropertyExists(propName2)
+	assert.Nil(t, propErr)
+	assert.True(t, propExists) // now exists
+
+	// Check GetPropertyNames
+	allPropNames, getNamesErr = rcvMsg.GetPropertyNames()
+	assert.Nil(t, getNamesErr)
+	assert.Equal(t, 2, len(allPropNames))
+	assert.Equal(t, propName, allPropNames[0])
+	assert.Equal(t, propName2, allPropNames[1])
+
+	// Properties that are not set should return nil
+	nonExistentPropName := "nonExistentProperty"
+	assert.Nil(t, rcvMsg.GetStringProperty(nonExistentPropName))
+	propExists, propErr = rcvMsg.PropertyExists(nonExistentPropName)
+	assert.Nil(t, propErr)
+	assert.False(t, propExists)
+
+	// Check for the unset property
+	propExists, propErr = rcvMsg.PropertyExists(unsetPropName)
+	assert.Nil(t, propErr)
+	assert.False(t, propExists)
+
+}
+
+/*
+ * Test the ClearProperties function for message properties
+ */
+func TestPropertyClearProperties(t *testing.T) {
+
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
+	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
+	assert.Nil(t, cfErr)
+
+	// Creates a connection to the queue manager, using defer to close it automatically
+	// at the end of the function (if it was created successfully)
+	context, ctxErr := cf.CreateContext()
+	assert.Nil(t, ctxErr)
+	if context != nil {
+		defer context.Close()
+	}
+
+	// Create a TextMessage and check that we can populate it
+	msgBody := "ExistsClearProperties-test"
+	txtMsg := context.CreateTextMessage()
+	txtMsg.SetText(msgBody)
+
+	propName := "myProperty"
+	propValue := "myValue"
+
+	// Test the ability to set properties before the message is sent.
+	retErr := txtMsg.SetStringProperty(propName, &propValue)
+	assert.Nil(t, retErr)
+	assert.Equal(t, propValue, *txtMsg.GetStringProperty(propName))
+	propExists, propErr := txtMsg.PropertyExists(propName)
+	assert.Nil(t, propErr)
+	assert.True(t, propExists) // now exists
+	allPropNames, getNamesErr := txtMsg.GetPropertyNames()
+	assert.Nil(t, getNamesErr)
+	assert.Equal(t, 1, len(allPropNames))
+	assert.Equal(t, propName, allPropNames[0])
+
+	clearErr := txtMsg.ClearProperties()
+	assert.Nil(t, clearErr)
+	assert.Nil(t, txtMsg.GetStringProperty(propName))
+	propExists, propErr = txtMsg.PropertyExists(propName)
+	assert.Nil(t, propErr)
+	assert.False(t, propExists)
+
+	allPropNames, getNamesErr = txtMsg.GetPropertyNames()
+	assert.Nil(t, getNamesErr)
+	assert.Equal(t, 0, len(allPropNames))
+
+	propName2 := "myPropertyTwo"
+	propValue2 := "myValueTwo"
+
+	// Set multiple properties
+	retErr = txtMsg.SetStringProperty(propName, &propValue)
+	assert.Nil(t, retErr)
+	assert.Equal(t, propValue, *txtMsg.GetStringProperty(propName))
+	retErr = txtMsg.SetStringProperty(propName2, &propValue2)
+	assert.Nil(t, retErr)
+	assert.Equal(t, propValue2, *txtMsg.GetStringProperty(propName2))
+	propExists, propErr = txtMsg.PropertyExists(propName2)
+	assert.Nil(t, propErr)
+	assert.True(t, propExists) // now exists
+	// Check the first property again to be sure
+	propExists, propErr = txtMsg.PropertyExists(propName)
+	assert.Nil(t, propErr)
+	assert.True(t, propExists) // now exists
+
+	allPropNames, getNamesErr = txtMsg.GetPropertyNames()
+	assert.Nil(t, getNamesErr)
+	assert.Equal(t, 2, len(allPropNames))
+
+	// Set a property then try to unset it by setting to nil
+	unsetPropName := "mySendThenRemovedString"
+	unsetPropValue := "someValueThatWillBeOverwritten"
+	retErr = txtMsg.SetStringProperty(unsetPropName, &unsetPropValue)
+	assert.Nil(t, retErr)
+	assert.Equal(t, unsetPropValue, *txtMsg.GetStringProperty(unsetPropName))
+	propExists, propErr = txtMsg.PropertyExists(unsetPropName)
+	assert.Nil(t, propErr)
+	assert.True(t, propExists)
+	allPropNames, getNamesErr = txtMsg.GetPropertyNames()
+	assert.Nil(t, getNamesErr)
+	assert.Equal(t, 3, len(allPropNames))
+	assert.Equal(t, propName, allPropNames[0])
+	assert.Equal(t, propName2, allPropNames[1])
+	assert.Equal(t, unsetPropName, allPropNames[2])
+	retErr = txtMsg.SetStringProperty(unsetPropName, nil)
+	assert.Nil(t, retErr)
+	assert.Nil(t, txtMsg.GetStringProperty(unsetPropName))
+	propExists, propErr = txtMsg.PropertyExists(unsetPropName)
+	assert.Nil(t, propErr)
+	assert.False(t, propExists)
+	allPropNames, getNamesErr = txtMsg.GetPropertyNames()
+	assert.Nil(t, getNamesErr)
+	assert.Equal(t, 2, len(allPropNames))
+	assert.Equal(t, propName, allPropNames[0])
+	assert.Equal(t, propName2, allPropNames[1])
+
+	clearErr = txtMsg.ClearProperties()
+	assert.Nil(t, clearErr)
+	assert.Nil(t, txtMsg.GetStringProperty(propName))
+	propExists, propErr = txtMsg.PropertyExists(propName)
+	assert.Nil(t, propErr)
+	assert.False(t, propExists)
+	allPropNames, getNamesErr = txtMsg.GetPropertyNames()
+	assert.Nil(t, getNamesErr)
+	assert.Equal(t, 0, len(allPropNames))
+
+	// Set up objects for send/receive
+	queue := context.CreateQueue("DEV.QUEUE.1")
+	consumer, errCons := context.CreateConsumer(queue)
+	if consumer != nil {
+		defer consumer.Close()
+	}
+	assert.Nil(t, errCons)
+
+	// Now send the message and get it back again, to check that it roundtripped.
+	errSend := context.CreateProducer().SetTimeToLive(10000).Send(queue, txtMsg)
+	assert.Nil(t, errSend)
+
+	rcvMsg, errRvc := consumer.ReceiveNoWait()
+	assert.Nil(t, errRvc)
+	assert.NotNil(t, rcvMsg)
+
+	switch msg := rcvMsg.(type) {
+	case jms20subset.TextMessage:
+		assert.Equal(t, msgBody, *msg.GetText())
+	default:
+		assert.Fail(t, "Got something other than a text message")
+	}
+
+	// Check property is available on received message.
+	propExists, propErr = rcvMsg.PropertyExists(propName)
+	assert.Nil(t, propErr)
+	assert.False(t, propExists)
+
+	propExists, propErr = rcvMsg.PropertyExists(propName2)
+	assert.Nil(t, propErr)
+	assert.False(t, propExists)
+
+	allPropNames, getNamesErr = rcvMsg.GetPropertyNames()
+	assert.Nil(t, getNamesErr)
+	assert.Equal(t, 0, len(allPropNames))
+
+	// Properties that are not set should return nil
+	nonExistentPropName := "nonExistentProperty"
+	assert.Nil(t, rcvMsg.GetStringProperty(nonExistentPropName))
+	propExists, propErr = rcvMsg.PropertyExists(nonExistentPropName)
+	assert.Nil(t, propErr)
+	assert.False(t, propExists)
+
+	// Check for the unset property
+	propExists, propErr = rcvMsg.PropertyExists(unsetPropName)
+	assert.Nil(t, propErr)
+	assert.False(t, propExists)
+
+	// Finally try clearing everything on the received message
+	clearErr = rcvMsg.ClearProperties()
+	assert.Nil(t, clearErr)
+	assert.Nil(t, rcvMsg.GetStringProperty(propName))
+	propExists, propErr = rcvMsg.PropertyExists(propName)
+	assert.Nil(t, propErr)
+	assert.False(t, propExists)
+	allPropNames, getNamesErr = rcvMsg.GetPropertyNames()
+	assert.Nil(t, getNamesErr)
+	assert.Equal(t, 0, len(allPropNames))
 
 }
 

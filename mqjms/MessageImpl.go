@@ -274,6 +274,7 @@ func (msg *MessageImpl) GetApplName() string {
 	return applName
 }
 
+// TODO documentation
 func (msg *MessageImpl) SetStringProperty(name string, value *string) jms20subset.JMSException {
 	var retErr jms20subset.JMSException
 
@@ -305,6 +306,7 @@ func (msg *MessageImpl) SetStringProperty(name string, value *string) jms20subse
 	return retErr
 }
 
+// TODO documentation
 func (msg *MessageImpl) GetStringProperty(name string) *string {
 
 	var valueStr string
@@ -335,35 +337,94 @@ func (msg *MessageImpl) GetStringProperty(name string) *string {
 	return &valueStr
 }
 
-func (msg *MessageImpl) propertyExists(name string) bool {
+// TODO documentation
+func (msg *MessageImpl) PropertyExists(name string) (bool, jms20subset.JMSException) {
+
+	found, _, retErr := msg.getPropertyInternal(name)
+	return found, retErr
+
+}
+
+// TODO documentation
+func (msg *MessageImpl) GetPropertyNames() ([]string, jms20subset.JMSException) {
+
+	_, propNames, retErr := msg.getPropertyInternal("")
+	return propNames, retErr
+}
+
+// TODO documentation
+// Two modes of operation;
+//   - supply non-empty name parameter to check whether that property exists
+//   - supply empty name parameter to get a []string of all property names
+func (msg *MessageImpl) getPropertyInternal(name string) (bool, []string, jms20subset.JMSException) {
 
 	impo := ibmmq.NewMQIMPO()
 	pd := ibmmq.NewMQPD()
+	propNames := []string{}
 
 	impo.Options = ibmmq.MQIMPO_CONVERT_VALUE | ibmmq.MQIMPO_INQ_FIRST
 	for propsToRead := true; propsToRead; {
 
-		gotName, gotValue, err := msg.msgHandle.InqMP(impo, pd, "%")
+		gotName, _, err := msg.msgHandle.InqMP(impo, pd, "%")
 		impo.Options = ibmmq.MQIMPO_CONVERT_VALUE | ibmmq.MQIMPO_INQ_NEXT
+
 		if err != nil {
 			mqret := err.(*ibmmq.MQReturn)
 			if mqret.MQRC != ibmmq.MQRC_PROPERTY_NOT_AVAILABLE {
-				fmt.Println(err)
+
+				rcInt := int(mqret.MQRC)
+				errCode := strconv.Itoa(rcInt)
+				reason := ibmmq.MQItoString("RC", rcInt)
+				retErr := jms20subset.CreateJMSException(reason, errCode, mqret)
+				return false, nil, retErr
+
 			} else {
-				// Read all properties
-				return false
+				// Read all properties (property not available)
+				return false, propNames, nil
 			}
 
-			propsToRead = false
+		} else if "" == name {
+			// We are looking to get back a list of all properties
+			propNames = append(propNames, gotName)
+
 		} else if gotName == name {
-			// Found the matching property name (shortcut)
-			return true
-		} else {
-			fmt.Printf("no property match to '%s' - gotName: '%s' gotValue '%v' \n", name, gotName, gotValue)
+			// We are just checking for the existence of this one property (shortcut)
+			return true, nil, nil
 		}
 
 	}
 
 	// Went through all properties and didn't find a match
-	return false
+	return false, propNames, nil
+}
+
+// TODO documentation
+func (msg *MessageImpl) ClearProperties() jms20subset.JMSException {
+
+	// Get the list of all property names, as we have to delete
+	// them individually
+	allPropNames, jmsErr := msg.GetPropertyNames()
+
+	if jmsErr == nil {
+
+		dmpo := ibmmq.NewMQDMPO()
+
+		for _, propName := range allPropNames {
+
+			// Delete this property
+			err := msg.msgHandle.DltMP(dmpo, propName)
+
+			if err != nil {
+				rcInt := int(err.(*ibmmq.MQReturn).MQRC)
+				errCode := strconv.Itoa(rcInt)
+				reason := ibmmq.MQItoString("RC", rcInt)
+				jmsErr = jms20subset.CreateJMSException(reason, errCode, err)
+				break
+			}
+		}
+
+	}
+
+	return jmsErr
+
 }

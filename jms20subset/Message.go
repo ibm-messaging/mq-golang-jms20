@@ -48,8 +48,19 @@ type Message interface {
 	// jms20subset.DeliveryMode_PERSISTENT and jms20subset.DeliveryMode_NON_PERSISTENT
 	GetJMSDeliveryMode() int
 
+	// TODO documentation
 	SetStringProperty(name string, value *string) JMSException
 
+	// TODO documentation
 	// Returns string property, or nil if the property is not set.
 	GetStringProperty(name string) *string
+
+	// TODO documentation
+	PropertyExists(name string) (bool, JMSException)
+
+	// TODO documentation
+	GetPropertyNames() ([]string, JMSException)
+
+	// TODO documentation
+	ClearProperties() JMSException
 }

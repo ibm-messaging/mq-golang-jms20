@@ -48,19 +48,24 @@ type Message interface {
 	// jms20subset.DeliveryMode_PERSISTENT and jms20subset.DeliveryMode_NON_PERSISTENT
 	GetJMSDeliveryMode() int
 
-	// TODO documentation
+	// SetStringProperty enables an application to set a string-type message property.
+	//
+	// value is *string which allows a nil value to be specified, to unset an individual
+	// property.
 	SetStringProperty(name string, value *string) JMSException
 
-	// TODO documentation
-	// Returns string property, or nil if the property is not set.
+	// GetStringProperty returns the string value of a named message property.
+	// Returns nil if the named property is not set.
 	GetStringProperty(name string) *string
 
-	// TODO documentation
+	// PropertyExists returns true if the named message property exists on this message.
 	PropertyExists(name string) (bool, JMSException)
 
-	// TODO documentation
+	// GetPropertyNames returns a slice of strings containing the name of every message
+	// property on this message.
+	// Returns a zero length slice if no message properties are defined.
 	GetPropertyNames() ([]string, JMSException)
 
-	// TODO documentation
+	// ClearProperties removes all message properties from this message.
 	ClearProperties() JMSException
 }

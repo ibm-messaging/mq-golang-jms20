@@ -27,10 +27,6 @@ import (
  * JMS: SetStringProperty, GetStringProperty,
  * https://github.com/eclipse-ee4j/messaging/blob/master/api/src/main/java/jakarta/jms/Message.java#L1119
  *
- * JMS: PropertyExists, ClearProperties, GetPropertyNames
- *         boolean propertyExists(String name) throws JMSException;
- *         void clearProperties() throws JMSException;
- *         Enumeration getPropertyNames() throws JMSException;
  */
 
 /*

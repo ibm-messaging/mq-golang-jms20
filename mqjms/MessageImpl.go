@@ -274,7 +274,10 @@ func (msg *MessageImpl) GetApplName() string {
 	return applName
 }
 
-// TODO documentation
+// SetStringProperty enables an application to set a string-type message property.
+//
+// value is *string which allows a nil value to be specified, to unset an individual
+// property.
 func (msg *MessageImpl) SetStringProperty(name string, value *string) jms20subset.JMSException {
 	var retErr jms20subset.JMSException
 
@@ -306,7 +309,8 @@ func (msg *MessageImpl) SetStringProperty(name string, value *string) jms20subse
 	return retErr
 }
 
-// TODO documentation
+// GetStringProperty returns the string value of a named message property.
+// Returns nil if the named property is not set.
 func (msg *MessageImpl) GetStringProperty(name string) *string {
 
 	var valueStr string
@@ -337,26 +341,28 @@ func (msg *MessageImpl) GetStringProperty(name string) *string {
 	return &valueStr
 }
 
-// TODO documentation
+// PropertyExists returns true if the named message property exists on this message.
 func (msg *MessageImpl) PropertyExists(name string) (bool, jms20subset.JMSException) {
 
-	found, _, retErr := msg.getPropertyInternal(name)
+	found, _, retErr := msg.getPropertiesInternal(name)
 	return found, retErr
 
 }
 
-// TODO documentation
+// GetPropertyNames returns a slice of strings containing the name of every message
+// property on this message.
+// Returns a zero length slice if no message properties are defined.
 func (msg *MessageImpl) GetPropertyNames() ([]string, jms20subset.JMSException) {
 
-	_, propNames, retErr := msg.getPropertyInternal("")
+	_, propNames, retErr := msg.getPropertiesInternal("")
 	return propNames, retErr
 }
 
-// TODO documentation
-// Two modes of operation;
-//   - supply non-empty name parameter to check whether that property exists
-//   - supply empty name parameter to get a []string of all property names
-func (msg *MessageImpl) getPropertyInternal(name string) (bool, []string, jms20subset.JMSException) {
+// getPropertiesInternal is an internal helper function that provides a largely
+// identical implication for two application-facing functions;
+// - PropertyExists supplies a non-empty name parameter to check whether that property exists
+// - GetPropertyNames supplies an empty name parameter to get a []string of all property names
+func (msg *MessageImpl) getPropertiesInternal(name string) (bool, []string, jms20subset.JMSException) {
 
 	impo := ibmmq.NewMQIMPO()
 	pd := ibmmq.NewMQPD()
@@ -398,7 +404,7 @@ func (msg *MessageImpl) getPropertyInternal(name string) (bool, []string, jms20s
 	return false, propNames, nil
 }
 
-// TODO documentation
+// ClearProperties removes all message properties from this message.
 func (msg *MessageImpl) ClearProperties() jms20subset.JMSException {
 
 	// Get the list of all property names, as we have to delete

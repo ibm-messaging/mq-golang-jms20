@@ -55,12 +55,16 @@ func TestStringPropertyTextMsg(t *testing.T) {
 	propValue := "myValue"
 
 	// Test the empty value before the property is set.
-	assert.Nil(t, txtMsg.GetStringProperty(propName))
+	gotPropValue, propErr := txtMsg.GetStringProperty(propName)
+	assert.Nil(t, propErr)
+	assert.Nil(t, gotPropValue)
 
 	// Test the ability to set properties before the message is sent.
 	retErr := txtMsg.SetStringProperty(propName, &propValue)
 	assert.Nil(t, retErr)
-	assert.Equal(t, propValue, *txtMsg.GetStringProperty(propName))
+	gotPropValue, propErr = txtMsg.GetStringProperty(propName)
+	assert.Nil(t, propErr)
+	assert.Equal(t, propValue, *gotPropValue)
 	assert.Equal(t, msgBody, *txtMsg.GetText())
 
 	// Send an empty string property as well
@@ -68,17 +72,23 @@ func TestStringPropertyTextMsg(t *testing.T) {
 	emptyPropValue := ""
 	retErr = txtMsg.SetStringProperty(emptyPropName, &emptyPropValue)
 	assert.Nil(t, retErr)
-	assert.Equal(t, emptyPropValue, *txtMsg.GetStringProperty(emptyPropName))
+	gotPropValue, propErr = txtMsg.GetStringProperty(emptyPropName)
+	assert.Nil(t, propErr)
+	assert.Equal(t, emptyPropValue, *gotPropValue)
 
 	// Set a property then try to unset it by setting to nil
 	unsetPropName := "mySendThenRemovedString"
 	unsetPropValue := "someValueThatWillBeOverwritten"
 	retErr = txtMsg.SetStringProperty(unsetPropName, &unsetPropValue)
 	assert.Nil(t, retErr)
-	assert.Equal(t, unsetPropValue, *txtMsg.GetStringProperty(unsetPropName))
+	gotPropValue, propErr = txtMsg.GetStringProperty(unsetPropName)
+	assert.Nil(t, propErr)
+	assert.Equal(t, unsetPropValue, *gotPropValue)
 	retErr = txtMsg.SetStringProperty(unsetPropName, nil)
 	assert.Nil(t, retErr)
-	assert.Nil(t, txtMsg.GetStringProperty(unsetPropName))
+	gotPropValue, propErr = txtMsg.GetStringProperty(unsetPropName)
+	assert.Nil(t, propErr)
+	assert.Nil(t, gotPropValue)
 
 	// Set up objects for send/receive
 	queue := context.CreateQueue("DEV.QUEUE.1")
@@ -104,14 +114,22 @@ func TestStringPropertyTextMsg(t *testing.T) {
 	}
 
 	// Check property is available on received message.
-	assert.Equal(t, propValue, *rcvMsg.GetStringProperty(propName))
+	gotPropValue, propErr = rcvMsg.GetStringProperty(propName)
+	assert.Nil(t, propErr)
+	assert.Equal(t, propValue, *gotPropValue)
 
 	// Check the empty string property.
-	assert.Equal(t, emptyPropValue, *rcvMsg.GetStringProperty(emptyPropName))
+	gotPropValue, propErr = rcvMsg.GetStringProperty(emptyPropName)
+	assert.Nil(t, propErr)
+	assert.Equal(t, emptyPropValue, *gotPropValue)
 
 	// Properties that are not set should return nil
-	assert.Nil(t, rcvMsg.GetStringProperty("nonExistentProperty"))
-	assert.Nil(t, rcvMsg.GetStringProperty(unsetPropName))
+	gotPropValue, propErr = rcvMsg.GetStringProperty("nonExistentProperty")
+	assert.Nil(t, propErr)
+	assert.Nil(t, gotPropValue)
+	gotPropValue, propErr = rcvMsg.GetStringProperty(unsetPropName)
+	assert.Nil(t, propErr)
+	assert.Nil(t, gotPropValue)
 
 }
 
@@ -141,7 +159,9 @@ func TestPropertyExistsGetNames(t *testing.T) {
 	propValue := "myValue"
 
 	// Test the empty value before the property is set.
-	assert.Nil(t, txtMsg.GetStringProperty(propName))
+	gotPropValue, propErr := txtMsg.GetStringProperty(propName)
+	assert.Nil(t, propErr)
+	assert.Nil(t, gotPropValue)
 	propExists, propErr := txtMsg.PropertyExists(propName)
 	assert.Nil(t, propErr)
 	assert.False(t, propExists)
@@ -152,7 +172,9 @@ func TestPropertyExistsGetNames(t *testing.T) {
 	// Test the ability to set properties before the message is sent.
 	retErr := txtMsg.SetStringProperty(propName, &propValue)
 	assert.Nil(t, retErr)
-	assert.Equal(t, propValue, *txtMsg.GetStringProperty(propName))
+	gotPropValue, propErr = txtMsg.GetStringProperty(propName)
+	assert.Nil(t, propErr)
+	assert.Equal(t, propValue, *gotPropValue)
 	propExists, propErr = txtMsg.PropertyExists(propName)
 	assert.Nil(t, propErr)
 	assert.True(t, propExists) // now exists
@@ -165,7 +187,9 @@ func TestPropertyExistsGetNames(t *testing.T) {
 	propValue2 := "myValueTwo"
 	retErr = txtMsg.SetStringProperty(propName2, &propValue2)
 	assert.Nil(t, retErr)
-	assert.Equal(t, propValue2, *txtMsg.GetStringProperty(propName2))
+	gotPropValue, propErr = txtMsg.GetStringProperty(propName2)
+	assert.Nil(t, propErr)
+	assert.Equal(t, propValue2, *gotPropValue)
 	propExists, propErr = txtMsg.PropertyExists(propName2)
 	assert.Nil(t, propErr)
 	assert.True(t, propExists) // now exists
@@ -184,7 +208,9 @@ func TestPropertyExistsGetNames(t *testing.T) {
 	unsetPropValue := "someValueThatWillBeOverwritten"
 	retErr = txtMsg.SetStringProperty(unsetPropName, &unsetPropValue)
 	assert.Nil(t, retErr)
-	assert.Equal(t, unsetPropValue, *txtMsg.GetStringProperty(unsetPropName))
+	gotPropValue, propErr = txtMsg.GetStringProperty(unsetPropName)
+	assert.Nil(t, propErr)
+	assert.Equal(t, unsetPropValue, *gotPropValue)
 	propExists, propErr = txtMsg.PropertyExists(unsetPropName)
 	assert.Nil(t, propErr)
 	assert.True(t, propExists)
@@ -193,7 +219,9 @@ func TestPropertyExistsGetNames(t *testing.T) {
 	assert.Equal(t, 3, len(allPropNames))
 	retErr = txtMsg.SetStringProperty(unsetPropName, nil)
 	assert.Nil(t, retErr)
-	assert.Nil(t, txtMsg.GetStringProperty(unsetPropName))
+	gotPropValue, propErr = txtMsg.GetStringProperty(unsetPropName)
+	assert.Nil(t, propErr)
+	assert.Nil(t, gotPropValue)
 	propExists, propErr = txtMsg.PropertyExists(unsetPropName)
 	assert.Nil(t, propErr)
 	assert.False(t, propExists)
@@ -242,7 +270,9 @@ func TestPropertyExistsGetNames(t *testing.T) {
 
 	// Properties that are not set should return nil
 	nonExistentPropName := "nonExistentProperty"
-	assert.Nil(t, rcvMsg.GetStringProperty(nonExistentPropName))
+	gotPropValue, propErr = rcvMsg.GetStringProperty(nonExistentPropName)
+	assert.Nil(t, propErr)
+	assert.Nil(t, gotPropValue)
 	propExists, propErr = rcvMsg.PropertyExists(nonExistentPropName)
 	assert.Nil(t, propErr)
 	assert.False(t, propExists)
@@ -282,7 +312,9 @@ func TestPropertyClearProperties(t *testing.T) {
 	// Test the ability to set properties before the message is sent.
 	retErr := txtMsg.SetStringProperty(propName, &propValue)
 	assert.Nil(t, retErr)
-	assert.Equal(t, propValue, *txtMsg.GetStringProperty(propName))
+	gotPropValue, propErr := txtMsg.GetStringProperty(propName)
+	assert.Nil(t, propErr)
+	assert.Equal(t, propValue, *gotPropValue)
 	propExists, propErr := txtMsg.PropertyExists(propName)
 	assert.Nil(t, propErr)
 	assert.True(t, propExists) // now exists
@@ -293,7 +325,9 @@ func TestPropertyClearProperties(t *testing.T) {
 
 	clearErr := txtMsg.ClearProperties()
 	assert.Nil(t, clearErr)
-	assert.Nil(t, txtMsg.GetStringProperty(propName))
+	gotPropValue, propErr = txtMsg.GetStringProperty(propName)
+	assert.Nil(t, propErr)
+	assert.Nil(t, gotPropValue)
 	propExists, propErr = txtMsg.PropertyExists(propName)
 	assert.Nil(t, propErr)
 	assert.False(t, propExists)
@@ -308,10 +342,14 @@ func TestPropertyClearProperties(t *testing.T) {
 	// Set multiple properties
 	retErr = txtMsg.SetStringProperty(propName, &propValue)
 	assert.Nil(t, retErr)
-	assert.Equal(t, propValue, *txtMsg.GetStringProperty(propName))
+	gotPropValue, propErr = txtMsg.GetStringProperty(propName)
+	assert.Nil(t, propErr)
+	assert.Equal(t, propValue, *gotPropValue)
 	retErr = txtMsg.SetStringProperty(propName2, &propValue2)
 	assert.Nil(t, retErr)
-	assert.Equal(t, propValue2, *txtMsg.GetStringProperty(propName2))
+	gotPropValue, propErr = txtMsg.GetStringProperty(propName2)
+	assert.Nil(t, propErr)
+	assert.Equal(t, propValue2, *gotPropValue)
 	propExists, propErr = txtMsg.PropertyExists(propName2)
 	assert.Nil(t, propErr)
 	assert.True(t, propExists) // now exists
@@ -329,7 +367,9 @@ func TestPropertyClearProperties(t *testing.T) {
 	unsetPropValue := "someValueThatWillBeOverwritten"
 	retErr = txtMsg.SetStringProperty(unsetPropName, &unsetPropValue)
 	assert.Nil(t, retErr)
-	assert.Equal(t, unsetPropValue, *txtMsg.GetStringProperty(unsetPropName))
+	gotPropValue, propErr = txtMsg.GetStringProperty(unsetPropName)
+	assert.Nil(t, propErr)
+	assert.Equal(t, unsetPropValue, *gotPropValue)
 	propExists, propErr = txtMsg.PropertyExists(unsetPropName)
 	assert.Nil(t, propErr)
 	assert.True(t, propExists)
@@ -341,7 +381,9 @@ func TestPropertyClearProperties(t *testing.T) {
 	assert.Equal(t, unsetPropName, allPropNames[2])
 	retErr = txtMsg.SetStringProperty(unsetPropName, nil)
 	assert.Nil(t, retErr)
-	assert.Nil(t, txtMsg.GetStringProperty(unsetPropName))
+	gotPropValue, propErr = txtMsg.GetStringProperty(unsetPropName)
+	assert.Nil(t, propErr)
+	assert.Nil(t, gotPropValue)
 	propExists, propErr = txtMsg.PropertyExists(unsetPropName)
 	assert.Nil(t, propErr)
 	assert.False(t, propExists)
@@ -353,7 +395,9 @@ func TestPropertyClearProperties(t *testing.T) {
 
 	clearErr = txtMsg.ClearProperties()
 	assert.Nil(t, clearErr)
-	assert.Nil(t, txtMsg.GetStringProperty(propName))
+	gotPropValue, propErr = txtMsg.GetStringProperty(propName)
+	assert.Nil(t, propErr)
+	assert.Nil(t, gotPropValue)
 	propExists, propErr = txtMsg.PropertyExists(propName)
 	assert.Nil(t, propErr)
 	assert.False(t, propExists)
@@ -399,7 +443,9 @@ func TestPropertyClearProperties(t *testing.T) {
 
 	// Properties that are not set should return nil
 	nonExistentPropName := "nonExistentProperty"
-	assert.Nil(t, rcvMsg.GetStringProperty(nonExistentPropName))
+	gotPropValue, propErr = rcvMsg.GetStringProperty(nonExistentPropName)
+	assert.Nil(t, propErr)
+	assert.Nil(t, gotPropValue)
 	propExists, propErr = rcvMsg.PropertyExists(nonExistentPropName)
 	assert.Nil(t, propErr)
 	assert.False(t, propExists)
@@ -412,7 +458,9 @@ func TestPropertyClearProperties(t *testing.T) {
 	// Finally try clearing everything on the received message
 	clearErr = rcvMsg.ClearProperties()
 	assert.Nil(t, clearErr)
-	assert.Nil(t, rcvMsg.GetStringProperty(propName))
+	gotPropValue, propErr = rcvMsg.GetStringProperty(propName)
+	assert.Nil(t, propErr)
+	assert.Nil(t, gotPropValue)
 	propExists, propErr = rcvMsg.PropertyExists(propName)
 	assert.Nil(t, propErr)
 	assert.False(t, propExists)
@@ -471,7 +519,9 @@ func TestStringPropertyTextMessageNilBody(t *testing.T) {
 	}
 
 	// Check property is available on received message.
-	assert.Equal(t, propValue, *rcvMsg.GetStringProperty(propName))
+	gotPropValue, propErr := rcvMsg.GetStringProperty(propName)
+	assert.Nil(t, propErr)
+	assert.Equal(t, propValue, *gotPropValue)
 
 }
 
@@ -535,7 +585,11 @@ func TestStringPropertyTextMessageEmptyBody(t *testing.T) {
 	}
 
 	// Check property is available on received message.
-	assert.Equal(t, propAValue, *rcvMsg.GetStringProperty(propAName))
-	assert.Equal(t, propBValue, *rcvMsg.GetStringProperty(propBName))
+	gotPropValue, propErr := rcvMsg.GetStringProperty(propAName)
+	assert.Nil(t, propErr)
+	assert.Equal(t, propAValue, *gotPropValue)
+	gotPropValue, propErr = rcvMsg.GetStringProperty(propBName)
+	assert.Nil(t, propErr)
+	assert.Equal(t, propBValue, *gotPropValue)
 
 }

@@ -56,7 +56,7 @@ type Message interface {
 
 	// GetStringProperty returns the string value of a named message property.
 	// Returns nil if the named property is not set.
-	GetStringProperty(name string) *string
+	GetStringProperty(name string) (*string, JMSException)
 
 	// PropertyExists returns true if the named message property exists on this message.
 	PropertyExists(name string) (bool, JMSException)

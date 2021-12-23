@@ -311,9 +311,11 @@ func (msg *MessageImpl) SetStringProperty(name string, value *string) jms20subse
 
 // GetStringProperty returns the string value of a named message property.
 // Returns nil if the named property is not set.
-func (msg *MessageImpl) GetStringProperty(name string) *string {
+func (msg *MessageImpl) GetStringProperty(name string) (*string, jms20subset.JMSException) {
 
 	var valueStr string
+	var retErr jms20subset.JMSException
+
 	impo := ibmmq.NewMQIMPO()
 	pd := ibmmq.NewMQPD()
 
@@ -332,13 +334,16 @@ func (msg *MessageImpl) GetStringProperty(name string) *string {
 		if mqret.MQRC == ibmmq.MQRC_PROPERTY_NOT_AVAILABLE {
 			// This indicates that the requested property does not exist.
 			// valueStr will remain with its default value of nil
-			return nil
+			return nil, nil
 		} else {
 			// Err was not nil
-			fmt.Println(err) // TODO - finish error handling
+			rcInt := int(mqret.MQRC)
+			errCode := strconv.Itoa(rcInt)
+			reason := ibmmq.MQItoString("RC", rcInt)
+			retErr = jms20subset.CreateJMSException(reason, errCode, mqret)
 		}
 	}
-	return &valueStr
+	return &valueStr, retErr
 }
 
 // PropertyExists returns true if the named message property exists on this message.

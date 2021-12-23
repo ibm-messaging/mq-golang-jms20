@@ -10,6 +10,7 @@
 package mqjms
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
@@ -130,9 +131,15 @@ func (ctx ContextImpl) CreateTextMessage() jms20subset.TextMessage {
 // store and retrieve message properties.
 func createMsgHandle(qMgr ibmmq.MQQueueManager) ibmmq.MQMessageHandle {
 
-	// TODO - error handling on CrtMH
 	cmho := ibmmq.NewMQCMHO()
-	thisMsgHandle, _ := qMgr.CrtMH(cmho)
+	thisMsgHandle, err := qMgr.CrtMH(cmho)
+
+	if err != nil {
+		// No easy way to pass this error back to the application without
+		// changing the function signature, which could break existing
+		// applications.
+		fmt.Println(err)
+	}
 
 	return thisMsgHandle
 

@@ -58,6 +58,13 @@ type Message interface {
 	// Returns nil if the named property is not set.
 	GetStringProperty(name string) (*string, JMSException)
 
+	// SetIntProperty enables an application to set a int-type message property.
+	SetIntProperty(name string, value int) JMSException
+
+	// GetIntProperty returns the int value of a named message property.
+	// Returns 0 if the named property is not set.
+	GetIntProperty(name string) (int, JMSException)
+
 	// PropertyExists returns true if the named message property exists on this message.
 	PropertyExists(name string) (bool, JMSException)
 

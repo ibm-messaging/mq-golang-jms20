@@ -346,6 +346,65 @@ func (msg *MessageImpl) GetStringProperty(name string) (*string, jms20subset.JMS
 	return &valueStr, retErr
 }
 
+// SetIntProperty enables an application to set a int-type message property.
+func (msg *MessageImpl) SetIntProperty(name string, value int) jms20subset.JMSException {
+	var retErr jms20subset.JMSException
+
+	var linkedErr error
+
+	smpo := ibmmq.NewMQSMPO()
+	pd := ibmmq.NewMQPD()
+
+	linkedErr = msg.msgHandle.SetMP(smpo, name, pd, value)
+
+	if linkedErr != nil {
+		rcInt := int(linkedErr.(*ibmmq.MQReturn).MQRC)
+		errCode := strconv.Itoa(rcInt)
+		reason := ibmmq.MQItoString("RC", rcInt)
+		retErr = jms20subset.CreateJMSException(reason, errCode, linkedErr)
+	}
+
+	return retErr
+}
+
+// GetIntProperty returns the int value of a named message property.
+// Returns 0 if the named property is not set.
+func (msg *MessageImpl) GetIntProperty(name string) (int, jms20subset.JMSException) {
+
+	var valueRet int
+	var retErr jms20subset.JMSException
+
+	impo := ibmmq.NewMQIMPO()
+	pd := ibmmq.NewMQPD()
+
+	_, value, err := msg.msgHandle.InqMP(impo, pd, name)
+
+	if err == nil {
+		switch valueTyped := value.(type) {
+		case int64:
+			valueRet = int(valueTyped)
+		default:
+			// TODO - other conversions
+			//fmt.Println("Other type", value, reflect.TypeOf(value))
+		}
+	} else {
+
+		mqret := err.(*ibmmq.MQReturn)
+		if mqret.MQRC == ibmmq.MQRC_PROPERTY_NOT_AVAILABLE {
+			// This indicates that the requested property does not exist.
+			// valueRet will remain with its default value of nil
+			return 0, nil
+		} else {
+			// Err was not nil
+			rcInt := int(mqret.MQRC)
+			errCode := strconv.Itoa(rcInt)
+			reason := ibmmq.MQItoString("RC", rcInt)
+			retErr = jms20subset.CreateJMSException(reason, errCode, mqret)
+		}
+	}
+	return valueRet, retErr
+}
+
 // PropertyExists returns true if the named message property exists on this message.
 func (msg *MessageImpl) PropertyExists(name string) (bool, jms20subset.JMSException) {
 

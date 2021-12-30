@@ -21,6 +21,9 @@ import (
 	ibmmq "github.com/ibm-messaging/mq-golang/v5/ibmmq"
 )
 
+const MessageImpl_PROPERTY_CONVERT_FAILED_REASON string = "MQJMS_E_BAD_TYPE"
+const MessageImpl_PROPERTY_CONVERT_FAILED_CODE string = "1055"
+
 // MessageImpl contains the IBM MQ specific attributes that are
 // common to all types of message.
 type MessageImpl struct {
@@ -380,9 +383,18 @@ func (msg *MessageImpl) GetIntProperty(name string) (int, jms20subset.JMSExcepti
 	_, value, err := msg.msgHandle.InqMP(impo, pd, name)
 
 	if err == nil {
+
+		var parseErr error
+
 		switch valueTyped := value.(type) {
 		case int64:
 			valueRet = int(valueTyped)
+		case string:
+			valueRet, parseErr = strconv.Atoi(valueTyped)
+			if parseErr != nil {
+				retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_FAILED_REASON,
+					MessageImpl_PROPERTY_CONVERT_FAILED_CODE, parseErr)
+			}
 		default:
 			// TODO - other conversions
 			//fmt.Println("Other type", value, reflect.TypeOf(value))
@@ -439,9 +451,18 @@ func (msg *MessageImpl) GetDoubleProperty(name string) (float64, jms20subset.JMS
 	_, value, err := msg.msgHandle.InqMP(impo, pd, name)
 
 	if err == nil {
+
+		var parseErr error
+
 		switch valueTyped := value.(type) {
 		case float64:
 			valueRet = valueTyped
+		case string:
+			valueRet, parseErr = strconv.ParseFloat(valueTyped, 64)
+			if parseErr != nil {
+				retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_FAILED_REASON,
+					MessageImpl_PROPERTY_CONVERT_FAILED_CODE, parseErr)
+			}
 		default:
 			// TODO - other conversions
 			//fmt.Println("Other type", value, reflect.TypeOf(value))
@@ -498,9 +519,18 @@ func (msg *MessageImpl) GetBooleanProperty(name string) (bool, jms20subset.JMSEx
 	_, value, err := msg.msgHandle.InqMP(impo, pd, name)
 
 	if err == nil {
+
+		var parseErr error
+
 		switch valueTyped := value.(type) {
 		case bool:
 			valueRet = valueTyped
+		case string:
+			valueRet, parseErr = strconv.ParseBool(valueTyped)
+			if parseErr != nil {
+				retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_FAILED_REASON,
+					MessageImpl_PROPERTY_CONVERT_FAILED_CODE, parseErr)
+			}
 		default:
 			// TODO - other conversions
 			//fmt.Println("Other type", value, reflect.TypeOf(value))

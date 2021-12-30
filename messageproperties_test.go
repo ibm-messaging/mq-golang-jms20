@@ -1088,3 +1088,212 @@ func TestPropertyBytesMsg(t *testing.T) {
 	assert.Equal(t, 5, len(allPropNames))
 
 }
+
+/*
+ * Test the conversion between different message property data types.
+ */
+func TestPropertyTypesStringConversion(t *testing.T) {
+
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
+	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
+	assert.Nil(t, cfErr)
+
+	// Creates a connection to the queue manager, using defer to close it automatically
+	// at the end of the function (if it was created successfully)
+	context, ctxErr := cf.CreateContext()
+	assert.Nil(t, ctxErr)
+	if context != nil {
+		defer context.Close()
+	}
+
+	msg := context.CreateTextMessage()
+
+	unsetPropName := "thisPropertyIsNotSet"
+
+	// Set up some different string properties
+	stringOfStringPropName := "stringOfString"
+	stringOfStringValue := "myValue"
+	stringOfEmptyStrPropName := "stringOfEmptyStr"
+	stringOfEmptyValue := ""
+
+	stringOfIntPropName := "stringOfInt"
+	stringOfIntValue := "245"
+	stringOfIntPropName2 := "stringOfInt2"
+	stringOfIntValue2 := "-34678"
+
+	stringOfBoolPropName := "stringOfBool"
+	stringOfBoolValue := "true"
+	stringOfBoolPropName2 := "stringOfBool2"
+	stringOfBoolValue2 := "false"
+
+	stringOfDoublePropName := "stringOfDouble"
+	stringOfDoubleValue := "2.718527453"
+	stringOfDoublePropName2 := "stringOfDouble2"
+	stringOfDoubleValue2 := "-25675752.212345678"
+
+	msg.SetStringProperty(stringOfStringPropName, &stringOfStringValue)
+	msg.SetStringProperty(stringOfEmptyStrPropName, &stringOfEmptyValue)
+	msg.SetStringProperty(stringOfIntPropName, &stringOfIntValue)
+	msg.SetStringProperty(stringOfIntPropName2, &stringOfIntValue2)
+	msg.SetStringProperty(stringOfBoolPropName, &stringOfBoolValue)
+	msg.SetStringProperty(stringOfBoolPropName2, &stringOfBoolValue2)
+	msg.SetStringProperty(stringOfDoublePropName, &stringOfDoubleValue)
+	msg.SetStringProperty(stringOfDoublePropName2, &stringOfDoubleValue2)
+
+	// Now an int property
+	intPropName := "myIntProperty"
+	intPropValue := 553786
+	retErr := msg.SetIntProperty(intPropName, intPropValue)
+	assert.Nil(t, retErr)
+
+	// Now a double property
+	doublePropName := "myDoubleProperty"
+	doublePropValue := float64(3.1415926535)
+	retErr = msg.SetDoubleProperty(doublePropName, doublePropValue)
+	assert.Nil(t, retErr)
+
+	// Now a bool property
+	boolPropName := "myBoolProperty"
+	boolPropValue := true
+	retErr = msg.SetBooleanProperty(boolPropName, boolPropValue)
+	assert.Nil(t, retErr)
+
+	// Set up objects for send/receive
+	queue := context.CreateQueue("DEV.QUEUE.1")
+	consumer, errCons := context.CreateConsumer(queue)
+	if consumer != nil {
+		defer consumer.Close()
+	}
+	assert.Nil(t, errCons)
+
+	// Now send the message and get it back again, to check that it roundtripped.
+	errSend := context.CreateProducer().SetTimeToLive(10000).Send(queue, msg)
+	assert.Nil(t, errSend)
+
+	rcvMsg, errRvc := consumer.ReceiveNoWait()
+	assert.Nil(t, errRvc)
+	assert.NotNil(t, rcvMsg)
+
+	// Check string properties were set correctly
+	gotStringPropValue, gotStringErr := rcvMsg.GetStringProperty(stringOfStringPropName)
+	gotEmptyStrPropValue, gotEmptyStrErr := rcvMsg.GetStringProperty(stringOfEmptyStrPropName)
+	gotIntPropValue, gotIntErr := rcvMsg.GetStringProperty(stringOfIntPropName)
+	gotIntPropValue2, gotIntErr2 := rcvMsg.GetStringProperty(stringOfIntPropName2)
+	gotBoolPropValue, gotBoolErr := rcvMsg.GetStringProperty(stringOfBoolPropName)
+	gotBoolPropValue2, gotBoolErr2 := rcvMsg.GetStringProperty(stringOfBoolPropName2)
+	gotDoublePropValue, gotDoubleErr := rcvMsg.GetStringProperty(stringOfDoublePropName)
+	gotDoublePropValue2, gotDoubleErr2 := rcvMsg.GetStringProperty(stringOfDoublePropName2)
+	gotUnsetPropValue, gotUnsetErr := rcvMsg.GetStringProperty(unsetPropName)
+	assert.Nil(t, gotStringErr)
+	assert.Nil(t, gotEmptyStrErr)
+	assert.Nil(t, gotIntErr)
+	assert.Nil(t, gotIntErr2)
+	assert.Nil(t, gotBoolErr)
+	assert.Nil(t, gotBoolErr2)
+	assert.Nil(t, gotDoubleErr)
+	assert.Nil(t, gotDoubleErr2)
+	assert.Nil(t, gotUnsetErr)
+	assert.Equal(t, stringOfStringValue, *gotStringPropValue)
+	assert.Equal(t, stringOfEmptyValue, *gotEmptyStrPropValue)
+	assert.Equal(t, stringOfIntValue, *gotIntPropValue)
+	assert.Equal(t, stringOfIntValue2, *gotIntPropValue2)
+	assert.Equal(t, stringOfBoolValue, *gotBoolPropValue)
+	assert.Equal(t, stringOfBoolValue2, *gotBoolPropValue2)
+	assert.Equal(t, stringOfDoubleValue, *gotDoublePropValue)
+	assert.Equal(t, stringOfDoubleValue2, *gotDoublePropValue2)
+	assert.Nil(t, gotUnsetPropValue)
+
+	// Get the string properties back as int.
+	gotStrAsIntValue, gotStringErr := rcvMsg.GetIntProperty(stringOfStringPropName)
+	gotEmptyStrAsIntValue, gotEmptyStrErr := rcvMsg.GetIntProperty(stringOfEmptyStrPropName)
+	gotStrIntAsIntValue, gotIntErr := rcvMsg.GetIntProperty(stringOfIntPropName)
+	gotStrIntAsIntValue2, gotIntErr2 := rcvMsg.GetIntProperty(stringOfIntPropName2)
+	gotStrBoolAsIntValue, gotBoolErr := rcvMsg.GetIntProperty(stringOfBoolPropName)
+	gotStrBoolAsIntValue2, gotBoolErr2 := rcvMsg.GetIntProperty(stringOfBoolPropName2)
+	gotStrDoubleAsIntValue, gotDoubleErr := rcvMsg.GetIntProperty(stringOfDoublePropName)
+	gotStrDoubleAsIntValue2, gotDoubleErr2 := rcvMsg.GetIntProperty(stringOfDoublePropName2)
+	gotUnsetAsIntValue, gotUnsetErr := rcvMsg.GetIntProperty(unsetPropName)
+	assert.NotNil(t, gotStringErr)
+	assert.Equal(t, "1055", gotStringErr.GetErrorCode())
+	assert.Equal(t, "MQJMS_E_BAD_TYPE", gotStringErr.GetReason())
+	assert.NotNil(t, gotEmptyStrErr)
+	assert.Nil(t, gotIntErr)
+	assert.Nil(t, gotIntErr2)
+	assert.NotNil(t, gotBoolErr)
+	assert.NotNil(t, gotBoolErr2)
+	assert.NotNil(t, gotDoubleErr)
+	assert.NotNil(t, gotDoubleErr2)
+	assert.Nil(t, gotUnsetErr)
+	assert.Equal(t, 0, gotStrAsIntValue)      // non-nil err
+	assert.Equal(t, 0, gotEmptyStrAsIntValue) // non-nil err
+	assert.Equal(t, 245, gotStrIntAsIntValue)
+	assert.Equal(t, -34678, gotStrIntAsIntValue2)
+	assert.Equal(t, 0, gotStrBoolAsIntValue)    // non-nil err
+	assert.Equal(t, 0, gotStrBoolAsIntValue2)   // non-nil err
+	assert.Equal(t, 0, gotStrDoubleAsIntValue)  // non-nil err
+	assert.Equal(t, 0, gotStrDoubleAsIntValue2) // non-nil err
+	assert.Equal(t, 0, gotUnsetAsIntValue)
+
+	// Get the string properties back as bool.
+	gotStrAsBoolValue, gotStringErr := rcvMsg.GetBooleanProperty(stringOfStringPropName)
+	gotEmptyStrAsBoolValue, gotEmptyStrErr := rcvMsg.GetBooleanProperty(stringOfEmptyStrPropName)
+	gotStrIntAsBoolValue, gotIntErr := rcvMsg.GetBooleanProperty(stringOfIntPropName)
+	gotStrIntAsBoolValue2, gotIntErr2 := rcvMsg.GetBooleanProperty(stringOfIntPropName2)
+	gotStrBoolAsBoolValue, gotBoolErr := rcvMsg.GetBooleanProperty(stringOfBoolPropName)
+	gotStrBoolAsBoolValue2, gotBoolErr2 := rcvMsg.GetBooleanProperty(stringOfBoolPropName2)
+	gotStrDoubleAsBoolValue, gotDoubleErr := rcvMsg.GetBooleanProperty(stringOfDoublePropName)
+	gotStrDoubleAsBoolValue2, gotDoubleErr2 := rcvMsg.GetBooleanProperty(stringOfDoublePropName2)
+	gotUnsetAsBoolValue, gotUnsetErr := rcvMsg.GetBooleanProperty(unsetPropName)
+	assert.NotNil(t, gotStringErr)
+	assert.Equal(t, "1055", gotStringErr.GetErrorCode())
+	assert.Equal(t, "MQJMS_E_BAD_TYPE", gotStringErr.GetReason())
+	assert.NotNil(t, gotEmptyStrErr)
+	assert.NotNil(t, gotIntErr)
+	assert.NotNil(t, gotIntErr2)
+	assert.Nil(t, gotBoolErr)
+	assert.Nil(t, gotBoolErr2)
+	assert.NotNil(t, gotDoubleErr)
+	assert.NotNil(t, gotDoubleErr2)
+	assert.Nil(t, gotUnsetErr)
+	assert.Equal(t, false, gotStrAsBoolValue)      // non-nil err
+	assert.Equal(t, false, gotEmptyStrAsBoolValue) // non-nil err
+	assert.Equal(t, false, gotStrIntAsBoolValue)   // non-nil err
+	assert.Equal(t, false, gotStrIntAsBoolValue2)  // non-nil err
+	assert.Equal(t, true, gotStrBoolAsBoolValue)
+	assert.Equal(t, false, gotStrBoolAsBoolValue2)
+	assert.Equal(t, false, gotStrDoubleAsBoolValue)  // non-nil err
+	assert.Equal(t, false, gotStrDoubleAsBoolValue2) // non-nil err
+	assert.Equal(t, false, gotUnsetAsBoolValue)
+
+	// Get the string properties back as double.
+	gotStrAsDoubleValue, gotStringErr := rcvMsg.GetDoubleProperty(stringOfStringPropName)
+	gotEmptyStrAsDoubleValue, gotEmptyStrErr := rcvMsg.GetDoubleProperty(stringOfEmptyStrPropName)
+	gotStrIntAsDoubleValue, gotIntErr := rcvMsg.GetDoubleProperty(stringOfIntPropName)
+	gotStrIntAsDoubleValue2, gotIntErr2 := rcvMsg.GetDoubleProperty(stringOfIntPropName2)
+	gotStrBoolAsDoubleValue, gotBoolErr := rcvMsg.GetDoubleProperty(stringOfBoolPropName)
+	gotStrBoolAsDoubleValue2, gotBoolErr2 := rcvMsg.GetDoubleProperty(stringOfBoolPropName2)
+	gotStrDoubleAsDoubleValue, gotDoubleErr := rcvMsg.GetDoubleProperty(stringOfDoublePropName)
+	gotStrDoubleAsDoubleValue2, gotDoubleErr2 := rcvMsg.GetDoubleProperty(stringOfDoublePropName2)
+	gotUnsetAsDoubleValue, gotUnsetErr := rcvMsg.GetDoubleProperty(unsetPropName)
+	assert.NotNil(t, gotStringErr)
+	assert.Equal(t, "1055", gotStringErr.GetErrorCode())
+	assert.Equal(t, "MQJMS_E_BAD_TYPE", gotStringErr.GetReason())
+	assert.NotNil(t, gotEmptyStrErr)
+	assert.Nil(t, gotIntErr)
+	assert.Nil(t, gotIntErr2)
+	assert.NotNil(t, gotBoolErr)
+	assert.NotNil(t, gotBoolErr2)
+	assert.Nil(t, gotDoubleErr)
+	assert.Nil(t, gotDoubleErr2)
+	assert.Nil(t, gotUnsetErr)
+	assert.Equal(t, float64(0), gotStrAsDoubleValue)      // non-nil err
+	assert.Equal(t, float64(0), gotEmptyStrAsDoubleValue) // non-nil err
+	assert.Equal(t, float64(245), gotStrIntAsDoubleValue)
+	assert.Equal(t, float64(-34678), gotStrIntAsDoubleValue2)
+	assert.Equal(t, float64(0), gotStrBoolAsDoubleValue)  // non-nil err
+	assert.Equal(t, float64(0), gotStrBoolAsDoubleValue2) // non-nil err
+	assert.Equal(t, float64(2.718527453), gotStrDoubleAsDoubleValue)
+	assert.Equal(t, float64(-25675752.212345678), gotStrDoubleAsDoubleValue2)
+	assert.Equal(t, float64(0), gotUnsetAsDoubleValue)
+
+}

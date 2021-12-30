@@ -712,3 +712,117 @@ func TestIntProperty(t *testing.T) {
 	assert.True(t, propExists) // exists, even though it is set to zero
 
 }
+
+/*
+ * Test the creation of a text message with an int property.
+ */
+func TestDoubleProperty(t *testing.T) {
+
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
+	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
+	assert.Nil(t, cfErr)
+
+	// Creates a connection to the queue manager, using defer to close it automatically
+	// at the end of the function (if it was created successfully)
+	context, ctxErr := cf.CreateContext()
+	assert.Nil(t, ctxErr)
+	if context != nil {
+		defer context.Close()
+	}
+
+	// Create a TextMessage and check that we can populate it
+	msgBody := "DoublePropertyRequestMsg"
+	txtMsg := context.CreateTextMessage()
+	txtMsg.SetText(msgBody)
+
+	propName := "myProperty"
+	propValue := float64(15867494.43857438)
+
+	// Test the empty value before the property is set.
+	gotPropValue, propErr := txtMsg.GetDoubleProperty(propName)
+	assert.Nil(t, propErr)
+	assert.Equal(t, float64(0), gotPropValue)
+	propExists, propErr := txtMsg.PropertyExists(propName)
+	assert.Nil(t, propErr)
+	assert.False(t, propExists)
+
+	// Test the ability to set properties before the message is sent.
+	retErr := txtMsg.SetDoubleProperty(propName, propValue)
+	assert.Nil(t, retErr)
+	gotPropValue, propErr = txtMsg.GetDoubleProperty(propName)
+	assert.Nil(t, propErr)
+	assert.Equal(t, propValue, gotPropValue)
+	assert.Equal(t, msgBody, *txtMsg.GetText())
+	propExists, propErr = txtMsg.PropertyExists(propName)
+	assert.Nil(t, propErr)
+	assert.True(t, propExists) // now exists
+
+	propName2 := "myProperty2"
+	propValue2 := float64(-246810.2255343676)
+	retErr = txtMsg.SetDoubleProperty(propName2, propValue2)
+	assert.Nil(t, retErr)
+	gotPropValue, propErr = txtMsg.GetDoubleProperty(propName2)
+	assert.Nil(t, propErr)
+	assert.Equal(t, propValue2, gotPropValue)
+
+	// Set a property then try to "unset" it by setting to 0
+	unsetPropName := "mySendThenRemovedString"
+	unsetPropValue := float64(12345.123456)
+	retErr = txtMsg.SetDoubleProperty(unsetPropName, unsetPropValue)
+	assert.Nil(t, retErr)
+	gotPropValue, propErr = txtMsg.GetDoubleProperty(unsetPropName)
+	assert.Nil(t, propErr)
+	assert.Equal(t, unsetPropValue, gotPropValue)
+	retErr = txtMsg.SetDoubleProperty(unsetPropName, 0)
+	assert.Nil(t, retErr)
+	gotPropValue, propErr = txtMsg.GetDoubleProperty(unsetPropName)
+	assert.Nil(t, propErr)
+	assert.Equal(t, float64(0), gotPropValue)
+
+	// Set up objects for send/receive
+	queue := context.CreateQueue("DEV.QUEUE.1")
+	consumer, errCons := context.CreateConsumer(queue)
+	if consumer != nil {
+		defer consumer.Close()
+	}
+	assert.Nil(t, errCons)
+
+	// Now send the message and get it back again, to check that it roundtripped.
+	errSend := context.CreateProducer().SetTimeToLive(10000).Send(queue, txtMsg)
+	assert.Nil(t, errSend)
+
+	rcvMsg, errRvc := consumer.ReceiveNoWait()
+	assert.Nil(t, errRvc)
+	assert.NotNil(t, rcvMsg)
+
+	switch msg := rcvMsg.(type) {
+	case jms20subset.TextMessage:
+		assert.Equal(t, msgBody, *msg.GetText())
+	default:
+		assert.Fail(t, "Got something other than a text message")
+	}
+
+	// Check property is available on received message.
+	gotPropValue, propErr = rcvMsg.GetDoubleProperty(propName)
+	assert.Nil(t, propErr)
+	assert.Equal(t, propValue, gotPropValue)
+	propExists, propErr = txtMsg.PropertyExists(propName)
+	assert.Nil(t, propErr)
+	assert.True(t, propExists) // now exists
+
+	gotPropValue, propErr = rcvMsg.GetDoubleProperty(propName2)
+	assert.Nil(t, propErr)
+	assert.Equal(t, propValue2, gotPropValue)
+
+	// Properties that are not set should return nil
+	gotPropValue, propErr = rcvMsg.GetDoubleProperty("nonExistentProperty")
+	assert.Nil(t, propErr)
+	assert.Equal(t, float64(0), gotPropValue)
+	gotPropValue, propErr = rcvMsg.GetDoubleProperty(unsetPropName)
+	assert.Nil(t, propErr)
+	assert.Equal(t, float64(0), gotPropValue)
+	propExists, propErr = txtMsg.PropertyExists(unsetPropName)
+	assert.Nil(t, propErr)
+	assert.True(t, propExists) // exists, even though it is set to zero
+
+}

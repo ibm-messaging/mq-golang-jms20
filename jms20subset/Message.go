@@ -65,6 +65,13 @@ type Message interface {
 	// Returns 0 if the named property is not set.
 	GetIntProperty(name string) (int, JMSException)
 
+	// SetDoubleProperty enables an application to set a double-type (float64) message property.
+	SetDoubleProperty(name string, value float64) JMSException
+
+	// GetDoubleProperty returns the double (float64) value of a named message property.
+	// Returns 0 if the named property is not set.
+	GetDoubleProperty(name string) (float64, JMSException)
+
 	// PropertyExists returns true if the named message property exists on this message.
 	PropertyExists(name string) (bool, JMSException)
 

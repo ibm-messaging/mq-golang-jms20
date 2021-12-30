@@ -464,6 +464,65 @@ func (msg *MessageImpl) GetDoubleProperty(name string) (float64, jms20subset.JMS
 	return valueRet, retErr
 }
 
+// SetBooleanProperty enables an application to set a bool-type message property.
+func (msg *MessageImpl) SetBooleanProperty(name string, value bool) jms20subset.JMSException {
+	var retErr jms20subset.JMSException
+
+	var linkedErr error
+
+	smpo := ibmmq.NewMQSMPO()
+	pd := ibmmq.NewMQPD()
+
+	linkedErr = msg.msgHandle.SetMP(smpo, name, pd, value)
+
+	if linkedErr != nil {
+		rcInt := int(linkedErr.(*ibmmq.MQReturn).MQRC)
+		errCode := strconv.Itoa(rcInt)
+		reason := ibmmq.MQItoString("RC", rcInt)
+		retErr = jms20subset.CreateJMSException(reason, errCode, linkedErr)
+	}
+
+	return retErr
+}
+
+// GetBooleanProperty returns the bool value of a named message property.
+// Returns false if the named property is not set.
+func (msg *MessageImpl) GetBooleanProperty(name string) (bool, jms20subset.JMSException) {
+
+	var valueRet bool
+	var retErr jms20subset.JMSException
+
+	impo := ibmmq.NewMQIMPO()
+	pd := ibmmq.NewMQPD()
+
+	_, value, err := msg.msgHandle.InqMP(impo, pd, name)
+
+	if err == nil {
+		switch valueTyped := value.(type) {
+		case bool:
+			valueRet = valueTyped
+		default:
+			// TODO - other conversions
+			//fmt.Println("Other type", value, reflect.TypeOf(value))
+		}
+	} else {
+
+		mqret := err.(*ibmmq.MQReturn)
+		if mqret.MQRC == ibmmq.MQRC_PROPERTY_NOT_AVAILABLE {
+			// This indicates that the requested property does not exist.
+			// valueRet will remain with its default value of nil
+			return false, nil
+		} else {
+			// Err was not nil
+			rcInt := int(mqret.MQRC)
+			errCode := strconv.Itoa(rcInt)
+			reason := ibmmq.MQItoString("RC", rcInt)
+			retErr = jms20subset.CreateJMSException(reason, errCode, mqret)
+		}
+	}
+	return valueRet, retErr
+}
+
 // PropertyExists returns true if the named message property exists on this message.
 func (msg *MessageImpl) PropertyExists(name string) (bool, jms20subset.JMSException) {
 

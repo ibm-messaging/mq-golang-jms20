@@ -72,6 +72,13 @@ type Message interface {
 	// Returns 0 if the named property is not set.
 	GetDoubleProperty(name string) (float64, JMSException)
 
+	// SetBooleanProperty enables an application to set a bool-type message property.
+	SetBooleanProperty(name string, value bool) JMSException
+
+	// GetBooleanProperty returns the bool value of a named message property.
+	// Returns false if the named property is not set.
+	GetBooleanProperty(name string) (bool, JMSException)
+
 	// PropertyExists returns true if the named message property exists on this message.
 	PropertyExists(name string) (bool, JMSException)
 

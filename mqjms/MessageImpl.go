@@ -337,6 +337,10 @@ func (msg *MessageImpl) GetStringProperty(name string) (*string, jms20subset.JMS
 				retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_FAILED_REASON,
 					MessageImpl_PROPERTY_CONVERT_FAILED_CODE, parseErr)
 			}
+		case bool:
+			valueStr = strconv.FormatBool(valueTyped)
+		case float64:
+			valueStr = fmt.Sprintf("%g", valueTyped)
 		default:
 			// TODO - other conversions
 		}
@@ -400,6 +404,17 @@ func (msg *MessageImpl) GetIntProperty(name string) (int, jms20subset.JMSExcepti
 			valueRet = int(valueTyped)
 		case string:
 			valueRet, parseErr = strconv.Atoi(valueTyped)
+			if parseErr != nil {
+				retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_FAILED_REASON,
+					MessageImpl_PROPERTY_CONVERT_FAILED_CODE, parseErr)
+			}
+		case bool:
+			if valueTyped {
+				valueRet = 1
+			}
+		case float64:
+			s := fmt.Sprintf("%.0f", valueTyped)
+			valueRet, parseErr = strconv.Atoi(s)
 			if parseErr != nil {
 				retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_FAILED_REASON,
 					MessageImpl_PROPERTY_CONVERT_FAILED_CODE, parseErr)
@@ -474,6 +489,10 @@ func (msg *MessageImpl) GetDoubleProperty(name string) (float64, jms20subset.JMS
 			}
 		case int64:
 			valueRet = float64(valueTyped)
+		case bool:
+			if valueTyped {
+				valueRet = 1
+			}
 		default:
 			// TODO - other conversions
 			//fmt.Println("Other type", value, reflect.TypeOf(value))
@@ -544,6 +563,11 @@ func (msg *MessageImpl) GetBooleanProperty(name string) (bool, jms20subset.JMSEx
 			}
 		case int64:
 			// Conversion from int to bool is true iff n=1
+			if valueTyped == 1 {
+				valueRet = true
+			}
+		case float64:
+			// Conversion from float64 to bool is true iff n=1
 			if valueTyped == 1 {
 				valueRet = true
 			}

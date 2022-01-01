@@ -1417,3 +1417,246 @@ func TestPropertyTypesIntConversion(t *testing.T) {
 	assert.Equal(t, float64(0), gotDoubleUnsetPropValue)
 
 }
+
+/*
+ * Test the conversion between different int message properties and other data types.
+ */
+func TestPropertyTypesBoolConversion(t *testing.T) {
+
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
+	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
+	assert.Nil(t, cfErr)
+
+	// Creates a connection to the queue manager, using defer to close it automatically
+	// at the end of the function (if it was created successfully)
+	context, ctxErr := cf.CreateContext()
+	assert.Nil(t, ctxErr)
+	if context != nil {
+		defer context.Close()
+	}
+
+	msg := context.CreateTextMessage()
+
+	// Set up some different int properties
+	truePropName := "intOne"
+	trueValue := true
+	falsePropName := "intZero"
+	falseValue := false
+
+	msg.SetBooleanProperty(truePropName, trueValue)
+	msg.SetBooleanProperty(falsePropName, falseValue)
+
+	// Set up objects for send/receive
+	queue := context.CreateQueue("DEV.QUEUE.1")
+	consumer, errCons := context.CreateConsumer(queue)
+	if consumer != nil {
+		defer consumer.Close()
+	}
+	assert.Nil(t, errCons)
+
+	// Now send the message and get it back again, to check that it roundtripped.
+	errSend := context.CreateProducer().SetTimeToLive(10000).Send(queue, msg)
+	assert.Nil(t, errSend)
+
+	rcvMsg, errRvc := consumer.ReceiveNoWait()
+	assert.Nil(t, errRvc)
+	assert.NotNil(t, rcvMsg)
+
+	// Check bool properties were set correctly
+	gotTrueValue, gotTrueErr := rcvMsg.GetBooleanProperty(truePropName)
+	gotFalseValue, gotFalseErr := rcvMsg.GetBooleanProperty(falsePropName)
+	assert.Nil(t, gotTrueErr)
+	assert.Nil(t, gotFalseErr)
+	assert.Equal(t, trueValue, gotTrueValue)
+	assert.Equal(t, falseValue, gotFalseValue)
+
+	// Convert back as string
+	gotStrTrueValue, gotTrueErr := rcvMsg.GetStringProperty(truePropName)
+	gotStrFalseValue, gotFalseErr := rcvMsg.GetStringProperty(falsePropName)
+	assert.Nil(t, gotTrueErr)
+	assert.Nil(t, gotFalseErr)
+	assert.Equal(t, "true", *gotStrTrueValue)
+	assert.Equal(t, "false", *gotStrFalseValue)
+
+	// Convert back as int
+	gotIntTrueValue, gotTrueErr := rcvMsg.GetIntProperty(truePropName)
+	gotIntFalseValue, gotFalseErr := rcvMsg.GetIntProperty(falsePropName)
+	assert.Nil(t, gotTrueErr)
+	assert.Nil(t, gotFalseErr)
+	assert.Equal(t, 1, gotIntTrueValue)
+	assert.Equal(t, 0, gotIntFalseValue)
+
+	// Convert back as double
+	gotDoubleTrueValue, gotTrueErr := rcvMsg.GetDoubleProperty(truePropName)
+	gotDoubleFalseValue, gotFalseErr := rcvMsg.GetDoubleProperty(falsePropName)
+	assert.Nil(t, gotTrueErr)
+	assert.Nil(t, gotFalseErr)
+	assert.Equal(t, float64(1), gotDoubleTrueValue)
+	assert.Equal(t, float64(0), gotDoubleFalseValue)
+
+}
+
+/*
+ * Test the conversion between different int message properties and other data types.
+ */
+func TestPropertyTypesDoubleConversion(t *testing.T) {
+
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
+	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
+	assert.Nil(t, cfErr)
+
+	// Creates a connection to the queue manager, using defer to close it automatically
+	// at the end of the function (if it was created successfully)
+	context, ctxErr := cf.CreateContext()
+	assert.Nil(t, ctxErr)
+	if context != nil {
+		defer context.Close()
+	}
+
+	msg := context.CreateTextMessage()
+
+	unsetPropName := "thisPropertyIsNotSet"
+
+	// Set up some different int properties
+	doubleOnePropName := "intOne"
+	doubleOneValue := float64(1)
+	doubleZeroPropName := "intZero"
+	doubleZeroValue := float64(0)
+	doubleMinusOnePropName := "intMinusOne"
+	doubleMinusOneValue := float64(-1)
+
+	doubleLargePosPropName := "largePositive"
+	doubleLargePosValue := float64(48632675)
+	doubleLargeNegPropName := "largeNegative"
+	doubleLargeNegValue := float64(-3789753467)
+
+	doubleLargeDecimalPropName := "largePositiveDecimal"
+	doubleLargeDecimalValue := float64(3867493.68473625)
+	doubleLargeNegativeDecimalPropName := "largeNegativeDecimal"
+	doubleLargeNegativeDecimalValue := float64(-87654335674.383656)
+
+	msg.SetDoubleProperty(doubleOnePropName, doubleOneValue)
+	msg.SetDoubleProperty(doubleZeroPropName, doubleZeroValue)
+	msg.SetDoubleProperty(doubleMinusOnePropName, doubleMinusOneValue)
+	msg.SetDoubleProperty(doubleLargePosPropName, doubleLargePosValue)
+	msg.SetDoubleProperty(doubleLargeNegPropName, doubleLargeNegValue)
+	msg.SetDoubleProperty(doubleLargeDecimalPropName, doubleLargeDecimalValue)
+	msg.SetDoubleProperty(doubleLargeNegativeDecimalPropName, doubleLargeNegativeDecimalValue)
+
+	// Set up objects for send/receive
+	queue := context.CreateQueue("DEV.QUEUE.1")
+	consumer, errCons := context.CreateConsumer(queue)
+	if consumer != nil {
+		defer consumer.Close()
+	}
+	assert.Nil(t, errCons)
+
+	// Now send the message and get it back again, to check that it roundtripped.
+	errSend := context.CreateProducer().SetTimeToLive(10000).Send(queue, msg)
+	assert.Nil(t, errSend)
+
+	rcvMsg, errRvc := consumer.ReceiveNoWait()
+	assert.Nil(t, errRvc)
+	assert.NotNil(t, rcvMsg)
+
+	// Check double properties were set correctly
+	gotDoubleOneValue, gotOneErr := rcvMsg.GetDoubleProperty(doubleOnePropName)
+	gotDoubleZeroValue, gotZeroErr := rcvMsg.GetDoubleProperty(doubleZeroPropName)
+	gotDoubleMinusOneValue, gotMinusOneErr := rcvMsg.GetDoubleProperty(doubleMinusOnePropName)
+	gotDoubleLargePosValue, gotLargePosErr := rcvMsg.GetDoubleProperty(doubleLargePosPropName)
+	gotDoubleLargeNegValue, gotLargeNegErr := rcvMsg.GetDoubleProperty(doubleLargeNegPropName)
+	gotDoubleLargePosDecimalValue, gotLargeDecPosErr := rcvMsg.GetDoubleProperty(doubleLargeDecimalPropName)
+	gotDoubleLargeNegDecimalValue, gotLargeDecNegErr := rcvMsg.GetDoubleProperty(doubleLargeNegativeDecimalPropName)
+	gotDoubleUnsetPropValue, gotUnsetErr := rcvMsg.GetDoubleProperty(unsetPropName)
+	assert.Nil(t, gotOneErr)
+	assert.Nil(t, gotZeroErr)
+	assert.Nil(t, gotMinusOneErr)
+	assert.Nil(t, gotLargePosErr)
+	assert.Nil(t, gotLargeNegErr)
+	assert.Nil(t, gotLargeDecPosErr)
+	assert.Nil(t, gotLargeDecNegErr)
+	assert.Nil(t, gotUnsetErr)
+	assert.Equal(t, float64(1), gotDoubleOneValue)
+	assert.Equal(t, float64(0), gotDoubleZeroValue)
+	assert.Equal(t, float64(-1), gotDoubleMinusOneValue)
+	assert.Equal(t, float64(48632675), gotDoubleLargePosValue)
+	assert.Equal(t, float64(-3789753467), gotDoubleLargeNegValue)
+	assert.Equal(t, float64(3867493.68473625), gotDoubleLargePosDecimalValue)
+	assert.Equal(t, float64(-87654335674.383656), gotDoubleLargeNegDecimalValue)
+	assert.Equal(t, float64(0), gotDoubleUnsetPropValue)
+
+	// Convert back as int
+	gotIntOneValue, gotOneErr := rcvMsg.GetIntProperty(doubleOnePropName)
+	gotIntZeroValue, gotZeroErr := rcvMsg.GetIntProperty(doubleZeroPropName)
+	gotIntMinusOneValue, gotMinusOneErr := rcvMsg.GetIntProperty(doubleMinusOnePropName)
+	gotIntLargePosValue, gotLargePosErr := rcvMsg.GetIntProperty(doubleLargePosPropName)
+	gotIntLargeNegValue, gotLargeNegErr := rcvMsg.GetIntProperty(doubleLargeNegPropName)
+	gotIntLargePosDecimalValue, gotLargeDecPosErr := rcvMsg.GetIntProperty(doubleLargeDecimalPropName)
+	gotIntLargeNegDecimalValue, gotLargeDecNegErr := rcvMsg.GetIntProperty(doubleLargeNegativeDecimalPropName)
+	gotIntUnsetPropValue, gotUnsetErr := rcvMsg.GetIntProperty(unsetPropName)
+	assert.Nil(t, gotOneErr)
+	assert.Nil(t, gotZeroErr)
+	assert.Nil(t, gotMinusOneErr)
+	assert.Nil(t, gotLargePosErr)
+	assert.Nil(t, gotLargeNegErr)
+	assert.Nil(t, gotLargeDecPosErr)
+	assert.Nil(t, gotLargeDecNegErr)
+	assert.Nil(t, gotUnsetErr)
+	assert.Equal(t, 1, gotIntOneValue)
+	assert.Equal(t, 0, gotIntZeroValue)
+	assert.Equal(t, -1, gotIntMinusOneValue)
+	assert.Equal(t, 48632675, gotIntLargePosValue)
+	assert.Equal(t, -3789753467, gotIntLargeNegValue)
+	assert.Equal(t, 3867494, gotIntLargePosDecimalValue)
+	assert.Equal(t, -87654335674, gotIntLargeNegDecimalValue)
+	assert.Equal(t, 0, gotIntUnsetPropValue)
+
+	// Convert back as string
+	gotStrOneValue, gotOneErr := rcvMsg.GetStringProperty(doubleOnePropName)
+	gotStrZeroValue, gotZeroErr := rcvMsg.GetStringProperty(doubleZeroPropName)
+	gotStrMinusOneValue, gotMinusOneErr := rcvMsg.GetStringProperty(doubleMinusOnePropName)
+	gotStrLargePosValue, gotLargePosErr := rcvMsg.GetStringProperty(doubleLargePosPropName)
+	gotStrLargeNegValue, gotLargeNegErr := rcvMsg.GetStringProperty(doubleLargeNegPropName)
+	gotStrLargePosDecimalValue, gotLargeDecPosErr := rcvMsg.GetStringProperty(doubleLargeDecimalPropName)
+	gotStrLargeNegDecimalValue, gotLargeDecNegErr := rcvMsg.GetStringProperty(doubleLargeNegativeDecimalPropName)
+	assert.Nil(t, gotOneErr)
+	assert.Nil(t, gotZeroErr)
+	assert.Nil(t, gotMinusOneErr)
+	assert.Nil(t, gotLargePosErr)
+	assert.Nil(t, gotLargeNegErr)
+	assert.Nil(t, gotLargeDecPosErr)
+	assert.Nil(t, gotLargeDecNegErr)
+	assert.Nil(t, gotUnsetErr)
+	assert.Equal(t, "1", *gotStrOneValue)
+	assert.Equal(t, "0", *gotStrZeroValue)
+	assert.Equal(t, "-1", *gotStrMinusOneValue)
+	assert.Equal(t, "4.8632675e+07", *gotStrLargePosValue)
+	assert.Equal(t, "-3.789753467e+09", *gotStrLargeNegValue)
+	assert.Equal(t, "3.86749368473625e+06", *gotStrLargePosDecimalValue)
+	assert.Equal(t, "-8.765433567438365e+10", *gotStrLargeNegDecimalValue)
+
+	// Convert back as bool
+	gotBoolOneValue, gotOneErr := rcvMsg.GetBooleanProperty(doubleOnePropName)
+	gotBoolZeroValue, gotZeroErr := rcvMsg.GetBooleanProperty(doubleZeroPropName)
+	gotBoolMinusOneValue, gotMinusOneErr := rcvMsg.GetBooleanProperty(doubleMinusOnePropName)
+	gotBoolLargePosValue, gotLargePosErr := rcvMsg.GetBooleanProperty(doubleLargePosPropName)
+	gotBoolLargeNegValue, gotLargeNegErr := rcvMsg.GetBooleanProperty(doubleLargeNegPropName)
+	gotBoolLargePosDecimalValue, gotLargeDecPosErr := rcvMsg.GetBooleanProperty(doubleLargeDecimalPropName)
+	gotBoolLargeNegDecimalValue, gotLargeDecNegErr := rcvMsg.GetBooleanProperty(doubleLargeNegativeDecimalPropName)
+	assert.Nil(t, gotOneErr)
+	assert.Nil(t, gotZeroErr)
+	assert.Nil(t, gotMinusOneErr)
+	assert.Nil(t, gotLargePosErr)
+	assert.Nil(t, gotLargeNegErr)
+	assert.Nil(t, gotLargeDecPosErr)
+	assert.Nil(t, gotLargeDecNegErr)
+	assert.Nil(t, gotUnsetErr)
+	assert.Equal(t, true, gotBoolOneValue)
+	assert.Equal(t, false, gotBoolZeroValue)
+	assert.Equal(t, false, gotBoolMinusOneValue)
+	assert.Equal(t, false, gotBoolLargePosValue)
+	assert.Equal(t, false, gotBoolLargeNegValue)
+	assert.Equal(t, false, gotBoolLargePosDecimalValue)
+	assert.Equal(t, false, gotBoolLargeNegDecimalValue)
+
+}

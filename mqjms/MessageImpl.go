@@ -325,9 +325,18 @@ func (msg *MessageImpl) GetStringProperty(name string) (*string, jms20subset.JMS
 	_, value, err := msg.msgHandle.InqMP(impo, pd, name)
 
 	if err == nil {
+
+		var parseErr error
+
 		switch valueTyped := value.(type) {
 		case string:
 			valueStr = valueTyped
+		case int64:
+			valueStr = strconv.FormatInt(valueTyped, 10)
+			if parseErr != nil {
+				retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_FAILED_REASON,
+					MessageImpl_PROPERTY_CONVERT_FAILED_CODE, parseErr)
+			}
 		default:
 			// TODO - other conversions
 		}
@@ -463,6 +472,8 @@ func (msg *MessageImpl) GetDoubleProperty(name string) (float64, jms20subset.JMS
 				retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_FAILED_REASON,
 					MessageImpl_PROPERTY_CONVERT_FAILED_CODE, parseErr)
 			}
+		case int64:
+			valueRet = float64(valueTyped)
 		default:
 			// TODO - other conversions
 			//fmt.Println("Other type", value, reflect.TypeOf(value))
@@ -530,6 +541,11 @@ func (msg *MessageImpl) GetBooleanProperty(name string) (bool, jms20subset.JMSEx
 			if parseErr != nil {
 				retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_FAILED_REASON,
 					MessageImpl_PROPERTY_CONVERT_FAILED_CODE, parseErr)
+			}
+		case int64:
+			// Conversion from int to bool is true iff n=1
+			if valueTyped == 1 {
+				valueRet = true
 			}
 		default:
 			// TODO - other conversions

@@ -10,6 +10,7 @@
 package mqjms
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
@@ -114,27 +115,77 @@ func (ctx ContextImpl) CreateConsumerWithSelector(dest jms20subset.Destination, 
 
 // CreateTextMessage is a JMS standard mechanism for creating a TextMessage.
 func (ctx ContextImpl) CreateTextMessage() jms20subset.TextMessage {
-	return &TextMessageImpl{}
+
+	var bodyStr *string
+	thisMsgHandle := createMsgHandle(ctx.qMgr)
+
+	return &TextMessageImpl{
+		bodyStr: bodyStr,
+		MessageImpl: MessageImpl{
+			msgHandle: &thisMsgHandle,
+		},
+	}
+}
+
+// createMsgHandle creates a new message handle object that can be used to
+// store and retrieve message properties.
+func createMsgHandle(qMgr ibmmq.MQQueueManager) ibmmq.MQMessageHandle {
+
+	cmho := ibmmq.NewMQCMHO()
+	thisMsgHandle, err := qMgr.CrtMH(cmho)
+
+	if err != nil {
+		// No easy way to pass this error back to the application without
+		// changing the function signature, which could break existing
+		// applications.
+		fmt.Println(err)
+	}
+
+	return thisMsgHandle
+
 }
 
 // CreateTextMessageWithString is a JMS standard mechanism for creating a TextMessage
 // and initialise it with the chosen text string.
 func (ctx ContextImpl) CreateTextMessageWithString(txt string) jms20subset.TextMessage {
-	msg := TextMessageImpl{}
-	msg.SetText(txt)
-	return &msg
+
+	thisMsgHandle := createMsgHandle(ctx.qMgr)
+
+	msg := &TextMessageImpl{
+		bodyStr: &txt,
+		MessageImpl: MessageImpl{
+			msgHandle: &thisMsgHandle,
+		},
+	}
+
+	return msg
 }
 
 // CreateBytesMessage is a JMS standard mechanism for creating a BytesMessage.
 func (ctx ContextImpl) CreateBytesMessage() jms20subset.BytesMessage {
-	return &BytesMessageImpl{}
+
+	var thisBodyBytes *[]byte
+	thisMsgHandle := createMsgHandle(ctx.qMgr)
+
+	return &BytesMessageImpl{
+		bodyBytes: thisBodyBytes,
+		MessageImpl: MessageImpl{
+			msgHandle: &thisMsgHandle,
+		},
+	}
 }
 
 // CreateBytesMessageWithBytes is a JMS standard mechanism for creating a BytesMessage.
 func (ctx ContextImpl) CreateBytesMessageWithBytes(bytes []byte) jms20subset.BytesMessage {
-	msg := BytesMessageImpl{}
-	msg.WriteBytes(bytes)
-	return &msg
+
+	thisMsgHandle := createMsgHandle(ctx.qMgr)
+
+	return &BytesMessageImpl{
+		bodyBytes: &bytes,
+		MessageImpl: MessageImpl{
+			msgHandle: &thisMsgHandle,
+		},
+	}
 }
 
 // Commit confirms all messages that were sent under this transaction.

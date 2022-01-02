@@ -21,10 +21,16 @@ import (
 	ibmmq "github.com/ibm-messaging/mq-golang/v5/ibmmq"
 )
 
+const MessageImpl_PROPERTY_CONVERT_FAILED_REASON string = "MQJMS_E_BAD_TYPE"
+const MessageImpl_PROPERTY_CONVERT_FAILED_CODE string = "1055"
+const MessageImpl_PROPERTY_CONVERT_NOTSUPPORTED_REASON string = "MQJMS_E_UNSUPPORTED_TYPE"
+const MessageImpl_PROPERTY_CONVERT_NOTSUPPORTED_CODE string = "1056	"
+
 // MessageImpl contains the IBM MQ specific attributes that are
 // common to all types of message.
 type MessageImpl struct {
-	mqmd *ibmmq.MQMD
+	mqmd      *ibmmq.MQMD
+	msgHandle *ibmmq.MQMessageHandle
 }
 
 // GetJMSDeliveryMode extracts the persistence setting from this message
@@ -259,7 +265,7 @@ func (msg *MessageImpl) GetJMSTimestamp() int64 {
 
 // GetApplName retrieves the PutApplName field from the MQMD.
 // This method is not exposed on the JMS style interface and is mainly for testing purposes.
-func (msg MessageImpl) GetApplName() string {
+func (msg *MessageImpl) GetApplName() string {
 	applName := ""
 
 	// Note that if there is no MQMD then there is no correlID stored.
@@ -271,4 +277,418 @@ func (msg MessageImpl) GetApplName() string {
 	}
 
 	return applName
+}
+
+// SetStringProperty enables an application to set a string-type message property.
+//
+// value is *string which allows a nil value to be specified, to unset an individual
+// property.
+func (msg *MessageImpl) SetStringProperty(name string, value *string) jms20subset.JMSException {
+	var retErr jms20subset.JMSException
+
+	var linkedErr error
+
+	if value != nil {
+		// Looking to set a value
+		var valueStr string
+		valueStr = *value
+
+		smpo := ibmmq.NewMQSMPO()
+		pd := ibmmq.NewMQPD()
+
+		linkedErr = msg.msgHandle.SetMP(smpo, name, pd, valueStr)
+	} else {
+		// Looking to unset a value
+		dmpo := ibmmq.NewMQDMPO()
+
+		linkedErr = msg.msgHandle.DltMP(dmpo, name)
+	}
+
+	if linkedErr != nil {
+		rcInt := int(linkedErr.(*ibmmq.MQReturn).MQRC)
+		errCode := strconv.Itoa(rcInt)
+		reason := ibmmq.MQItoString("RC", rcInt)
+		retErr = jms20subset.CreateJMSException(reason, errCode, linkedErr)
+	}
+
+	return retErr
+}
+
+// GetStringProperty returns the string value of a named message property.
+// Returns nil if the named property is not set.
+func (msg *MessageImpl) GetStringProperty(name string) (*string, jms20subset.JMSException) {
+
+	var valueStrPtr *string
+	var retErr jms20subset.JMSException
+
+	impo := ibmmq.NewMQIMPO()
+	pd := ibmmq.NewMQPD()
+
+	_, value, err := msg.msgHandle.InqMP(impo, pd, name)
+
+	if err == nil {
+
+		var parseErr error
+
+		switch valueTyped := value.(type) {
+		case string:
+			valueStrPtr = &valueTyped
+		case int64:
+			valueStr := strconv.FormatInt(valueTyped, 10)
+			valueStrPtr = &valueStr
+			if parseErr != nil {
+				retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_FAILED_REASON,
+					MessageImpl_PROPERTY_CONVERT_FAILED_CODE, parseErr)
+			}
+		case bool:
+			valueStr := strconv.FormatBool(valueTyped)
+			valueStrPtr = &valueStr
+		case float64:
+			valueStr := fmt.Sprintf("%g", valueTyped)
+			valueStrPtr = &valueStr
+		default:
+			retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_NOTSUPPORTED_REASON,
+				MessageImpl_PROPERTY_CONVERT_NOTSUPPORTED_CODE, parseErr)
+		}
+	} else {
+
+		mqret := err.(*ibmmq.MQReturn)
+		if mqret.MQRC == ibmmq.MQRC_PROPERTY_NOT_AVAILABLE {
+			// This indicates that the requested property does not exist.
+			// valueStr will remain with its default value
+			return nil, nil
+		} else {
+			// Err was not nil
+			rcInt := int(mqret.MQRC)
+			errCode := strconv.Itoa(rcInt)
+			reason := ibmmq.MQItoString("RC", rcInt)
+			retErr = jms20subset.CreateJMSException(reason, errCode, mqret)
+
+			valueStrPtr = nil
+		}
+	}
+	return valueStrPtr, retErr
+}
+
+// SetIntProperty enables an application to set a int-type message property.
+func (msg *MessageImpl) SetIntProperty(name string, value int) jms20subset.JMSException {
+	var retErr jms20subset.JMSException
+
+	var linkedErr error
+
+	smpo := ibmmq.NewMQSMPO()
+	pd := ibmmq.NewMQPD()
+
+	linkedErr = msg.msgHandle.SetMP(smpo, name, pd, value)
+
+	if linkedErr != nil {
+		rcInt := int(linkedErr.(*ibmmq.MQReturn).MQRC)
+		errCode := strconv.Itoa(rcInt)
+		reason := ibmmq.MQItoString("RC", rcInt)
+		retErr = jms20subset.CreateJMSException(reason, errCode, linkedErr)
+	}
+
+	return retErr
+}
+
+// GetIntProperty returns the int value of a named message property.
+// Returns 0 if the named property is not set.
+func (msg *MessageImpl) GetIntProperty(name string) (int, jms20subset.JMSException) {
+
+	var valueRet int
+	var retErr jms20subset.JMSException
+
+	impo := ibmmq.NewMQIMPO()
+	pd := ibmmq.NewMQPD()
+
+	_, value, err := msg.msgHandle.InqMP(impo, pd, name)
+
+	if err == nil {
+
+		var parseErr error
+
+		switch valueTyped := value.(type) {
+		case int64:
+			valueRet = int(valueTyped)
+		case string:
+			valueRet, parseErr = strconv.Atoi(valueTyped)
+		case bool:
+			if valueTyped {
+				valueRet = 1
+			}
+		case float64:
+			s := fmt.Sprintf("%.0f", valueTyped)
+			valueRet, parseErr = strconv.Atoi(s)
+		default:
+			retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_NOTSUPPORTED_REASON,
+				MessageImpl_PROPERTY_CONVERT_NOTSUPPORTED_CODE, parseErr)
+		}
+
+		if parseErr != nil {
+			retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_FAILED_REASON,
+				MessageImpl_PROPERTY_CONVERT_FAILED_CODE, parseErr)
+		}
+
+	} else {
+
+		mqret := err.(*ibmmq.MQReturn)
+		if mqret.MQRC == ibmmq.MQRC_PROPERTY_NOT_AVAILABLE {
+			// This indicates that the requested property does not exist.
+			// valueRet will remain with its default value
+			return 0, nil
+		} else {
+			// Err was not nil
+			rcInt := int(mqret.MQRC)
+			errCode := strconv.Itoa(rcInt)
+			reason := ibmmq.MQItoString("RC", rcInt)
+			retErr = jms20subset.CreateJMSException(reason, errCode, mqret)
+		}
+	}
+	return valueRet, retErr
+}
+
+// SetDoubleProperty enables an application to set a double-type (float64) message property.
+func (msg *MessageImpl) SetDoubleProperty(name string, value float64) jms20subset.JMSException {
+	var retErr jms20subset.JMSException
+
+	var linkedErr error
+
+	smpo := ibmmq.NewMQSMPO()
+	pd := ibmmq.NewMQPD()
+
+	linkedErr = msg.msgHandle.SetMP(smpo, name, pd, value)
+
+	if linkedErr != nil {
+		rcInt := int(linkedErr.(*ibmmq.MQReturn).MQRC)
+		errCode := strconv.Itoa(rcInt)
+		reason := ibmmq.MQItoString("RC", rcInt)
+		retErr = jms20subset.CreateJMSException(reason, errCode, linkedErr)
+	}
+
+	return retErr
+}
+
+// GetDoubleProperty returns the double (float64) value of a named message property.
+// Returns 0 if the named property is not set.
+func (msg *MessageImpl) GetDoubleProperty(name string) (float64, jms20subset.JMSException) {
+
+	var valueRet float64
+	var retErr jms20subset.JMSException
+
+	impo := ibmmq.NewMQIMPO()
+	pd := ibmmq.NewMQPD()
+
+	_, value, err := msg.msgHandle.InqMP(impo, pd, name)
+
+	if err == nil {
+
+		var parseErr error
+
+		switch valueTyped := value.(type) {
+		case float64:
+			valueRet = valueTyped
+		case string:
+			valueRet, parseErr = strconv.ParseFloat(valueTyped, 64)
+			if parseErr != nil {
+				retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_FAILED_REASON,
+					MessageImpl_PROPERTY_CONVERT_FAILED_CODE, parseErr)
+			}
+		case int64:
+			valueRet = float64(valueTyped)
+		case bool:
+			if valueTyped {
+				valueRet = 1
+			}
+		default:
+			retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_NOTSUPPORTED_REASON,
+				MessageImpl_PROPERTY_CONVERT_NOTSUPPORTED_CODE, parseErr)
+		}
+	} else {
+
+		mqret := err.(*ibmmq.MQReturn)
+		if mqret.MQRC == ibmmq.MQRC_PROPERTY_NOT_AVAILABLE {
+			// This indicates that the requested property does not exist.
+			// valueRet will remain with its default value
+			return 0, nil
+		} else {
+			// Err was not nil
+			rcInt := int(mqret.MQRC)
+			errCode := strconv.Itoa(rcInt)
+			reason := ibmmq.MQItoString("RC", rcInt)
+			retErr = jms20subset.CreateJMSException(reason, errCode, mqret)
+		}
+	}
+	return valueRet, retErr
+}
+
+// SetBooleanProperty enables an application to set a bool-type message property.
+func (msg *MessageImpl) SetBooleanProperty(name string, value bool) jms20subset.JMSException {
+	var retErr jms20subset.JMSException
+
+	var linkedErr error
+
+	smpo := ibmmq.NewMQSMPO()
+	pd := ibmmq.NewMQPD()
+
+	linkedErr = msg.msgHandle.SetMP(smpo, name, pd, value)
+
+	if linkedErr != nil {
+		rcInt := int(linkedErr.(*ibmmq.MQReturn).MQRC)
+		errCode := strconv.Itoa(rcInt)
+		reason := ibmmq.MQItoString("RC", rcInt)
+		retErr = jms20subset.CreateJMSException(reason, errCode, linkedErr)
+	}
+
+	return retErr
+}
+
+// GetBooleanProperty returns the bool value of a named message property.
+// Returns false if the named property is not set.
+func (msg *MessageImpl) GetBooleanProperty(name string) (bool, jms20subset.JMSException) {
+
+	var valueRet bool
+	var retErr jms20subset.JMSException
+
+	impo := ibmmq.NewMQIMPO()
+	pd := ibmmq.NewMQPD()
+
+	_, value, err := msg.msgHandle.InqMP(impo, pd, name)
+
+	if err == nil {
+
+		var parseErr error
+
+		switch valueTyped := value.(type) {
+		case bool:
+			valueRet = valueTyped
+		case string:
+			valueRet, parseErr = strconv.ParseBool(valueTyped)
+			if parseErr != nil {
+				retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_FAILED_REASON,
+					MessageImpl_PROPERTY_CONVERT_FAILED_CODE, parseErr)
+			}
+		case int64:
+			// Conversion from int to bool is true iff n=1
+			if valueTyped == 1 {
+				valueRet = true
+			}
+		case float64:
+			// Conversion from float64 to bool is true iff n=1
+			if valueTyped == 1 {
+				valueRet = true
+			}
+		default:
+			retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_NOTSUPPORTED_REASON,
+				MessageImpl_PROPERTY_CONVERT_NOTSUPPORTED_CODE, parseErr)
+		}
+	} else {
+
+		mqret := err.(*ibmmq.MQReturn)
+		if mqret.MQRC == ibmmq.MQRC_PROPERTY_NOT_AVAILABLE {
+			// This indicates that the requested property does not exist.
+			// valueRet will remain with its default value
+			return false, nil
+		} else {
+			// Err was not nil
+			rcInt := int(mqret.MQRC)
+			errCode := strconv.Itoa(rcInt)
+			reason := ibmmq.MQItoString("RC", rcInt)
+			retErr = jms20subset.CreateJMSException(reason, errCode, mqret)
+		}
+	}
+	return valueRet, retErr
+}
+
+// PropertyExists returns true if the named message property exists on this message.
+func (msg *MessageImpl) PropertyExists(name string) (bool, jms20subset.JMSException) {
+
+	found, _, retErr := msg.getPropertiesInternal(name)
+	return found, retErr
+
+}
+
+// GetPropertyNames returns a slice of strings containing the name of every message
+// property on this message.
+// Returns a zero length slice if no message properties are set.
+func (msg *MessageImpl) GetPropertyNames() ([]string, jms20subset.JMSException) {
+
+	_, propNames, retErr := msg.getPropertiesInternal("")
+	return propNames, retErr
+}
+
+// getPropertiesInternal is an internal helper function that provides a largely
+// identical implication for two application-facing functions;
+// - PropertyExists supplies a non-empty name parameter to check whether that property exists
+// - GetPropertyNames supplies an empty name parameter to get a []string of all property names
+func (msg *MessageImpl) getPropertiesInternal(name string) (bool, []string, jms20subset.JMSException) {
+
+	impo := ibmmq.NewMQIMPO()
+	pd := ibmmq.NewMQPD()
+	propNames := []string{}
+
+	impo.Options = ibmmq.MQIMPO_CONVERT_VALUE | ibmmq.MQIMPO_INQ_FIRST
+	for propsToRead := true; propsToRead; {
+
+		gotName, _, err := msg.msgHandle.InqMP(impo, pd, "%")
+		impo.Options = ibmmq.MQIMPO_CONVERT_VALUE | ibmmq.MQIMPO_INQ_NEXT
+
+		if err != nil {
+			mqret := err.(*ibmmq.MQReturn)
+			if mqret.MQRC != ibmmq.MQRC_PROPERTY_NOT_AVAILABLE {
+
+				rcInt := int(mqret.MQRC)
+				errCode := strconv.Itoa(rcInt)
+				reason := ibmmq.MQItoString("RC", rcInt)
+				retErr := jms20subset.CreateJMSException(reason, errCode, mqret)
+				return false, nil, retErr
+
+			} else {
+				// Read all properties (property not available)
+				return false, propNames, nil
+			}
+
+		} else if "" == name {
+			// We are looking to get back a list of all properties
+			propNames = append(propNames, gotName)
+
+		} else if gotName == name {
+			// We are just checking for the existence of this one property (shortcut)
+			return true, nil, nil
+		}
+
+	}
+
+	// Went through all properties and didn't find a match
+	return false, propNames, nil
+}
+
+// ClearProperties removes all message properties from this message.
+func (msg *MessageImpl) ClearProperties() jms20subset.JMSException {
+
+	// Get the list of all property names, as we have to delete
+	// them individually
+	allPropNames, jmsErr := msg.GetPropertyNames()
+
+	if jmsErr == nil {
+
+		dmpo := ibmmq.NewMQDMPO()
+
+		for _, propName := range allPropNames {
+
+			// Delete this property
+			err := msg.msgHandle.DltMP(dmpo, propName)
+
+			if err != nil {
+				rcInt := int(err.(*ibmmq.MQReturn).MQRC)
+				errCode := strconv.Itoa(rcInt)
+				reason := ibmmq.MQItoString("RC", rcInt)
+				jmsErr = jms20subset.CreateJMSException(reason, errCode, err)
+				break
+			}
+		}
+
+	}
+
+	return jmsErr
+
 }

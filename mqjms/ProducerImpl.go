@@ -103,6 +103,9 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 			putmqmd = typedMsg.mqmd
 		}
 
+		// Pass up the handle containing the message properties
+		pmo.OriginalMsgHandle = *typedMsg.msgHandle
+
 		// Store the Put MQMD so that we can later retrieve "out" fields like MsgId
 		typedMsg.mqmd = putmqmd
 
@@ -120,6 +123,9 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 		if typedMsg.mqmd != nil {
 			putmqmd = typedMsg.mqmd
 		}
+
+		// Pass up the handle containing the message properties
+		pmo.OriginalMsgHandle = *typedMsg.msgHandle
 
 		// Store the Put MQMD so that we can later retrieve "out" fields like MsgId
 		typedMsg.mqmd = putmqmd

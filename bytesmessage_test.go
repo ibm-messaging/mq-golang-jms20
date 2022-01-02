@@ -89,7 +89,7 @@ func TestBytesMessageNilBody(t *testing.T) {
 		assert.Equal(t, 0, msg2.GetBodyLength())
 		assert.Equal(t, []byte{}, *msg2.ReadBytes())
 	default:
-		assert.Fail(t, "Got something other than a text message")
+		assert.Fail(t, "Got something other than a bytes message")
 	}
 
 }
@@ -138,7 +138,7 @@ func TestBytesMessageWithBody(t *testing.T) {
 		assert.Equal(t, len(msgBody), msg2.GetBodyLength())
 		assert.Equal(t, msgBody, *msg2.ReadBytes())
 	default:
-		assert.Fail(t, "Got something other than a text message")
+		assert.Fail(t, "Got something other than a bytes message")
 	}
 
 }
@@ -186,7 +186,7 @@ func TestBytesMessageInitWithBytes(t *testing.T) {
 		assert.Equal(t, len(msgBody), msg2.GetBodyLength())
 		assert.Equal(t, msgBody, *msg2.ReadBytes())
 	default:
-		assert.Fail(t, "Got something other than a text message")
+		assert.Fail(t, "Got something other than a bytes message")
 	}
 
 }
@@ -231,7 +231,7 @@ func TestBytesMessageProducerSendBytes(t *testing.T) {
 		assert.Equal(t, 13, msg2.GetBodyLength())
 		assert.Equal(t, msgBody, *msg2.ReadBytes())
 	default:
-		assert.Fail(t, "Got something other than a text message")
+		assert.Fail(t, "Got something other than a bytes message")
 	}
 
 }

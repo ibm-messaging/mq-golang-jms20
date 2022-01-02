@@ -47,4 +47,46 @@ type Message interface {
 	// Typical values returned by this method include
 	// jms20subset.DeliveryMode_PERSISTENT and jms20subset.DeliveryMode_NON_PERSISTENT
 	GetJMSDeliveryMode() int
+
+	// SetStringProperty enables an application to set a string-type message property.
+	//
+	// value is *string which allows a nil value to be specified, to unset an individual
+	// property.
+	SetStringProperty(name string, value *string) JMSException
+
+	// GetStringProperty returns the string value of a named message property.
+	// Returns nil if the named property is not set.
+	GetStringProperty(name string) (*string, JMSException)
+
+	// SetIntProperty enables an application to set a int-type message property.
+	SetIntProperty(name string, value int) JMSException
+
+	// GetIntProperty returns the int value of a named message property.
+	// Returns 0 if the named property is not set.
+	GetIntProperty(name string) (int, JMSException)
+
+	// SetDoubleProperty enables an application to set a double-type (float64) message property.
+	SetDoubleProperty(name string, value float64) JMSException
+
+	// GetDoubleProperty returns the double (float64) value of a named message property.
+	// Returns 0 if the named property is not set.
+	GetDoubleProperty(name string) (float64, JMSException)
+
+	// SetBooleanProperty enables an application to set a bool-type message property.
+	SetBooleanProperty(name string, value bool) JMSException
+
+	// GetBooleanProperty returns the bool value of a named message property.
+	// Returns false if the named property is not set.
+	GetBooleanProperty(name string) (bool, JMSException)
+
+	// PropertyExists returns true if the named message property exists on this message.
+	PropertyExists(name string) (bool, JMSException)
+
+	// GetPropertyNames returns a slice of strings containing the name of every message
+	// property on this message.
+	// Returns a zero length slice if no message properties are set.
+	GetPropertyNames() ([]string, JMSException)
+
+	// ClearProperties removes all message properties from this message.
+	ClearProperties() JMSException
 }

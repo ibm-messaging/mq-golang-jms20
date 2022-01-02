@@ -23,6 +23,8 @@ import (
 
 const MessageImpl_PROPERTY_CONVERT_FAILED_REASON string = "MQJMS_E_BAD_TYPE"
 const MessageImpl_PROPERTY_CONVERT_FAILED_CODE string = "1055"
+const MessageImpl_PROPERTY_CONVERT_NOTSUPPORTED_REASON string = "MQJMS_E_UNSUPPORTED_TYPE"
+const MessageImpl_PROPERTY_CONVERT_NOTSUPPORTED_CODE string = "1056	"
 
 // MessageImpl contains the IBM MQ specific attributes that are
 // common to all types of message.
@@ -316,7 +318,7 @@ func (msg *MessageImpl) SetStringProperty(name string, value *string) jms20subse
 // Returns nil if the named property is not set.
 func (msg *MessageImpl) GetStringProperty(name string) (*string, jms20subset.JMSException) {
 
-	var valueStr string
+	var valueStrPtr *string
 	var retErr jms20subset.JMSException
 
 	impo := ibmmq.NewMQIMPO()
@@ -330,26 +332,30 @@ func (msg *MessageImpl) GetStringProperty(name string) (*string, jms20subset.JMS
 
 		switch valueTyped := value.(type) {
 		case string:
-			valueStr = valueTyped
+			valueStrPtr = &valueTyped
 		case int64:
-			valueStr = strconv.FormatInt(valueTyped, 10)
+			valueStr := strconv.FormatInt(valueTyped, 10)
+			valueStrPtr = &valueStr
 			if parseErr != nil {
 				retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_FAILED_REASON,
 					MessageImpl_PROPERTY_CONVERT_FAILED_CODE, parseErr)
 			}
 		case bool:
-			valueStr = strconv.FormatBool(valueTyped)
+			valueStr := strconv.FormatBool(valueTyped)
+			valueStrPtr = &valueStr
 		case float64:
-			valueStr = fmt.Sprintf("%g", valueTyped)
+			valueStr := fmt.Sprintf("%g", valueTyped)
+			valueStrPtr = &valueStr
 		default:
-			// TODO - other conversions
+			retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_NOTSUPPORTED_REASON,
+				MessageImpl_PROPERTY_CONVERT_NOTSUPPORTED_CODE, parseErr)
 		}
 	} else {
 
 		mqret := err.(*ibmmq.MQReturn)
 		if mqret.MQRC == ibmmq.MQRC_PROPERTY_NOT_AVAILABLE {
 			// This indicates that the requested property does not exist.
-			// valueStr will remain with its default value of nil
+			// valueStr will remain with its default value
 			return nil, nil
 		} else {
 			// Err was not nil
@@ -357,9 +363,11 @@ func (msg *MessageImpl) GetStringProperty(name string) (*string, jms20subset.JMS
 			errCode := strconv.Itoa(rcInt)
 			reason := ibmmq.MQItoString("RC", rcInt)
 			retErr = jms20subset.CreateJMSException(reason, errCode, mqret)
+
+			valueStrPtr = nil
 		}
 	}
-	return &valueStr, retErr
+	return valueStrPtr, retErr
 }
 
 // SetIntProperty enables an application to set a int-type message property.
@@ -404,10 +412,6 @@ func (msg *MessageImpl) GetIntProperty(name string) (int, jms20subset.JMSExcepti
 			valueRet = int(valueTyped)
 		case string:
 			valueRet, parseErr = strconv.Atoi(valueTyped)
-			if parseErr != nil {
-				retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_FAILED_REASON,
-					MessageImpl_PROPERTY_CONVERT_FAILED_CODE, parseErr)
-			}
 		case bool:
 			if valueTyped {
 				valueRet = 1
@@ -415,20 +419,22 @@ func (msg *MessageImpl) GetIntProperty(name string) (int, jms20subset.JMSExcepti
 		case float64:
 			s := fmt.Sprintf("%.0f", valueTyped)
 			valueRet, parseErr = strconv.Atoi(s)
-			if parseErr != nil {
-				retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_FAILED_REASON,
-					MessageImpl_PROPERTY_CONVERT_FAILED_CODE, parseErr)
-			}
 		default:
-			// TODO - other conversions
-			//fmt.Println("Other type", value, reflect.TypeOf(value))
+			retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_NOTSUPPORTED_REASON,
+				MessageImpl_PROPERTY_CONVERT_NOTSUPPORTED_CODE, parseErr)
 		}
+
+		if parseErr != nil {
+			retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_FAILED_REASON,
+				MessageImpl_PROPERTY_CONVERT_FAILED_CODE, parseErr)
+		}
+
 	} else {
 
 		mqret := err.(*ibmmq.MQReturn)
 		if mqret.MQRC == ibmmq.MQRC_PROPERTY_NOT_AVAILABLE {
 			// This indicates that the requested property does not exist.
-			// valueRet will remain with its default value of nil
+			// valueRet will remain with its default value
 			return 0, nil
 		} else {
 			// Err was not nil
@@ -494,15 +500,15 @@ func (msg *MessageImpl) GetDoubleProperty(name string) (float64, jms20subset.JMS
 				valueRet = 1
 			}
 		default:
-			// TODO - other conversions
-			//fmt.Println("Other type", value, reflect.TypeOf(value))
+			retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_NOTSUPPORTED_REASON,
+				MessageImpl_PROPERTY_CONVERT_NOTSUPPORTED_CODE, parseErr)
 		}
 	} else {
 
 		mqret := err.(*ibmmq.MQReturn)
 		if mqret.MQRC == ibmmq.MQRC_PROPERTY_NOT_AVAILABLE {
 			// This indicates that the requested property does not exist.
-			// valueRet will remain with its default value of nil
+			// valueRet will remain with its default value
 			return 0, nil
 		} else {
 			// Err was not nil
@@ -572,15 +578,15 @@ func (msg *MessageImpl) GetBooleanProperty(name string) (bool, jms20subset.JMSEx
 				valueRet = true
 			}
 		default:
-			// TODO - other conversions
-			//fmt.Println("Other type", value, reflect.TypeOf(value))
+			retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_NOTSUPPORTED_REASON,
+				MessageImpl_PROPERTY_CONVERT_NOTSUPPORTED_CODE, parseErr)
 		}
 	} else {
 
 		mqret := err.(*ibmmq.MQReturn)
 		if mqret.MQRC == ibmmq.MQRC_PROPERTY_NOT_AVAILABLE {
 			// This indicates that the requested property does not exist.
-			// valueRet will remain with its default value of nil
+			// valueRet will remain with its default value
 			return false, nil
 		} else {
 			// Err was not nil
@@ -603,7 +609,7 @@ func (msg *MessageImpl) PropertyExists(name string) (bool, jms20subset.JMSExcept
 
 // GetPropertyNames returns a slice of strings containing the name of every message
 // property on this message.
-// Returns a zero length slice if no message properties are defined.
+// Returns a zero length slice if no message properties are set.
 func (msg *MessageImpl) GetPropertyNames() ([]string, jms20subset.JMSException) {
 
 	_, propNames, retErr := msg.getPropertiesInternal("")

@@ -84,7 +84,7 @@ type Message interface {
 
 	// GetPropertyNames returns a slice of strings containing the name of every message
 	// property on this message.
-	// Returns a zero length slice if no message properties are defined.
+	// Returns a zero length slice if no message properties are set.
 	GetPropertyNames() ([]string, JMSException)
 
 	// ClearProperties removes all message properties from this message.

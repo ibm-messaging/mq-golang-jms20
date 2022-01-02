@@ -18,23 +18,9 @@ import (
 )
 
 /*
- * mq-golang: SetMP, DltMP, InqMP
- * https://github.com/ibm-messaging/mq-golang/blob/95e9b8b09a1fc167747de7d066c49adb86e14dda/ibmmq/mqi.go#L1080
- *
- * mq-golang sample application to set properties
- * https://github.com/ibm-messaging/mq-golang/blob/master/samples/amqsprop.go#L49
- *
- * JMS: SetStringProperty, GetStringProperty,
- * https://github.com/eclipse-ee4j/messaging/blob/master/api/src/main/java/jakarta/jms/Message.java#L1119
- *
- * Property conversion between types
- *
- */
-
-/*
  * Test the creation of a text message with a string property.
  */
-func TestStringPropertyTextMsg(t *testing.T) {
+func TestPropertyStringTextMsg(t *testing.T) {
 
 	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
@@ -132,6 +118,13 @@ func TestStringPropertyTextMsg(t *testing.T) {
 	gotPropValue, propErr = rcvMsg.GetStringProperty(unsetPropName)
 	assert.Nil(t, propErr)
 	assert.Nil(t, gotPropValue)
+
+	// Error checking on property names
+	emptyNameValue, emptyNameErr := rcvMsg.GetStringProperty("")
+	assert.NotNil(t, emptyNameErr)
+	assert.Equal(t, "2513", emptyNameErr.GetErrorCode())
+	assert.Equal(t, "MQRC_PROPERTY_NAME_LENGTH_ERR", emptyNameErr.GetReason())
+	assert.Nil(t, emptyNameValue)
 
 }
 
@@ -475,7 +468,7 @@ func TestPropertyClearProperties(t *testing.T) {
 /*
  * Test send and receive of a text message with a string property and no content.
  */
-func TestStringPropertyTextMessageNilBody(t *testing.T) {
+func TestPropertyStringTextMessageNilBody(t *testing.T) {
 
 	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
@@ -532,7 +525,7 @@ func TestStringPropertyTextMessageNilBody(t *testing.T) {
  * body. It's difficult to distinguish nil and empty string so we are expecting
  * that the received message will contain a nil body.
  */
-func TestStringPropertyTextMessageEmptyBody(t *testing.T) {
+func TestPropertyStringTextMessageEmptyBody(t *testing.T) {
 
 	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
@@ -599,7 +592,7 @@ func TestStringPropertyTextMessageEmptyBody(t *testing.T) {
 /*
  * Test the creation of a text message with an int property.
  */
-func TestIntProperty(t *testing.T) {
+func TestPropertyInt(t *testing.T) {
 
 	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
@@ -689,7 +682,7 @@ func TestIntProperty(t *testing.T) {
 	gotPropValue, propErr = rcvMsg.GetIntProperty(propName)
 	assert.Nil(t, propErr)
 	assert.Equal(t, propValue, gotPropValue)
-	propExists, propErr = txtMsg.PropertyExists(propName)
+	propExists, propErr = rcvMsg.PropertyExists(propName)
 	assert.Nil(t, propErr)
 	assert.True(t, propExists) // now exists
 
@@ -704,16 +697,23 @@ func TestIntProperty(t *testing.T) {
 	gotPropValue, propErr = rcvMsg.GetIntProperty(unsetPropName)
 	assert.Nil(t, propErr)
 	assert.Equal(t, 0, gotPropValue)
-	propExists, propErr = txtMsg.PropertyExists(unsetPropName)
+	propExists, propErr = rcvMsg.PropertyExists(unsetPropName)
 	assert.Nil(t, propErr)
 	assert.True(t, propExists) // exists, even though it is set to zero
+
+	// Error checking on property names
+	emptyNameValue, emptyNameErr := rcvMsg.GetStringProperty("")
+	assert.NotNil(t, emptyNameErr)
+	assert.Equal(t, "2513", emptyNameErr.GetErrorCode())
+	assert.Equal(t, "MQRC_PROPERTY_NAME_LENGTH_ERR", emptyNameErr.GetReason())
+	assert.Nil(t, emptyNameValue)
 
 }
 
 /*
  * Test the creation of a text message with a double property.
  */
-func TestDoubleProperty(t *testing.T) {
+func TestPropertyDouble(t *testing.T) {
 
 	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
@@ -803,7 +803,7 @@ func TestDoubleProperty(t *testing.T) {
 	gotPropValue, propErr = rcvMsg.GetDoubleProperty(propName)
 	assert.Nil(t, propErr)
 	assert.Equal(t, propValue, gotPropValue)
-	propExists, propErr = txtMsg.PropertyExists(propName)
+	propExists, propErr = rcvMsg.PropertyExists(propName)
 	assert.Nil(t, propErr)
 	assert.True(t, propExists) // now exists
 
@@ -818,16 +818,23 @@ func TestDoubleProperty(t *testing.T) {
 	gotPropValue, propErr = rcvMsg.GetDoubleProperty(unsetPropName)
 	assert.Nil(t, propErr)
 	assert.Equal(t, float64(0), gotPropValue)
-	propExists, propErr = txtMsg.PropertyExists(unsetPropName)
+	propExists, propErr = rcvMsg.PropertyExists(unsetPropName)
 	assert.Nil(t, propErr)
 	assert.True(t, propExists) // exists, even though it is set to zero
+
+	// Error checking on property names
+	emptyNameValue, emptyNameErr := rcvMsg.GetStringProperty("")
+	assert.NotNil(t, emptyNameErr)
+	assert.Equal(t, "2513", emptyNameErr.GetErrorCode())
+	assert.Equal(t, "MQRC_PROPERTY_NAME_LENGTH_ERR", emptyNameErr.GetReason())
+	assert.Nil(t, emptyNameValue)
 
 }
 
 /*
  * Test the creation of a text message with a boolean property.
  */
-func TestBooleanProperty(t *testing.T) {
+func TestPropertyBoolean(t *testing.T) {
 
 	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
@@ -917,7 +924,7 @@ func TestBooleanProperty(t *testing.T) {
 	gotPropValue, propErr = rcvMsg.GetBooleanProperty(propName)
 	assert.Nil(t, propErr)
 	assert.Equal(t, propValue, gotPropValue)
-	propExists, propErr = txtMsg.PropertyExists(propName)
+	propExists, propErr = rcvMsg.PropertyExists(propName)
 	assert.Nil(t, propErr)
 	assert.True(t, propExists) // now exists
 
@@ -932,9 +939,16 @@ func TestBooleanProperty(t *testing.T) {
 	gotPropValue, propErr = rcvMsg.GetBooleanProperty(unsetPropName)
 	assert.Nil(t, propErr)
 	assert.Equal(t, false, gotPropValue)
-	propExists, propErr = txtMsg.PropertyExists(unsetPropName)
+	propExists, propErr = rcvMsg.PropertyExists(unsetPropName)
 	assert.Nil(t, propErr)
 	assert.True(t, propExists) // exists, even though it is set to zero
+
+	// Error checking on property names
+	emptyNameValue, emptyNameErr := rcvMsg.GetStringProperty("")
+	assert.NotNil(t, emptyNameErr)
+	assert.Equal(t, "2513", emptyNameErr.GetErrorCode())
+	assert.Equal(t, "MQRC_PROPERTY_NAME_LENGTH_ERR", emptyNameErr.GetReason())
+	assert.Nil(t, emptyNameValue)
 
 }
 
@@ -1092,7 +1106,7 @@ func TestPropertyBytesMsg(t *testing.T) {
 /*
  * Test the conversion between string message properties and other data types.
  */
-func TestPropertyTypesStringConversion(t *testing.T) {
+func TestPropertyConversionString(t *testing.T) {
 
 	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
@@ -1283,7 +1297,7 @@ func TestPropertyTypesStringConversion(t *testing.T) {
 /*
  * Test the conversion between different int message properties and other data types.
  */
-func TestPropertyTypesIntConversion(t *testing.T) {
+func TestPropertyConversionInt(t *testing.T) {
 
 	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
@@ -1421,7 +1435,7 @@ func TestPropertyTypesIntConversion(t *testing.T) {
 /*
  * Test the conversion between different int message properties and other data types.
  */
-func TestPropertyTypesBoolConversion(t *testing.T) {
+func TestPropertyConversionBool(t *testing.T) {
 
 	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
@@ -1499,7 +1513,7 @@ func TestPropertyTypesBoolConversion(t *testing.T) {
 /*
  * Test the conversion between different int message properties and other data types.
  */
-func TestPropertyTypesDoubleConversion(t *testing.T) {
+func TestPropertyConversionDouble(t *testing.T) {
 
 	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()

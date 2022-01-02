@@ -117,6 +117,7 @@ your own error handling or logging.
 * Send/receive a slice of bytes (BytesMessage) - [bytesmessage_test.go](bytesmessage_test.go)
 * Receive with wait [receivewithwait_test.go](receivewithwait_test.go)
 * Send a message as Persistent or NonPersistent - [deliverymode_test.go](deliverymode_test.go)
+* Set a message property of type string, int, double or boolean - [messageproperties_test.go](messageproperties_test.go)
 * Get by CorrelationID - [getbycorrelid_test.go](getbycorrelid_test.go)
 * Request/reply messaging pattern - [requestreply_test.go](requestreply_test.go)
 * Send and receive under a local transaction - [local_transaction_test.go](local_transaction_test.go)

@@ -125,11 +125,10 @@ func TestSelectorParsing(t *testing.T) {
 	assert.Nil(t, correlIDErr)
 	assert.NotNil(t, correlIDConsumer)
 
-	// Check that we get an appropriate error when trying to create a consumer with
-	// a selector that is not (yet) supported.
+	// JMSMessageID selectors are now supported.
 	msgIDConsumer, msgIDErr := context.CreateConsumerWithSelector(queue, "JMSMessageID = 'ID:1234'")
-	assert.NotNil(t, msgIDErr)
-	assert.Nil(t, msgIDConsumer)
+	assert.Nil(t, msgIDErr)
+	assert.NotNil(t, msgIDConsumer)
 
 	// Check that we get an appropriate error when trying to create a consumer with
 	// a malformed selector.

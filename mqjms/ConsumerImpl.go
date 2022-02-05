@@ -107,7 +107,7 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 			var msgBodyStr *string
 
 			if datalen > 0 {
-				strContent := strings.TrimSpace(string(buffer[:datalen]))
+				strContent := string(buffer[:datalen])
 				msgBodyStr = &strContent
 			}
 

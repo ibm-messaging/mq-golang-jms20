@@ -292,17 +292,23 @@ func applySelector(selector string, getmqmd *ibmmq.MQMD, gmo *ibmmq.MQGMO) error
 		return nil
 	}
 
-	// looking for something like "JMSCorrelationID = '01020304050607'"
+	// looking for something like
+	//   "JMSCorrelationID = '01020304050607'"
+	//   "JMSMessageID = '414d5120514d31202020202020202020bec0ba61034dbe40'"
 	clauseSplits := strings.Split(selector, "=")
 
 	if len(clauseSplits) != 2 {
 		return errors.New("Unable to parse selector " + selector)
 	}
 
-	if strings.TrimSpace(clauseSplits[0]) != "JMSCorrelationID" {
-		// Currently we only support correlID selectors, so error out quickly
+	selectorFieldName := strings.TrimSpace(clauseSplits[0])
+
+	if selectorFieldName != "JMSCorrelationID" &&
+		selectorFieldName != "JMSMessageID" {
+
+		// Currently we only support correlID and messageID selectors, so error out quickly
 		// if we see anything else.
-		return errors.New("Only selectors on JMSCorrelationID are currently supported")
+		return errors.New("Only selectors on JMSCorrelationID and JMSMessageID are currently supported")
 	}
 
 	// Trim the value.
@@ -314,13 +320,28 @@ func applySelector(selector string, getmqmd *ibmmq.MQMD, gmo *ibmmq.MQGMO) error
 
 		// Parse out the value, and convert it to bytes
 		stringSplits := strings.Split(value, "'")
-		correlIDStr := stringSplits[1]
+		selectorValue := stringSplits[1]
 
-		if correlIDStr != "" {
-			correlBytes := convertStringToMQBytes(correlIDStr)
-			getmqmd.CorrelId = correlBytes
+		// For CorrelID and MsgID there is typically an "ID:" prefix on the
+		// selector value that needs to be trimmed off before we convert it.
+		if strings.HasPrefix(selectorValue, "ID:") {
+			selectorValue = selectorValue[3:]
+		}
+
+		if selectorValue != "" {
+
+			selectorValueBytes := convertStringToMQBytes(selectorValue)
+
+			switch selectorFieldName {
+			case "JMSCorrelationID":
+				getmqmd.CorrelId = selectorValueBytes
+
+			case "JMSMessageID":
+				getmqmd.MsgId = selectorValueBytes
+			}
+
 		} else {
-			return errors.New("No value was found for CorrelationID")
+			return errors.New("No value was found for selector string")
 		}
 
 	} else {

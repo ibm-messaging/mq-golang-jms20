@@ -137,3 +137,68 @@ func TestTextMessageEmptyBody(t *testing.T) {
 	}
 
 }
+
+/*
+ * Test the behaviour for send/receive of a text message with a body that starts
+ * and ends with spaces. Reported issue that the trailing spaces are trimmed from
+ * the returned message.
+ */
+func TestTextMessageWithSpaces(t *testing.T) {
+
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
+	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
+	assert.Nil(t, cfErr)
+
+	// Creates a connection to the queue manager, using defer to close it automatically
+	// at the end of the function (if it was created successfully)
+	context, ctxErr := cf.CreateContext()
+	assert.Nil(t, ctxErr)
+	if context != nil {
+		defer context.Close()
+	}
+
+	// Create a TextMessage
+	msgText := "   This is some text with spaces before and after   "
+	msg := context.CreateTextMessageWithString(msgText)
+
+	// Now send the message and get it back again.
+	queue := context.CreateQueue("DEV.QUEUE.1")
+	producer := context.CreateProducer().SetTimeToLive(5000)
+	errSend := producer.Send(queue, msg)
+	assert.Nil(t, errSend)
+
+	consumer, errCons := context.CreateConsumer(queue)
+	assert.Nil(t, errCons)
+	if consumer != nil {
+		defer consumer.Close()
+	}
+
+	rcvMsg, errRvc := consumer.ReceiveNoWait()
+	assert.Nil(t, errRvc)
+	assert.NotNil(t, rcvMsg)
+
+	switch msg := rcvMsg.(type) {
+	case jms20subset.TextMessage:
+		assert.Equal(t, msgText, *msg.GetText())
+	default:
+		assert.Fail(t, "Got something other than a text message")
+	}
+
+	// Create a TextMessage consisting of all spaces.
+	msgText2 := "         "
+	msg2 := context.CreateTextMessageWithString(msgText2)
+	errSend = producer.Send(queue, msg2)
+	assert.Nil(t, errSend)
+
+	rcvMsg2, errRvc2 := consumer.ReceiveNoWait()
+	assert.Nil(t, errRvc2)
+	assert.NotNil(t, rcvMsg2)
+
+	switch msg := rcvMsg2.(type) {
+	case jms20subset.TextMessage:
+		assert.Equal(t, msgText2, *msg.GetText())
+	default:
+		assert.Fail(t, "Got something other than a text message")
+	}
+
+}

@@ -322,6 +322,12 @@ func applySelector(selector string, getmqmd *ibmmq.MQMD, gmo *ibmmq.MQGMO) error
 		stringSplits := strings.Split(value, "'")
 		selectorValue := stringSplits[1]
 
+		// For CorrelID and MsgID there is typically an "ID:" prefix on the
+		// selector value that needs to be trimmed off before we convert it.
+		if strings.HasPrefix(selectorValue, "ID:") {
+			selectorValue = selectorValue[3:]
+		}
+
 		if selectorValue != "" {
 
 			selectorValueBytes := convertStringToMQBytes(selectorValue)

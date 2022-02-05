@@ -130,6 +130,11 @@ func TestSelectorParsing(t *testing.T) {
 	assert.Nil(t, msgIDErr)
 	assert.NotNil(t, msgIDConsumer)
 
+	// MessageID selector that has an empty ID
+	failMsgIDConsumer, failMsgIDErr := context.CreateConsumerWithSelector(queue, "JMSMessageID = 'ID:'")
+	assert.NotNil(t, failMsgIDErr)
+	assert.Nil(t, failMsgIDConsumer)
+
 	// Check that we get an appropriate error when trying to create a consumer with
 	// a malformed selector.
 	fail1Consumer, fail1Err := context.CreateConsumerWithSelector(queue, "JMSCorrelationID")

@@ -113,6 +113,54 @@ func (ctx ContextImpl) CreateConsumerWithSelector(dest jms20subset.Destination, 
 	return consumer, retErr
 }
 
+// CreateBrowser creates a consumer for the specified Destination so that
+// an application can look at messages without removing them.
+func (ctx ContextImpl) CreateBrowser(dest jms20subset.Destination) (jms20subset.QueueBrowser, jms20subset.JMSException) {
+
+	// Set up the necessary objects to open the queue
+	mqod := ibmmq.NewMQOD()
+	var openOptions int32
+	openOptions = ibmmq.MQOO_FAIL_IF_QUIESCING
+	openOptions |= ibmmq.MQOO_INPUT_AS_Q_DEF
+	openOptions |= ibmmq.MQOO_BROWSE // This is the important part for browsing!
+	mqod.ObjectType = ibmmq.MQOT_Q
+	mqod.ObjectName = dest.GetDestinationName()
+
+	var retErr jms20subset.JMSException
+	var browser jms20subset.QueueBrowser
+
+	// Invoke the MQ command to open the queue.
+	qObject, err := ctx.qMgr.Open(mqod, openOptions)
+
+	if err == nil {
+
+		// Success - store the necessary objects away for later use to receive
+		// messages.
+		consumer := ConsumerImpl{
+			ctx:     ctx,
+			qObject: qObject,
+		}
+
+		brse := int32(ibmmq.MQGMO_BROWSE_FIRST)
+
+		browser = &BrowserImpl{
+			browseOption: &brse,
+			ConsumerImpl: consumer,
+		}
+
+	} else {
+
+		// Error occurred - extract the failure details and return to the caller.
+		rcInt := int(err.(*ibmmq.MQReturn).MQRC)
+		errCode := strconv.Itoa(rcInt)
+		reason := ibmmq.MQItoString("RC", rcInt)
+		retErr = jms20subset.CreateJMSException(reason, errCode, err)
+
+	}
+
+	return browser, retErr
+}
+
 // CreateTextMessage is a JMS standard mechanism for creating a TextMessage.
 func (ctx ContextImpl) CreateTextMessage() jms20subset.TextMessage {
 

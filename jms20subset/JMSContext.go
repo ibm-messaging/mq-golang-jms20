@@ -41,6 +41,10 @@ type JMSContext interface {
 	// name and different parameters we must use a different function name.
 	CreateConsumerWithSelector(dest Destination, selector string) (JMSConsumer, JMSException)
 
+	// CreateBrowser creates a consumer for the specified Destination so that
+	// an application can look at messages without removing them.
+	CreateBrowser(dest Destination) (QueueBrowser, JMSException)
+
 	// CreateQueue creates a queue object which encapsulates a provider specific
 	// queue name.
 	//

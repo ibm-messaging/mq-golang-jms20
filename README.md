@@ -120,6 +120,7 @@ your own error handling or logging.
 * Set a message property of type string, int, double or boolean - [messageproperties_test.go](messageproperties_test.go)
 * Get by CorrelationID - [getbycorrelid_test.go](getbycorrelid_test.go)
 * Get by JMSMessageID - [getbymsgid_test.go](getbymsgid_test.go)
+* Browse messages non-destructively using a QueueBrowser - [queuebrowser_test.go](queuebrowser_test.go)
 * Request/reply messaging pattern - [requestreply_test.go](requestreply_test.go)
 * Send and receive under a local transaction - [local_transaction_test.go](local_transaction_test.go)
 * Sending a message that expires after a period of time - [timetolive_test.go](timetolive_test.go)

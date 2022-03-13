@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
 	ibmmq "github.com/ibm-messaging/mq-golang/v5/ibmmq"
@@ -110,7 +111,11 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 		typedMsg.mqmd = putmqmd
 
 		// Set up this MQ message to contain the string from the JMS message.
-		putmqmd.Format = ibmmq.MQFMT_STRING
+		trimmedFormat := strings.TrimSpace(putmqmd.Format)
+		if trimmedFormat == ibmmq.MQFMT_NONE {
+			putmqmd.Format = ibmmq.MQFMT_STRING
+		}
+
 		msgStr := typedMsg.GetText()
 		if msgStr != nil {
 			buffer = []byte(*msgStr)
@@ -131,7 +136,6 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 		typedMsg.mqmd = putmqmd
 
 		// Set up this MQ message to contain the bytes from the JMS message.
-		putmqmd.Format = ibmmq.MQFMT_NONE
 		buffer = *typedMsg.ReadBytes()
 
 	default:

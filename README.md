@@ -128,11 +128,31 @@ your own error handling or logging.
 * Set the application name (ApplName) on connections - [applname_test.go](applname_test.go)
 * Receive messages over 32kb in size by setting the receive buffer size - [largemessage_test.go](largemessage_test.go)
 * Asynchronous put - [asyncput_test.go](asyncput_test.go)
+* Special header properties such as JMS_IBM_Format - [specialproperties_test.go](specialproperties_test.go)
 
 As normal with Go, you can run any individual testcase by executing a command such as;
 ```bash
 go test -run TestSampleSendReceiveWithErrorHandling
 ```
+
+### Special header properties supported
+The following special header properties are supported for Get, Put or both as listed below.
+
+```
+Field name                         Example                                                Notes
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+JMS_IBM_PutDate                    msg.GetStringProperty("JMS_IBM_PutDate")               YYYYMMDD
+JMS_IBM_PutTime                    msg.GetStringProperty("JMS_IBM_PutTime")               HHMMSSTH
+JMS_IBM_Format                     msg.GetStringProperty("JMS_IBM_Format")                MQSTR
+                                   msg.SetStringProperty("JMS_IBM_Format", "MYFMT")
+JMS_IBM_MQMD_Format                msg.GetStringProperty("JMS_IBM_MQMD_Format")           MQSTR
+                                   msg.SetStringProperty("JMS_IBM_MQMD_Format", "MYFMT")
+JMS_IBM_MQMD_MsgId                 msg.GetJMSMessageID()
+JMS_IBM_MQMD_ApplOriginData        msg.GetStringProperty("JMS_IBM_MQMD_ApplOriginData")
+JMSExpiration                      msg.GetJMSExpiration()
+JMSXAppID                          msg.GetStringProperty("JMSXAppID")                     JMSXAppID / PutApplName is set using ConnectionFactory.ApplName
+```
+
 
 
 ## Getting started

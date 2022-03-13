@@ -25,6 +25,10 @@ type Message interface {
 	// handed off to the provider to be sent.
 	GetJMSTimestamp() int64
 
+	// GetJMSExpiration returns the timestamp at which the message is due to
+	// expire.
+	GetJMSExpiration() int64
+
 	// SetJMSCorrelationID sets the correlation ID for the message which can be
 	// used to link on message to another. A typical use is to link a response
 	// message with its request message.

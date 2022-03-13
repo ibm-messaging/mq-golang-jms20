@@ -263,20 +263,18 @@ func (msg *MessageImpl) GetJMSTimestamp() int64 {
 	return timestamp
 }
 
-// GetApplName retrieves the PutApplName field from the MQMD.
-// This method is not exposed on the JMS style interface and is mainly for testing purposes.
-func (msg *MessageImpl) GetApplName() string {
-	applName := ""
+// GetJMSExpiration returns the timestamp at which the message is due to
+// expire.
+func (msg *MessageImpl) GetJMSExpiration() int64 {
 
-	// Note that if there is no MQMD then there is no correlID stored.
-	if msg.mqmd != nil {
+	// mqmd.Expiry gives tenths of a second after which message should expire
+	timestamp := msg.GetJMSTimestamp()
 
-		// Get hold of the bytes representation of the correlation ID.
-		applName = msg.mqmd.PutApplName
-
+	if timestamp != 0 && msg.mqmd.Expiry != 0 {
+		timestamp += (int64(msg.mqmd.Expiry) * 100)
 	}
 
-	return applName
+	return timestamp
 }
 
 // SetStringProperty enables an application to set a string-type message property.
@@ -287,6 +285,12 @@ func (msg *MessageImpl) SetStringProperty(name string, value *string) jms20subse
 	var retErr jms20subset.JMSException
 
 	var linkedErr error
+
+	// Different code path and shortcut for special header properties
+	isSpecial, _ := msg.setSpecialStringPropertyValue(name, value)
+	if isSpecial {
+		return nil
+	}
 
 	if value != nil {
 		// Looking to set a value
@@ -314,6 +318,104 @@ func (msg *MessageImpl) SetStringProperty(name string, value *string) jms20subse
 	return retErr
 }
 
+// getSpecialPropertyValue returns the value of special header properties such as
+// values from the MQMD that are mapped to JMS properties.
+func (msg *MessageImpl) setSpecialStringPropertyValue(name string, value *string) (bool, error) {
+
+	// Special properties always start with a known prefix.
+	if !strings.HasPrefix(name, "JMS") {
+		return false, nil
+	}
+
+	// Check first that there is an MQMD to write to
+	if msg.mqmd == nil {
+		msg.mqmd = ibmmq.NewMQMD()
+	}
+
+	// Assume for now that this property is special as it has passed the basic
+	// checks, and this value will be set back to false if it doesn't match any
+	// of the specific fields.
+	isSpecial := true
+
+	var err error
+
+	switch name {
+	case "JMS_IBM_Format":
+		if value != nil {
+			msg.mqmd.Format = *value
+		} else {
+			msg.mqmd.Format = ibmmq.MQFMT_NONE // unset
+		}
+
+	case "JMS_IBM_MQMD_Format":
+		if value != nil {
+			msg.mqmd.Format = *value
+		} else {
+			msg.mqmd.Format = ibmmq.MQFMT_NONE // unset
+		}
+
+	default:
+		isSpecial = false
+	}
+
+	return isSpecial, err
+}
+
+// getSpecialPropertyValue returns the value of special header properties such as
+// values from the MQMD that are mapped to JMS properties.
+func (msg *MessageImpl) getSpecialPropertyValue(name string) (bool, interface{}, error) {
+
+	// Special properties always start with a known prefix.
+	if !strings.HasPrefix(name, "JMS") {
+		return false, nil, nil
+	}
+
+	// Assume for now that this property is special as it has passed the basic
+	// checks, and this value will be set back to false if it doesn't match any
+	// of the specific fields.
+	isSpecial := true
+
+	var value interface{}
+	var err error
+
+	switch name {
+	case "JMS_IBM_PutDate":
+		if msg.mqmd != nil {
+			value = msg.mqmd.PutDate
+		}
+
+	case "JMS_IBM_PutTime":
+		if msg.mqmd != nil {
+			value = msg.mqmd.PutTime
+		}
+
+	case "JMS_IBM_Format":
+		if msg.mqmd != nil && msg.mqmd.Format != ibmmq.MQFMT_NONE {
+			value = msg.mqmd.Format
+		}
+
+	case "JMS_IBM_MQMD_Format": // same as JMS_IBM_Format
+		if msg.mqmd != nil && msg.mqmd.Format != ibmmq.MQFMT_NONE {
+			value = msg.mqmd.Format
+		}
+
+	case "JMSXAppID":
+		if msg.mqmd != nil {
+			value = msg.mqmd.PutApplName
+		}
+
+	case "JMS_IBM_MQMD_ApplOriginData":
+		if msg.mqmd != nil && msg.mqmd.ApplOriginData != ibmmq.MQFMT_NONE {
+			value = msg.mqmd.ApplOriginData
+		}
+
+	default:
+		isSpecial = false
+	}
+
+	return isSpecial, value, err
+}
+
 // GetStringProperty returns the string value of a named message property.
 // Returns nil if the named property is not set.
 func (msg *MessageImpl) GetStringProperty(name string) (*string, jms20subset.JMSException) {
@@ -324,32 +426,43 @@ func (msg *MessageImpl) GetStringProperty(name string) (*string, jms20subset.JMS
 	impo := ibmmq.NewMQIMPO()
 	pd := ibmmq.NewMQPD()
 
-	_, value, err := msg.msgHandle.InqMP(impo, pd, name)
+	// Check first if this is a special property
+	isSpecialProp, value, err := msg.getSpecialPropertyValue(name)
+
+	if !isSpecialProp {
+		// If not then look for a user property
+		_, value, err = msg.msgHandle.InqMP(impo, pd, name)
+	}
 
 	if err == nil {
 
 		var parseErr error
 
-		switch valueTyped := value.(type) {
-		case string:
-			valueStrPtr = &valueTyped
-		case int64:
-			valueStr := strconv.FormatInt(valueTyped, 10)
-			valueStrPtr = &valueStr
-			if parseErr != nil {
-				retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_FAILED_REASON,
-					MessageImpl_PROPERTY_CONVERT_FAILED_CODE, parseErr)
+		if value != nil {
+
+			switch valueTyped := value.(type) {
+			case string:
+				valueStrPtr = &valueTyped
+			case int64:
+				valueStr := strconv.FormatInt(valueTyped, 10)
+				valueStrPtr = &valueStr
+				if parseErr != nil {
+					retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_FAILED_REASON,
+						MessageImpl_PROPERTY_CONVERT_FAILED_CODE, parseErr)
+				}
+			case bool:
+				valueStr := strconv.FormatBool(valueTyped)
+				valueStrPtr = &valueStr
+			case float64:
+				valueStr := fmt.Sprintf("%g", valueTyped)
+				valueStrPtr = &valueStr
+			default:
+				retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_NOTSUPPORTED_REASON,
+					MessageImpl_PROPERTY_CONVERT_NOTSUPPORTED_CODE, parseErr)
 			}
-		case bool:
-			valueStr := strconv.FormatBool(valueTyped)
-			valueStrPtr = &valueStr
-		case float64:
-			valueStr := fmt.Sprintf("%g", valueTyped)
-			valueStrPtr = &valueStr
-		default:
-			retErr = jms20subset.CreateJMSException(MessageImpl_PROPERTY_CONVERT_NOTSUPPORTED_REASON,
-				MessageImpl_PROPERTY_CONVERT_NOTSUPPORTED_CODE, parseErr)
+
 		}
+
 	} else {
 
 		mqret := err.(*ibmmq.MQReturn)

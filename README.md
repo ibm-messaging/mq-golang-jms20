@@ -139,18 +139,29 @@ go test -run TestSampleSendReceiveWithErrorHandling
 The following special header properties are supported for Get, Put or both as listed below.
 
 ```
-Field name                         Example                                                Notes
+Field name                    Example                                                Notes
 ---------------------------------------------------------------------------------------------------------------------------------------------------------
-JMS_IBM_PutDate                    msg.GetStringProperty("JMS_IBM_PutDate")               YYYYMMDD
-JMS_IBM_PutTime                    msg.GetStringProperty("JMS_IBM_PutTime")               HHMMSSTH
-JMS_IBM_Format                     msg.GetStringProperty("JMS_IBM_Format")                MQSTR
-                                   msg.SetStringProperty("JMS_IBM_Format", "MYFMT")
-JMS_IBM_MQMD_Format                msg.GetStringProperty("JMS_IBM_MQMD_Format")           MQSTR
-                                   msg.SetStringProperty("JMS_IBM_MQMD_Format", "MYFMT")
-JMS_IBM_MQMD_MsgId                 msg.GetJMSMessageID()
-JMS_IBM_MQMD_ApplOriginData        msg.GetStringProperty("JMS_IBM_MQMD_ApplOriginData")
-JMSExpiration                      msg.GetJMSExpiration()
-JMSXAppID                          msg.GetStringProperty("JMSXAppID")                     JMSXAppID / PutApplName is set using ConnectionFactory.ApplName
+JMS_IBM_PutDate               msg.GetStringProperty("JMS_IBM_PutDate")               YYYYMMDD
+JMS_IBM_PutTime               msg.GetStringProperty("JMS_IBM_PutTime")               HHMMSSTH
+JMS_IBM_Format                msg.GetStringProperty("JMS_IBM_Format")                MQSTR
+                              msg.SetStringProperty("JMS_IBM_Format", "MYFMT")
+JMS_IBM_MQMD_Format           msg.GetStringProperty("JMS_IBM_MQMD_Format")           MQSTR
+                              msg.SetStringProperty("JMS_IBM_MQMD_Format", "MYFMT")
+JMS_IBM_PutApplType           msg.GetIntProperty("JMS_IBM_PutApplType")
+JMS_IBM_Encoding              msg.GetIntProperty("JMS_IBM_Encoding")              
+                              msg.SetIntProperty("JMS_IBM_Encoding", 273)                  
+JMS_IBM_Character_Set         msg.GetIntProperty("JMS_IBM_Character_Set")              
+                              msg.SetIntProperty("JMS_IBM_Character_Set", 1208)
+JMS_IBM_MQMD_CodedCharSetId   msg.GetIntProperty("JMS_IBM_MQMD_CodedCharSetId")              
+                              msg.SetIntProperty("JMS_IBM_MQMD_CodedCharSetId", 1208) 
+JMS_IBM_MsgType               msg.GetIntProperty("JMS_IBM_MsgType")              
+                              msg.SetIntProperty("JMS_IBM_MsgType", 8)            
+JMS_IBM_MQMD_MsgType          msg.GetIntProperty("JMS_IBM_MQMD_MsgType")              
+                              msg.SetIntProperty("JMS_IBM_MQMD_MsgType", 8)
+JMS_IBM_MQMD_MsgId            msg.GetJMSMessageID()
+JMS_IBM_MQMD_ApplOriginData   msg.GetStringProperty("JMS_IBM_MQMD_ApplOriginData")
+JMSExpiration                 msg.GetJMSExpiration()
+JMSXAppID                     msg.GetStringProperty("JMSXAppID")                     JMSXAppID / PutApplName is set using ConnectionFactory.ApplName
 ```
 
 

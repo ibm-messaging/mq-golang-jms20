@@ -318,8 +318,7 @@ func (msg *MessageImpl) SetStringProperty(name string, value *string) jms20subse
 	return retErr
 }
 
-// getSpecialPropertyValue returns the value of special header properties such as
-// values from the MQMD that are mapped to JMS properties.
+// setSpecialStringPropertyValue sets the special header properties that are of type String
 func (msg *MessageImpl) setSpecialStringPropertyValue(name string, value *string) (bool, error) {
 
 	// Special properties always start with a known prefix.
@@ -353,6 +352,52 @@ func (msg *MessageImpl) setSpecialStringPropertyValue(name string, value *string
 		} else {
 			msg.mqmd.Format = ibmmq.MQFMT_NONE // unset
 		}
+
+	default:
+		isSpecial = false
+	}
+
+	return isSpecial, err
+}
+
+// setSpecialIntPropertyValue sets the special header properties of type int
+func (msg *MessageImpl) setSpecialIntPropertyValue(name string, value int) (bool, error) {
+
+	// Special properties always start with a known prefix.
+	if !strings.HasPrefix(name, "JMS") {
+		return false, nil
+	}
+
+	// Check first that there is an MQMD to write to
+	if msg.mqmd == nil {
+		msg.mqmd = ibmmq.NewMQMD()
+	}
+
+	// Assume for now that this property is special as it has passed the basic
+	// checks, and this value will be set back to false if it doesn't match any
+	// of the specific fields.
+	isSpecial := true
+
+	var err error
+
+	switch name {
+	case "JMS_IBM_PutApplType":
+		msg.mqmd.PutApplType = int32(value)
+
+	case "JMS_IBM_Encoding":
+		msg.mqmd.Encoding = int32(value)
+
+	case "JMS_IBM_Character_Set":
+		msg.mqmd.CodedCharSetId = int32(value)
+
+	case "JMS_IBM_MQMD_CodedCharSetId":
+		msg.mqmd.CodedCharSetId = int32(value)
+
+	case "JMS_IBM_MsgType":
+		msg.mqmd.MsgType = int32(value)
+
+	case "JMS_IBM_MQMD_MsgType":
+		msg.mqmd.MsgType = int32(value)
 
 	default:
 		isSpecial = false
@@ -407,6 +452,36 @@ func (msg *MessageImpl) getSpecialPropertyValue(name string) (bool, interface{},
 	case "JMS_IBM_MQMD_ApplOriginData":
 		if msg.mqmd != nil && msg.mqmd.ApplOriginData != ibmmq.MQFMT_NONE {
 			value = msg.mqmd.ApplOriginData
+		}
+
+	case "JMS_IBM_PutApplType":
+		if msg.mqmd != nil {
+			value = msg.mqmd.PutApplType
+		}
+
+	case "JMS_IBM_Encoding":
+		if msg.mqmd != nil {
+			value = msg.mqmd.Encoding
+		}
+
+	case "JMS_IBM_Character_Set":
+		if msg.mqmd != nil {
+			value = msg.mqmd.CodedCharSetId
+		}
+
+	case "JMS_IBM_MQMD_CodedCharSetId":
+		if msg.mqmd != nil {
+			value = msg.mqmd.CodedCharSetId
+		}
+
+	case "JMS_IBM_MsgType":
+		if msg.mqmd != nil {
+			value = msg.mqmd.MsgType
+		}
+
+	case "JMS_IBM_MQMD_MsgType":
+		if msg.mqmd != nil {
+			value = msg.mqmd.MsgType
 		}
 
 	default:
@@ -489,6 +564,12 @@ func (msg *MessageImpl) SetIntProperty(name string, value int) jms20subset.JMSEx
 
 	var linkedErr error
 
+	// Different code path and shortcut for special header properties
+	isSpecial, _ := msg.setSpecialIntPropertyValue(name, value)
+	if isSpecial {
+		return nil
+	}
+
 	smpo := ibmmq.NewMQSMPO()
 	pd := ibmmq.NewMQPD()
 
@@ -514,13 +595,23 @@ func (msg *MessageImpl) GetIntProperty(name string) (int, jms20subset.JMSExcepti
 	impo := ibmmq.NewMQIMPO()
 	pd := ibmmq.NewMQPD()
 
-	_, value, err := msg.msgHandle.InqMP(impo, pd, name)
+	// Check first if this is a special property
+	isSpecialProp, value, err := msg.getSpecialPropertyValue(name)
+
+	if !isSpecialProp {
+		// If not then look for a user property
+		_, value, err = msg.msgHandle.InqMP(impo, pd, name)
+	}
 
 	if err == nil {
 
 		var parseErr error
 
 		switch valueTyped := value.(type) {
+		case int:
+			valueRet = valueTyped
+		case int32:
+			valueRet = int(valueTyped)
 		case int64:
 			valueRet = int(valueTyped)
 		case string:

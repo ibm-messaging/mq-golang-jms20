@@ -54,6 +54,20 @@ func (msg *MessageImpl) GetJMSDeliveryMode() int {
 	return jmsPersistence
 }
 
+// GetJMSPriority extracts the message priority from the native MQ message descriptor.
+func (msg *MessageImpl) GetJMSPriority() int {
+
+	pri := 4
+
+	// Extract the MsgId field from the MQ message descriptor if one exists.
+	// Note that if there is no MQMD then there is no messageID to return.
+	if msg.mqmd != nil {
+		pri = int(msg.mqmd.Priority)
+	}
+
+	return pri
+}
+
 // GetJMSMessageID extracts the message ID from the native MQ message descriptor.
 func (msg *MessageImpl) GetJMSMessageID() string {
 	msgIDStr := ""

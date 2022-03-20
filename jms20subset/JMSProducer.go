@@ -59,4 +59,11 @@ type JMSProducer interface {
 	// GetTimeToLive returns the time to live (in milliseconds) that will be
 	// applied to messages that are sent using this JMSProducer.
 	GetTimeToLive() int
+
+	// SetPriority sets the message priority for all messages sent by this producer.
+	SetPriority(priority int) JMSProducer
+
+	// GetPriority returns the priority for all messages sent by this producer.
+	// Default priority is 4.
+	GetPriority() int
 }

@@ -25,6 +25,7 @@ type ProducerImpl struct {
 	ctx          ContextImpl
 	deliveryMode int
 	timeToLive   int
+	priority     int
 }
 
 // SendString sends a TextMessage with the specified body to the specified Destination
@@ -151,6 +152,10 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 		// 10ths of a second
 		putmqmd.Expiry = (int32(producer.timeToLive) / 100)
 	}
+
+	// Convert the JMS priority into the equivalent MQ message descriptor
+	// attribute.
+	putmqmd.Priority = int32(producer.priority)
 
 	// Invoke the MQ command to put the message using MQPUT1 to avoid MQOPEN and MQCLOSE.
 	// Any Err that occurs will be handled below.
@@ -309,4 +314,29 @@ func (producer *ProducerImpl) SetTimeToLive(timeToLive int) jms20subset.JMSProdu
 // Producer.
 func (producer *ProducerImpl) GetTimeToLive() int {
 	return producer.timeToLive
+}
+
+// SetPriority contains the MQ logic necessary to store the specified
+// priority parameter inside the Producer object so that it can be
+// applied when sending messages using this Producer.
+func (producer *ProducerImpl) SetPriority(priority int) jms20subset.JMSProducer {
+
+	// Only accept a non-negative value for priority.
+	if priority >= 0 {
+		producer.priority = priority
+
+	} else {
+		// Normally we would throw an error here to indicate that an invalid value
+		// was specified, however we have decided that it is more useful to support
+		// method chaining, which prevents us from returning an error object.
+		// Instead we settle for printing an error message to the console.
+		fmt.Println("Invalid Priority specified: " + strconv.FormatInt(int64(priority), 10))
+	}
+
+	return producer
+}
+
+// GetPriority returns the priority for all messages sent by this producer.
+func (producer *ProducerImpl) GetPriority() int {
+	return producer.priority
 }

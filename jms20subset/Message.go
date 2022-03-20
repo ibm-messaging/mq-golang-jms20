@@ -52,6 +52,9 @@ type Message interface {
 	// jms20subset.DeliveryMode_PERSISTENT and jms20subset.DeliveryMode_NON_PERSISTENT
 	GetJMSDeliveryMode() int
 
+	// GetJMSPriority returns the priority that is specified for this message.
+	GetJMSPriority() int
+
 	// SetStringProperty enables an application to set a string-type message property.
 	//
 	// value is *string which allows a nil value to be specified, to unset an individual

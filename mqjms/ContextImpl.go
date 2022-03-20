@@ -49,6 +49,7 @@ func (ctx ContextImpl) CreateProducer() jms20subset.JMSProducer {
 	producer := ProducerImpl{
 		ctx:          ctx,
 		deliveryMode: jms20subset.DeliveryMode_PERSISTENT,
+		priority:     jms20subset.Priority_DEFAULT,
 	}
 
 	return &producer

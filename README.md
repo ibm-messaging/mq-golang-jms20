@@ -124,6 +124,7 @@ your own error handling or logging.
 * Request/reply messaging pattern - [requestreply_test.go](requestreply_test.go)
 * Send and receive under a local transaction - [local_transaction_test.go](local_transaction_test.go)
 * Sending a message that expires after a period of time - [timetolive_test.go](timetolive_test.go)
+* Sending a message with a specified priority - [priority_test.go](priority_test.go)
 * Handle error codes returned by the queue manager - [sample_errorhandling_test.go](sample_errorhandling_test.go)
 * Set the application name (ApplName) on connections - [applname_test.go](applname_test.go)
 * Receive messages over 32kb in size by setting the receive buffer size - [largemessage_test.go](largemessage_test.go)

@@ -76,6 +76,7 @@ func TestPrioritySetGet(t *testing.T) {
 	// Go again with a different priority.
 	newMsgPriority := 2
 	producer = producer.SetPriority(newMsgPriority)
+	producer = producer.SetDeliveryMode(jms20subset.DeliveryMode_PERSISTENT)
 	assert.Equal(t, newMsgPriority, producer.GetPriority())
 
 	errSend = producer.Send(queue, txtMsg)
@@ -95,11 +96,13 @@ func TestPrioritySetGet(t *testing.T) {
 	// Check the Priority
 	gotPropValue = rcvMsg.GetJMSPriority()
 	assert.Equal(t, newMsgPriority, gotPropValue)
+	assert.Equal(t, jms20subset.DeliveryMode_PERSISTENT, rcvMsg.GetJMSDeliveryMode())
 
 	// -------
 	// Go again with a different priority.
 	newMsgPriority2 := 7
 	producer = producer.SetPriority(newMsgPriority2)
+	producer = producer.SetDeliveryMode(jms20subset.DeliveryMode_NON_PERSISTENT)
 	assert.Equal(t, newMsgPriority2, producer.GetPriority())
 
 	errSend = producer.Send(queue, txtMsg)
@@ -119,6 +122,7 @@ func TestPrioritySetGet(t *testing.T) {
 	// Check the Priority
 	gotPropValue = rcvMsg.GetJMSPriority()
 	assert.Equal(t, newMsgPriority2, gotPropValue)
+	assert.Equal(t, jms20subset.DeliveryMode_NON_PERSISTENT, rcvMsg.GetJMSDeliveryMode())
 
 }
 

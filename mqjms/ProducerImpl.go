@@ -84,14 +84,6 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 		pmo.Options |= ibmmq.MQPMO_ASYNC_RESPONSE
 	}
 
-	// Convert the JMS persistence into the equivalent MQ message descriptor
-	// attribute.
-	if producer.deliveryMode == jms20subset.DeliveryMode_NON_PERSISTENT {
-		putmqmd.Persistence = ibmmq.MQPER_NOT_PERSISTENT
-	} else {
-		putmqmd.Persistence = ibmmq.MQPER_PERSISTENT
-	}
-
 	var buffer []byte
 
 	// We have a "Message" object and can use a switch to safely convert it
@@ -143,6 +135,14 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 		// This "should never happen"(!) apart from in situations where we are
 		// part way through adding support for a new message type to this library.
 		log.Fatal(jms20subset.CreateJMSException("UnexpectedMessageType", "UnexpectedMessageType-send1", nil))
+	}
+
+	// Convert the JMS persistence into the equivalent MQ message descriptor
+	// attribute.
+	if producer.deliveryMode == jms20subset.DeliveryMode_NON_PERSISTENT {
+		putmqmd.Persistence = ibmmq.MQPER_NOT_PERSISTENT
+	} else {
+		putmqmd.Persistence = ibmmq.MQPER_PERSISTENT
 	}
 
 	// If the producer has a TTL specified then apply it to the put MQMD so

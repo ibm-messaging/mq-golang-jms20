@@ -11,6 +11,7 @@ package mqjms
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -301,9 +302,13 @@ func (msg *MessageImpl) SetStringProperty(name string, value *string) jms20subse
 	var linkedErr error
 
 	// Different code path and shortcut for special header properties
-	isSpecial, _ := msg.setSpecialStringPropertyValue(name, value)
+	isSpecial, specialErr := msg.setSpecialStringPropertyValue(name, value)
 	if isSpecial {
-		return nil
+
+		if specialErr != nil {
+			retErr = jms20subset.CreateJMSException("4125", "MQJMS4125", specialErr)
+		}
+		return retErr
 	}
 
 	if value != nil {
@@ -367,6 +372,15 @@ func (msg *MessageImpl) setSpecialStringPropertyValue(name string, value *string
 			msg.mqmd.Format = ibmmq.MQFMT_NONE // unset
 		}
 
+	case "JMSXGroupID":
+		err = errors.New("Not yet implemented")
+		/* Implementation not yet complete
+		if value != nil {
+			groupBytes := convertStringToMQBytes(*value)
+			msg.mqmd.GroupId = groupBytes
+			msg.mqmd.MsgFlags |= ibmmq.MQMF_MSG_IN_GROUP
+		} */
+
 	default:
 		isSpecial = false
 	}
@@ -412,6 +426,10 @@ func (msg *MessageImpl) setSpecialIntPropertyValue(name string, value int) (bool
 
 	case "JMS_IBM_MQMD_MsgType":
 		msg.mqmd.MsgType = int32(value)
+
+	case "JMSXGroupSeq":
+		err = errors.New("Not yet implemented")
+		//msg.mqmd.MsgSeqNumber = int32(value)
 
 	default:
 		isSpecial = false
@@ -498,6 +516,38 @@ func (msg *MessageImpl) getSpecialPropertyValue(name string) (bool, interface{},
 			value = msg.mqmd.MsgType
 		}
 
+	case "JMSXGroupID":
+		if msg.mqmd != nil {
+			valueBytes := msg.mqmd.GroupId
+
+			// See whether this is a non-zero response.
+			nonZeros := false
+			for _, thisByte := range valueBytes {
+				if thisByte != 0 {
+					nonZeros = true
+					break
+				}
+			}
+
+			if nonZeros {
+				value = hex.EncodeToString(valueBytes)
+			}
+		}
+
+	case "JMSXGroupSeq":
+		if msg.mqmd != nil {
+			value = msg.mqmd.MsgSeqNumber
+		} else {
+			value = int32(1)
+		}
+
+	case "JMS_IBM_Last_Msg_In_Group":
+		if msg.mqmd != nil {
+			value = ((msg.mqmd.MsgFlags & ibmmq.MQMF_LAST_MSG_IN_GROUP) != 0)
+		} else {
+			value = false
+		}
+
 	default:
 		isSpecial = false
 	}
@@ -579,9 +629,13 @@ func (msg *MessageImpl) SetIntProperty(name string, value int) jms20subset.JMSEx
 	var linkedErr error
 
 	// Different code path and shortcut for special header properties
-	isSpecial, _ := msg.setSpecialIntPropertyValue(name, value)
+	isSpecial, specialErr := msg.setSpecialIntPropertyValue(name, value)
 	if isSpecial {
-		return nil
+
+		if specialErr != nil {
+			retErr = jms20subset.CreateJMSException("4125", "MQJMS4125", specialErr)
+		}
+		return retErr
 	}
 
 	smpo := ibmmq.NewMQSMPO()
@@ -696,7 +750,13 @@ func (msg *MessageImpl) GetDoubleProperty(name string) (float64, jms20subset.JMS
 	impo := ibmmq.NewMQIMPO()
 	pd := ibmmq.NewMQPD()
 
-	_, value, err := msg.msgHandle.InqMP(impo, pd, name)
+	// Check first if this is a special property
+	isSpecialProp, value, err := msg.getSpecialPropertyValue(name)
+
+	if !isSpecialProp {
+		// If not then look for a user property
+		_, value, err = msg.msgHandle.InqMP(impo, pd, name)
+	}
 
 	if err == nil {
 
@@ -748,6 +808,16 @@ func (msg *MessageImpl) SetBooleanProperty(name string, value bool) jms20subset.
 	smpo := ibmmq.NewMQSMPO()
 	pd := ibmmq.NewMQPD()
 
+	// Different code path and shortcut for special header properties
+	isSpecial, specialErr := msg.setSpecialBooleanPropertyValue(name, value)
+	if isSpecial {
+
+		if specialErr != nil {
+			retErr = jms20subset.CreateJMSException("4125", "MQJMS4125", specialErr)
+		}
+		return retErr
+	}
+
 	linkedErr = msg.msgHandle.SetMP(smpo, name, pd, value)
 
 	if linkedErr != nil {
@@ -760,6 +830,37 @@ func (msg *MessageImpl) SetBooleanProperty(name string, value bool) jms20subset.
 	return retErr
 }
 
+// setSpecialBooleanPropertyValue sets the special header properties of type bool
+func (msg *MessageImpl) setSpecialBooleanPropertyValue(name string, value bool) (bool, error) {
+
+	// Special properties always start with a known prefix.
+	if !strings.HasPrefix(name, "JMS") {
+		return false, nil
+	}
+
+	// Check first that there is an MQMD to write to
+	if msg.mqmd == nil {
+		msg.mqmd = ibmmq.NewMQMD()
+	}
+
+	// Assume for now that this property is special as it has passed the basic
+	// checks, and this value will be set back to false if it doesn't match any
+	// of the specific fields.
+	isSpecial := true
+
+	var err error
+
+	switch name {
+	case "JMS_IBM_Last_Msg_In_Group":
+		err = errors.New("Not yet implemented")
+
+	default:
+		isSpecial = false
+	}
+
+	return isSpecial, err
+}
+
 // GetBooleanProperty returns the bool value of a named message property.
 // Returns false if the named property is not set.
 func (msg *MessageImpl) GetBooleanProperty(name string) (bool, jms20subset.JMSException) {
@@ -770,7 +871,13 @@ func (msg *MessageImpl) GetBooleanProperty(name string) (bool, jms20subset.JMSEx
 	impo := ibmmq.NewMQIMPO()
 	pd := ibmmq.NewMQPD()
 
-	_, value, err := msg.msgHandle.InqMP(impo, pd, name)
+	// Check first if this is a special property
+	isSpecialProp, value, err := msg.getSpecialPropertyValue(name)
+
+	if !isSpecialProp {
+		// If not then look for a user property
+		_, value, err = msg.msgHandle.InqMP(impo, pd, name)
+	}
 
 	if err == nil {
 

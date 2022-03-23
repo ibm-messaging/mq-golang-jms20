@@ -163,6 +163,9 @@ JMS_IBM_MQMD_MsgId            msg.GetJMSMessageID()
 JMS_IBM_MQMD_ApplOriginData   msg.GetStringProperty("JMS_IBM_MQMD_ApplOriginData")
 JMSExpiration                 msg.GetJMSExpiration()
 JMSXAppID                     msg.GetStringProperty("JMSXAppID")                     JMSXAppID / PutApplName is set using ConnectionFactory.ApplName
+JMSXGroupID                   msg.GetStringProperty("JMSXGroupID")
+JMSXGroupSeq                  msg.GetIntProperty("JMSXGroupSeq")
+JMS_IBM_Last_Msg_In_Group     msg.GetBooleanProperty("JMS_IBM_Last_Msg_In_Group")
 ```
 
 

@@ -9,7 +9,6 @@ Not currently implemented:
 - SendToQmgr, ReplyToQmgr
 - Topics (pub/sub)
 - Temporary destinations
-- Priority
 - Configurable option to auto-set the receive buffer length if the default 32kb is exceeded (less efficient that setting up front)
 
 Client capabilities for participating in Uniform Clusters;

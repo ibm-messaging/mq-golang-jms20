@@ -58,11 +58,10 @@ func TestApplName(t *testing.T) {
 	assert.Nil(t, errRvc)
 	assert.NotNil(t, rcvMsg)
 
-	messageImpl, ok := rcvMsg.(*mqjms.TextMessageImpl)
-	assert.True(t, ok)
-
 	// Check that the application name was successfully stored in the message
 	// that we sent.
-	assert.Equal(t, applName, messageImpl.GetApplName())
+	gotAppName, err := rcvMsg.GetStringProperty("JMSXAppID")
+	assert.Nil(t, err)
+	assert.Equal(t, applName, *gotAppName)
 
 }

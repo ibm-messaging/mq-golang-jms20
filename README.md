@@ -124,15 +124,50 @@ your own error handling or logging.
 * Request/reply messaging pattern - [requestreply_test.go](requestreply_test.go)
 * Send and receive under a local transaction - [local_transaction_test.go](local_transaction_test.go)
 * Sending a message that expires after a period of time - [timetolive_test.go](timetolive_test.go)
+* Sending a message with a specified priority - [priority_test.go](priority_test.go)
 * Handle error codes returned by the queue manager - [sample_errorhandling_test.go](sample_errorhandling_test.go)
 * Set the application name (ApplName) on connections - [applname_test.go](applname_test.go)
 * Receive messages over 32kb in size by setting the receive buffer size - [largemessage_test.go](largemessage_test.go)
 * Asynchronous put - [asyncput_test.go](asyncput_test.go)
+* Special header properties such as JMS_IBM_Format - [specialproperties_test.go](specialproperties_test.go)
 
 As normal with Go, you can run any individual testcase by executing a command such as;
 ```bash
 go test -run TestSampleSendReceiveWithErrorHandling
 ```
+
+### Special header properties supported
+The following special header properties are supported for Get, Put or both as listed below.
+
+```
+Field name                    Example                                                Notes
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+JMS_IBM_PutDate               msg.GetStringProperty("JMS_IBM_PutDate")               YYYYMMDD
+JMS_IBM_PutTime               msg.GetStringProperty("JMS_IBM_PutTime")               HHMMSSTH
+JMS_IBM_Format                msg.GetStringProperty("JMS_IBM_Format")                MQSTR
+                              msg.SetStringProperty("JMS_IBM_Format", "MYFMT")
+JMS_IBM_MQMD_Format           msg.GetStringProperty("JMS_IBM_MQMD_Format")           MQSTR
+                              msg.SetStringProperty("JMS_IBM_MQMD_Format", "MYFMT")
+JMS_IBM_PutApplType           msg.GetIntProperty("JMS_IBM_PutApplType")
+JMS_IBM_Encoding              msg.GetIntProperty("JMS_IBM_Encoding")              
+                              msg.SetIntProperty("JMS_IBM_Encoding", 273)                  
+JMS_IBM_Character_Set         msg.GetIntProperty("JMS_IBM_Character_Set")              
+                              msg.SetIntProperty("JMS_IBM_Character_Set", 1208)
+JMS_IBM_MQMD_CodedCharSetId   msg.GetIntProperty("JMS_IBM_MQMD_CodedCharSetId")              
+                              msg.SetIntProperty("JMS_IBM_MQMD_CodedCharSetId", 1208) 
+JMS_IBM_MsgType               msg.GetIntProperty("JMS_IBM_MsgType")              
+                              msg.SetIntProperty("JMS_IBM_MsgType", 8)            
+JMS_IBM_MQMD_MsgType          msg.GetIntProperty("JMS_IBM_MQMD_MsgType")              
+                              msg.SetIntProperty("JMS_IBM_MQMD_MsgType", 8)
+JMS_IBM_MQMD_MsgId            msg.GetJMSMessageID()
+JMS_IBM_MQMD_ApplOriginData   msg.GetStringProperty("JMS_IBM_MQMD_ApplOriginData")
+JMSExpiration                 msg.GetJMSExpiration()
+JMSXAppID                     msg.GetStringProperty("JMSXAppID")                     JMSXAppID / PutApplName is set using ConnectionFactory.ApplName
+JMSXGroupID                   msg.GetStringProperty("JMSXGroupID")
+JMSXGroupSeq                  msg.GetIntProperty("JMSXGroupSeq")
+JMS_IBM_Last_Msg_In_Group     msg.GetBooleanProperty("JMS_IBM_Last_Msg_In_Group")
+```
+
 
 
 ## Getting started

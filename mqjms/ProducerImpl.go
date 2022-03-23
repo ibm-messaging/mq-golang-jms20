@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
 	ibmmq "github.com/ibm-messaging/mq-golang/v5/ibmmq"
@@ -24,6 +25,7 @@ type ProducerImpl struct {
 	ctx          ContextImpl
 	deliveryMode int
 	timeToLive   int
+	priority     int
 }
 
 // SendString sends a TextMessage with the specified body to the specified Destination
@@ -82,14 +84,6 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 		pmo.Options |= ibmmq.MQPMO_ASYNC_RESPONSE
 	}
 
-	// Convert the JMS persistence into the equivalent MQ message descriptor
-	// attribute.
-	if producer.deliveryMode == jms20subset.DeliveryMode_NON_PERSISTENT {
-		putmqmd.Persistence = ibmmq.MQPER_NOT_PERSISTENT
-	} else {
-		putmqmd.Persistence = ibmmq.MQPER_PERSISTENT
-	}
-
 	var buffer []byte
 
 	// We have a "Message" object and can use a switch to safely convert it
@@ -110,7 +104,11 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 		typedMsg.mqmd = putmqmd
 
 		// Set up this MQ message to contain the string from the JMS message.
-		putmqmd.Format = ibmmq.MQFMT_STRING
+		trimmedFormat := strings.TrimSpace(putmqmd.Format)
+		if trimmedFormat == ibmmq.MQFMT_NONE {
+			putmqmd.Format = ibmmq.MQFMT_STRING
+		}
+
 		msgStr := typedMsg.GetText()
 		if msgStr != nil {
 			buffer = []byte(*msgStr)
@@ -131,13 +129,20 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 		typedMsg.mqmd = putmqmd
 
 		// Set up this MQ message to contain the bytes from the JMS message.
-		putmqmd.Format = ibmmq.MQFMT_NONE
 		buffer = *typedMsg.ReadBytes()
 
 	default:
 		// This "should never happen"(!) apart from in situations where we are
 		// part way through adding support for a new message type to this library.
 		log.Fatal(jms20subset.CreateJMSException("UnexpectedMessageType", "UnexpectedMessageType-send1", nil))
+	}
+
+	// Convert the JMS persistence into the equivalent MQ message descriptor
+	// attribute.
+	if producer.deliveryMode == jms20subset.DeliveryMode_NON_PERSISTENT {
+		putmqmd.Persistence = ibmmq.MQPER_NOT_PERSISTENT
+	} else {
+		putmqmd.Persistence = ibmmq.MQPER_PERSISTENT
 	}
 
 	// If the producer has a TTL specified then apply it to the put MQMD so
@@ -147,6 +152,10 @@ func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.
 		// 10ths of a second
 		putmqmd.Expiry = (int32(producer.timeToLive) / 100)
 	}
+
+	// Convert the JMS priority into the equivalent MQ message descriptor
+	// attribute.
+	putmqmd.Priority = int32(producer.priority)
 
 	// Invoke the MQ command to put the message using MQPUT1 to avoid MQOPEN and MQCLOSE.
 	// Any Err that occurs will be handled below.
@@ -305,4 +314,29 @@ func (producer *ProducerImpl) SetTimeToLive(timeToLive int) jms20subset.JMSProdu
 // Producer.
 func (producer *ProducerImpl) GetTimeToLive() int {
 	return producer.timeToLive
+}
+
+// SetPriority contains the MQ logic necessary to store the specified
+// priority parameter inside the Producer object so that it can be
+// applied when sending messages using this Producer.
+func (producer *ProducerImpl) SetPriority(priority int) jms20subset.JMSProducer {
+
+	// Only accept a non-negative value for priority.
+	if priority >= 0 {
+		producer.priority = priority
+
+	} else {
+		// Normally we would throw an error here to indicate that an invalid value
+		// was specified, however we have decided that it is more useful to support
+		// method chaining, which prevents us from returning an error object.
+		// Instead we settle for printing an error message to the console.
+		fmt.Println("Invalid Priority specified: " + strconv.FormatInt(int64(priority), 10))
+	}
+
+	return producer
+}
+
+// GetPriority returns the priority for all messages sent by this producer.
+func (producer *ProducerImpl) GetPriority() int {
+	return producer.priority
 }

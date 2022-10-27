@@ -59,13 +59,13 @@ type ConnectionFactoryImpl struct {
 
 // CreateContext implements the JMS method to create a connection to an IBM MQ
 // queue manager.
-func (cf ConnectionFactoryImpl) CreateContext() (jms20subset.JMSContext, jms20subset.JMSException) {
-	return cf.CreateContextWithSessionMode(jms20subset.JMSContextAUTOACKNOWLEDGE)
+func (cf ConnectionFactoryImpl) CreateContext(mqos ...MQOptions) (jms20subset.JMSContext, jms20subset.JMSException) {
+	return cf.CreateContextWithSessionMode(jms20subset.JMSContextAUTOACKNOWLEDGE, mqos...)
 }
 
 // CreateContextWithSessionMode implements the JMS method to create a connection to an IBM MQ
 // queue manager using the specified session mode.
-func (cf ConnectionFactoryImpl) CreateContextWithSessionMode(sessionMode int) (jms20subset.JMSContext, jms20subset.JMSException) {
+func (cf ConnectionFactoryImpl) CreateContextWithSessionMode(sessionMode int, mqos ...MQOptions) (jms20subset.JMSContext, jms20subset.JMSException) {
 
 	// Allocate the internal structures required to create an connection to IBM MQ.
 	cno := ibmmq.NewMQCNO()
@@ -131,6 +131,11 @@ func (cf ConnectionFactoryImpl) CreateContextWithSessionMode(sessionMode int) (j
 
 	}
 
+	// Apply options
+	for _, mqo := range mqos {
+		mqo(cno)
+	}
+
 	var ctx jms20subset.JMSContext
 	var retErr jms20subset.JMSException
 
@@ -169,4 +174,12 @@ func (cf ConnectionFactoryImpl) CreateContextWithSessionMode(sessionMode int) (j
 
 	return ctx, retErr
 
+}
+
+type MQOptions func(cno *ibmmq.MQCNO)
+
+func WithMaxMsgLength(maxMsgLength int32) MQOptions {
+	return func(cno *ibmmq.MQCNO) {
+		cno.ClientConn.MaxMsgLength = maxMsgLength
+	}
 }

@@ -10,6 +10,7 @@
 package main
 
 import (
+	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
 	"github.com/ibm-messaging/mq-golang/v5/ibmmq"
 	"testing"
 
@@ -18,7 +19,8 @@ import (
 )
 
 func TestMQConnectionOptions(t *testing.T) {
-	t.Run("MaxMsgLength", func(t *testing.T) {
+
+	t.Run("MaxMsgLength set on CreateContext", func(t *testing.T) {
 		// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
 		cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
 		assert.Nil(t, cfErr)
@@ -26,9 +28,9 @@ func TestMQConnectionOptions(t *testing.T) {
 		// Ensure that the options were applied when setting connection options on Context creation
 		msg := "options were not applied"
 		context, ctxErr := cf.CreateContext(
-			mqjms.WithMaxMsgLength(2000),
+			jms20subset.WithMaxMsgLength(2000),
 			func(cno *ibmmq.MQCNO) {
-				assert.Equal(t, 2000, cno.ClientConn.MaxMsgLength)
+				assert.Equal(t, int32(2000), cno.ClientConn.MaxMsgLength)
 				msg = "options applied"
 			},
 		)
@@ -39,5 +41,46 @@ func TestMQConnectionOptions(t *testing.T) {
 		}
 
 		assert.Equal(t, "options applied", msg)
+	})
+
+	t.Run("MaxMsgLength is respected when receive message on CreateContextWithSessionMode", func(t *testing.T) {
+		// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
+		cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
+		assert.Nil(t, cfErr)
+
+		sContext, ctxErr := cf.CreateContext()
+		assert.Nil(t, ctxErr)
+		if sContext != nil {
+			defer sContext.Close()
+		}
+
+		// Create a Queue object that points at an IBM MQ queue
+		sQueue := sContext.CreateQueue("DEV.QUEUE.1")
+		// Send a message to the queue that contains a large string
+		errSend := sContext.CreateProducer().SendString(sQueue, "This has more than data than the max message length")
+		assert.NoError(t, errSend)
+
+		// create consumer with low msg length
+		rContext, ctxErr := cf.CreateContextWithSessionMode(
+			jms20subset.JMSContextAUTOACKNOWLEDGE,
+			jms20subset.WithMaxMsgLength(20),
+		)
+		assert.Nil(t, ctxErr)
+		if rContext != nil {
+			defer rContext.Close()
+		}
+
+		// Create a Queue object that points at an IBM MQ queue
+		rQueue := rContext.CreateQueue("DEV.QUEUE.1")
+		// Send a message to the queue that contains a large string
+		consumer, errSend := rContext.CreateConsumer(rQueue)
+		assert.NoError(t, errSend)
+
+		// expect that receiving the message will cause an JMS Data Length error
+		_, err := consumer.ReceiveStringBodyNoWait()
+		assert.Error(t, err)
+		jmsErr, ok := err.(jms20subset.JMSExceptionImpl)
+		assert.True(t, ok)
+		assert.Equal(t, "MQRC_DATA_LENGTH_ERROR", jmsErr.GetReason())
 	})
 }

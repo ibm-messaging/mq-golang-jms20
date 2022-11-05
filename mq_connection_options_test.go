@@ -10,9 +10,10 @@
 package main
 
 import (
+	"testing"
+
 	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
 	"github.com/ibm-messaging/mq-golang/v5/ibmmq"
-	"testing"
 
 	"github.com/ibm-messaging/mq-golang-jms20/mqjms"
 	"github.com/stretchr/testify/assert"
@@ -73,8 +74,8 @@ func TestMQConnectionOptions(t *testing.T) {
 		// Create a Queue object that points at an IBM MQ queue
 		rQueue := rContext.CreateQueue("DEV.QUEUE.1")
 		// Send a message to the queue that contains a large string
-		consumer, errSend := rContext.CreateConsumer(rQueue)
-		assert.NoError(t, errSend)
+		consumer, errCons := rContext.CreateConsumer(rQueue)
+		assert.NoError(t, errCons)
 
 		// expect that receiving the message will cause an JMS Data Length error
 		_, err := consumer.ReceiveStringBodyNoWait()
@@ -82,5 +83,12 @@ func TestMQConnectionOptions(t *testing.T) {
 		jmsErr, ok := err.(jms20subset.JMSExceptionImpl)
 		assert.True(t, ok)
 		assert.Equal(t, "MQRC_DATA_LENGTH_ERROR", jmsErr.GetReason())
+
+		// Now consume the message sucessfully to tidy up before the next test.
+		tidyConsumer, errCons := sContext.CreateConsumer(sQueue)
+		assert.NoError(t, errCons)
+		gotMsg, err := tidyConsumer.ReceiveNoWait()
+		assert.NoError(t, err)
+		assert.NotNil(t, gotMsg)
 	})
 }

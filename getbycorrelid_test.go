@@ -199,7 +199,7 @@ func TestCorrelIDParsing(t *testing.T) {
 
 	testCorrel = "ThisIsAVeryLongCorrelationIDWhichIsMoreThanTwentyFourCharacters"
 	msg.SetJMSCorrelationID(testCorrel)
-	assert.Equal(t, testCorrel[0:24], msg.GetJMSCorrelationID())
+	assert.Equal(t, testCorrel[0:12], msg.GetJMSCorrelationID())
 
 	// MessageID format
 	testCorrel = "414d5120514d312020202020202020201017155c0255b621"
@@ -210,5 +210,81 @@ func TestCorrelIDParsing(t *testing.T) {
 	testCorrel = "000000000000000000000000000000000000000000000000"
 	msg.SetJMSCorrelationID(testCorrel)
 	assert.Equal(t, "", msg.GetJMSCorrelationID())
+
+}
+
+// Do a round-trip send and receive of a message in order to check the correlation ID
+func checkCorrelIDOnSendReceive(t *testing.T, context jms20subset.JMSContext, queue jms20subset.Queue,
+	producer jms20subset.JMSProducer, consumer jms20subset.JMSConsumer,
+	inputCorrelID string, expectedCorrelID string) {
+
+	msg := context.CreateTextMessage()
+	msg.SetJMSCorrelationID(inputCorrelID)
+	assert.Equal(t, expectedCorrelID, msg.GetJMSCorrelationID())
+	sendErr := producer.Send(queue, msg)
+	assert.Nil(t, sendErr)
+
+	rcvMsg, rcvErr := consumer.ReceiveNoWait()
+	assert.Nil(t, rcvErr)
+	assert.NotNil(t, rcvMsg)
+	assert.Equal(t, expectedCorrelID, rcvMsg.GetJMSCorrelationID())
+
+}
+
+/*
+ * Test that we can round trip various correlation IDs via messages sent
+ * and received, since there is some checking on send.
+ */
+func TestCorrelIDParsingOnSend(t *testing.T) {
+
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
+	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
+	assert.Nil(t, cfErr)
+
+	// Creates a connection to the queue manager, using defer to close it automatically
+	// at the end of the function (if it was created successfully)
+	context, ctxErr := cf.CreateContext()
+	assert.Nil(t, ctxErr)
+	if context != nil {
+		defer context.Close()
+	}
+
+	// First, check the Send queue is initially empty
+	queue := context.CreateQueue("DEV.QUEUE.1")
+	consumer, rConErr := context.CreateConsumer(queue)
+	assert.Nil(t, rConErr)
+	if consumer != nil {
+		defer consumer.Close()
+	}
+	reqMsgTest, rcvErr := consumer.ReceiveNoWait()
+	assert.Nil(t, rcvErr)
+	assert.Nil(t, reqMsgTest)
+
+	producer := context.CreateProducer().SetTimeToLive(1000)
+	assert.NotNil(t, producer)
+
+	// Try out the various combinations of correlation ID
+	testCorrel := ""
+	checkCorrelIDOnSendReceive(t, context, queue, producer, consumer, testCorrel, "")
+
+	// MessageID format
+	testCorrel = "414d5120514d312020202020202020201017155c0255b621"
+	checkCorrelIDOnSendReceive(t, context, queue, producer, consumer, testCorrel, testCorrel)
+
+	// Empty correlationID
+	testCorrel = "000000000000000000000000000000000000000000000000"
+	checkCorrelIDOnSendReceive(t, context, queue, producer, consumer, testCorrel, "")
+
+	testCorrel = "ThisIsAVeryLongCorrelationIDWhichIsMoreThanTwentyFourCharacters"
+	checkCorrelIDOnSendReceive(t, context, queue, producer, consumer, testCorrel, testCorrel[0:12])
+
+	testCorrel = "Hello World"
+	checkCorrelIDOnSendReceive(t, context, queue, producer, consumer, testCorrel, testCorrel)
+
+	testCorrel = "  "
+	checkCorrelIDOnSendReceive(t, context, queue, producer, consumer, testCorrel, testCorrel)
+
+	testCorrel = "010203040506"
+	checkCorrelIDOnSendReceive(t, context, queue, producer, consumer, testCorrel, testCorrel)
 
 }

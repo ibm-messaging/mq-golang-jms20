@@ -146,7 +146,7 @@ func (msg *MessageImpl) SetJMSCorrelationID(correlID string) jms20subset.JMSExce
 	}
 
 	// Store the bytes form of the correlID
-	msg.mqmd.CorrelId = correlHexBytes
+	copy(msg.mqmd.CorrelId, []byte(correlHexBytes))
 
 	return retErr
 }
@@ -213,7 +213,7 @@ func (msg *MessageImpl) GetJMSCorrelationID() string {
 
 			// An error occurred while decoding to a plain text string, so encode
 			// the bytes that we have into a raw string representation themselves.
-			correlID = hex.EncodeToString(correlIDBytes)
+			correlID = hex.EncodeToString(correlIDBytes[0:realLength])
 		}
 
 	}

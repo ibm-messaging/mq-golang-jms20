@@ -11,6 +11,7 @@ package mqjms
 
 import (
 	"strconv"
+	"sync"
 
 	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
 	ibmmq "github.com/ibm-messaging/mq-golang/v5/ibmmq"
@@ -155,6 +156,7 @@ func (cf ConnectionFactoryImpl) CreateContextWithSessionMode(sessionMode int, mq
 		// a new ContextImpl and return it to the caller.
 		ctx = ContextImpl{
 			qMgr:              qMgr,
+			ctxLock:           &sync.Mutex{},
 			sessionMode:       sessionMode,
 			receiveBufferSize: cf.ReceiveBufferSize,
 			sendCheckCount:    cf.SendCheckCount,

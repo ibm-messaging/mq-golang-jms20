@@ -58,6 +58,11 @@ func (producer ProducerImpl) SendBytes(dest jms20subset.Destination, body []byte
 // that are defined on this JMSProducer.
 func (producer ProducerImpl) Send(dest jms20subset.Destination, msg jms20subset.Message) jms20subset.JMSException {
 
+	// Lock the context while we are making calls to the queue manager so that it
+	// doesn't conflict with the finalizer we use (below) to delete unused MessageHandles.
+	producer.ctx.ctxLock.Lock()
+	defer producer.ctx.ctxLock.Unlock()
+
 	// Set up the basic objects we need to send the message.
 	mqod := ibmmq.NewMQOD()
 	putmqmd := ibmmq.NewMQMD()

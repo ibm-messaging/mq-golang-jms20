@@ -12,6 +12,7 @@ package mqjms
 import (
 	"fmt"
 	"strconv"
+	"sync"
 
 	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
 	ibmmq "github.com/ibm-messaging/mq-golang/v5/ibmmq"
@@ -21,6 +22,7 @@ import (
 // connection to an IBM MQ queue manager.
 type ContextImpl struct {
 	qMgr              ibmmq.MQQueueManager
+	ctxLock           *sync.Mutex // Mutex to synchronize MQRC calls to the queue manager
 	sessionMode       int
 	receiveBufferSize int
 	sendCheckCount    int
@@ -64,6 +66,11 @@ func (ctx ContextImpl) CreateConsumer(dest jms20subset.Destination) (jms20subset
 // CreateConsumerWithSelector creates a consumer object that allows an application to
 // receive messages that match the specified selector from the given Destination.
 func (ctx ContextImpl) CreateConsumerWithSelector(dest jms20subset.Destination, selector string) (jms20subset.JMSConsumer, jms20subset.JMSException) {
+
+	// Lock the context while we are making calls to the queue manager so that it
+	// doesn't conflict with the finalizer we use (below) to delete unused MessageHandles.
+	ctx.ctxLock.Lock()
+	defer ctx.ctxLock.Unlock()
 
 	// First validate the selector string format (we don't make use of it at
 	// runtime until the receive is called)
@@ -118,6 +125,11 @@ func (ctx ContextImpl) CreateConsumerWithSelector(dest jms20subset.Destination, 
 // an application can look at messages without removing them.
 func (ctx ContextImpl) CreateBrowser(dest jms20subset.Destination) (jms20subset.QueueBrowser, jms20subset.JMSException) {
 
+	// Lock the context while we are making calls to the queue manager so that it
+	// doesn't conflict with the finalizer we use (below) to delete unused MessageHandles.
+	ctx.ctxLock.Lock()
+	defer ctx.ctxLock.Unlock()
+
 	// Set up the necessary objects to open the queue
 	mqod := ibmmq.NewMQOD()
 	var openOptions int32
@@ -165,6 +177,11 @@ func (ctx ContextImpl) CreateBrowser(dest jms20subset.Destination) (jms20subset.
 // CreateTextMessage is a JMS standard mechanism for creating a TextMessage.
 func (ctx ContextImpl) CreateTextMessage() jms20subset.TextMessage {
 
+	// Lock the context while we are making calls to the queue manager so that it
+	// doesn't conflict with the finalizer we use (below) to delete unused MessageHandles.
+	ctx.ctxLock.Lock()
+	defer ctx.ctxLock.Unlock()
+
 	var bodyStr *string
 	thisMsgHandle := createMsgHandle(ctx.qMgr)
 
@@ -198,6 +215,11 @@ func createMsgHandle(qMgr ibmmq.MQQueueManager) ibmmq.MQMessageHandle {
 // and initialise it with the chosen text string.
 func (ctx ContextImpl) CreateTextMessageWithString(txt string) jms20subset.TextMessage {
 
+	// Lock the context while we are making calls to the queue manager so that it
+	// doesn't conflict with the finalizer we use (below) to delete unused MessageHandles.
+	ctx.ctxLock.Lock()
+	defer ctx.ctxLock.Unlock()
+
 	thisMsgHandle := createMsgHandle(ctx.qMgr)
 
 	msg := &TextMessageImpl{
@@ -213,6 +235,11 @@ func (ctx ContextImpl) CreateTextMessageWithString(txt string) jms20subset.TextM
 // CreateBytesMessage is a JMS standard mechanism for creating a BytesMessage.
 func (ctx ContextImpl) CreateBytesMessage() jms20subset.BytesMessage {
 
+	// Lock the context while we are making calls to the queue manager so that it
+	// doesn't conflict with the finalizer we use (below) to delete unused MessageHandles.
+	ctx.ctxLock.Lock()
+	defer ctx.ctxLock.Unlock()
+
 	var thisBodyBytes *[]byte
 	thisMsgHandle := createMsgHandle(ctx.qMgr)
 
@@ -227,6 +254,11 @@ func (ctx ContextImpl) CreateBytesMessage() jms20subset.BytesMessage {
 // CreateBytesMessageWithBytes is a JMS standard mechanism for creating a BytesMessage.
 func (ctx ContextImpl) CreateBytesMessageWithBytes(bytes []byte) jms20subset.BytesMessage {
 
+	// Lock the context while we are making calls to the queue manager so that it
+	// doesn't conflict with the finalizer we use (below) to delete unused MessageHandles.
+	ctx.ctxLock.Lock()
+	defer ctx.ctxLock.Unlock()
+
 	thisMsgHandle := createMsgHandle(ctx.qMgr)
 
 	return &BytesMessageImpl{
@@ -239,6 +271,11 @@ func (ctx ContextImpl) CreateBytesMessageWithBytes(bytes []byte) jms20subset.Byt
 
 // Commit confirms all messages that were sent under this transaction.
 func (ctx ContextImpl) Commit() jms20subset.JMSException {
+
+	// Lock the context while we are making calls to the queue manager so that it
+	// doesn't conflict with the finalizer we use (below) to delete unused MessageHandles.
+	ctx.ctxLock.Lock()
+	defer ctx.ctxLock.Unlock()
 
 	var retErr jms20subset.JMSException
 
@@ -294,6 +331,11 @@ func (ctx ContextImpl) Commit() jms20subset.JMSException {
 // Rollback releases all messages that were sent under this transaction.
 func (ctx ContextImpl) Rollback() jms20subset.JMSException {
 
+	// Lock the context while we are making calls to the queue manager so that it
+	// doesn't conflict with the finalizer we use (below) to delete unused MessageHandles.
+	ctx.ctxLock.Lock()
+	defer ctx.ctxLock.Unlock()
+
 	var retErr jms20subset.JMSException
 
 	if (ibmmq.MQQueueManager{}) != ctx.qMgr {
@@ -321,6 +363,12 @@ func (ctx ContextImpl) Close() {
 	ctx.Rollback()
 
 	if (ibmmq.MQQueueManager{}) != ctx.qMgr {
+
+		// Lock the context while we are making calls to the queue manager so that it
+		// doesn't conflict with the finalizer we use (below) to delete unused MessageHandles.
+		ctx.ctxLock.Lock()
+		defer ctx.ctxLock.Unlock()
+
 		ctx.qMgr.Disc()
 	}
 

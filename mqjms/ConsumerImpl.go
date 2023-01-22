@@ -15,6 +15,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
 	ibmmq "github.com/ibm-messaging/mq-golang/v5/ibmmq"
@@ -109,24 +110,7 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 		// Set a finalizer on the message handle to allow it to be deleted
 		// when it is no longer referenced by an active object, to reduce/prevent
 		// memory leaks.
-		runtime.SetFinalizer(&thisMsgHandle, func(msgHandle *ibmmq.MQMessageHandle) {
-			consumer.ctx.ctxLock.Lock()
-			dmho := ibmmq.NewMQDMHO()
-			err := msgHandle.DltMH(dmho)
-			if err != nil {
-
-				mqret := err.(*ibmmq.MQReturn)
-
-				if mqret.MQRC == ibmmq.MQRC_HCONN_ERROR {
-					// Expected if the connection is closed before the finalizer executes
-					// (at which point it should get tidied up automatically by the connection)
-				} else {
-					fmt.Println("DltMH finalizer", err)
-				}
-
-			}
-			consumer.ctx.ctxLock.Unlock()
-		})
+		setMessageHandlerFinalizer(thisMsgHandle, consumer.ctx.ctxLock)
 
 		// Message received successfully (without error).
 		// Determine on the basis of the format field what sort of message to create.
@@ -196,6 +180,36 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 	}
 
 	return msg, jmsErr
+}
+
+/*
+ * Set a finalizer on the message handle to allow it to be deleted
+ * when it is no longer referenced by an active object, to reduce/prevent
+ * memory leaks.
+ */
+func setMessageHandlerFinalizer(thisMsgHandle ibmmq.MQMessageHandle, ctxLock *sync.Mutex) {
+
+	runtime.SetFinalizer(&thisMsgHandle, func(msgHandle *ibmmq.MQMessageHandle) {
+		ctxLock.Lock()
+		defer ctxLock.Unlock()
+
+		dmho := ibmmq.NewMQDMHO()
+		err := msgHandle.DltMH(dmho)
+		if err != nil {
+
+			mqret := err.(*ibmmq.MQReturn)
+
+			if mqret.MQRC == ibmmq.MQRC_HCONN_ERROR {
+				// Expected if the connection is closed before the finalizer executes
+				// (at which point it should get tidied up automatically by the connection)
+			} else {
+				fmt.Println("DltMH finalizer", err)
+			}
+
+		}
+
+	})
+
 }
 
 // ReceiveStringBodyNoWait implements the IBM MQ logic necessary to receive a

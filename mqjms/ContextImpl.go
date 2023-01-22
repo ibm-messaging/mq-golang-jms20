@@ -183,7 +183,7 @@ func (ctx ContextImpl) CreateTextMessage() jms20subset.TextMessage {
 	defer ctx.ctxLock.Unlock()
 
 	var bodyStr *string
-	thisMsgHandle := createMsgHandle(ctx.qMgr)
+	thisMsgHandle := ctx.createMsgHandle(ctx.qMgr)
 
 	return &TextMessageImpl{
 		bodyStr: bodyStr,
@@ -195,10 +195,15 @@ func (ctx ContextImpl) CreateTextMessage() jms20subset.TextMessage {
 
 // createMsgHandle creates a new message handle object that can be used to
 // store and retrieve message properties.
-func createMsgHandle(qMgr ibmmq.MQQueueManager) ibmmq.MQMessageHandle {
+func (ctx ContextImpl) createMsgHandle(qMgr ibmmq.MQQueueManager) ibmmq.MQMessageHandle {
 
 	cmho := ibmmq.NewMQCMHO()
 	thisMsgHandle, err := qMgr.CrtMH(cmho)
+
+	// Set a finalizer on the message handle to allow it to be deleted
+	// when it is no longer referenced by an active object, to reduce/prevent
+	// memory leaks.
+	setMessageHandlerFinalizer(thisMsgHandle, ctx.ctxLock)
 
 	if err != nil {
 		// No easy way to pass this error back to the application without
@@ -220,7 +225,7 @@ func (ctx ContextImpl) CreateTextMessageWithString(txt string) jms20subset.TextM
 	ctx.ctxLock.Lock()
 	defer ctx.ctxLock.Unlock()
 
-	thisMsgHandle := createMsgHandle(ctx.qMgr)
+	thisMsgHandle := ctx.createMsgHandle(ctx.qMgr)
 
 	msg := &TextMessageImpl{
 		bodyStr: &txt,
@@ -241,7 +246,7 @@ func (ctx ContextImpl) CreateBytesMessage() jms20subset.BytesMessage {
 	defer ctx.ctxLock.Unlock()
 
 	var thisBodyBytes *[]byte
-	thisMsgHandle := createMsgHandle(ctx.qMgr)
+	thisMsgHandle := ctx.createMsgHandle(ctx.qMgr)
 
 	return &BytesMessageImpl{
 		bodyBytes: thisBodyBytes,
@@ -259,7 +264,7 @@ func (ctx ContextImpl) CreateBytesMessageWithBytes(bytes []byte) jms20subset.Byt
 	ctx.ctxLock.Lock()
 	defer ctx.ctxLock.Unlock()
 
-	thisMsgHandle := createMsgHandle(ctx.qMgr)
+	thisMsgHandle := ctx.createMsgHandle(ctx.qMgr)
 
 	return &BytesMessageImpl{
 		bodyBytes: &bytes,

@@ -16,6 +16,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
@@ -32,6 +33,7 @@ const MessageImpl_PROPERTY_CONVERT_NOTSUPPORTED_CODE string = "1056	"
 type MessageImpl struct {
 	mqmd      *ibmmq.MQMD
 	msgHandle *ibmmq.MQMessageHandle
+	ctxLock   *sync.Mutex
 }
 
 // GetJMSDeliveryMode extracts the persistence setting from this message
@@ -311,6 +313,11 @@ func (msg *MessageImpl) SetStringProperty(name string, value *string) jms20subse
 		return retErr
 	}
 
+	// Lock the context while we are making calls to the queue manager so that it
+	// doesn't conflict with the finalizer we use to delete unused MessageHandles.
+	msg.ctxLock.Lock()
+	defer msg.ctxLock.Unlock()
+
 	if value != nil {
 		// Looking to set a value
 		var valueStr string
@@ -569,6 +576,12 @@ func (msg *MessageImpl) GetStringProperty(name string) (*string, jms20subset.JMS
 	isSpecialProp, value, err := msg.getSpecialPropertyValue(name)
 
 	if !isSpecialProp {
+
+		// Lock the context while we are making calls to the queue manager so that it
+		// doesn't conflict with the finalizer we use to delete unused MessageHandles.
+		msg.ctxLock.Lock()
+		defer msg.ctxLock.Unlock()
+
 		// If not then look for a user property
 		_, value, err = msg.msgHandle.InqMP(impo, pd, name)
 	}
@@ -641,6 +654,11 @@ func (msg *MessageImpl) SetIntProperty(name string, value int) jms20subset.JMSEx
 	smpo := ibmmq.NewMQSMPO()
 	pd := ibmmq.NewMQPD()
 
+	// Lock the context while we are making calls to the queue manager so that it
+	// doesn't conflict with the finalizer we use to delete unused MessageHandles.
+	msg.ctxLock.Lock()
+	defer msg.ctxLock.Unlock()
+
 	linkedErr = msg.msgHandle.SetMP(smpo, name, pd, value)
 
 	if linkedErr != nil {
@@ -667,6 +685,12 @@ func (msg *MessageImpl) GetIntProperty(name string) (int, jms20subset.JMSExcepti
 	isSpecialProp, value, err := msg.getSpecialPropertyValue(name)
 
 	if !isSpecialProp {
+
+		// Lock the context while we are making calls to the queue manager so that it
+		// doesn't conflict with the finalizer we use to delete unused MessageHandles.
+		msg.ctxLock.Lock()
+		defer msg.ctxLock.Unlock()
+
 		// If not then look for a user property
 		_, value, err = msg.msgHandle.InqMP(impo, pd, name)
 	}
@@ -728,6 +752,11 @@ func (msg *MessageImpl) SetDoubleProperty(name string, value float64) jms20subse
 	smpo := ibmmq.NewMQSMPO()
 	pd := ibmmq.NewMQPD()
 
+	// Lock the context while we are making calls to the queue manager so that it
+	// doesn't conflict with the finalizer we use to delete unused MessageHandles.
+	msg.ctxLock.Lock()
+	defer msg.ctxLock.Unlock()
+
 	linkedErr = msg.msgHandle.SetMP(smpo, name, pd, value)
 
 	if linkedErr != nil {
@@ -754,6 +783,12 @@ func (msg *MessageImpl) GetDoubleProperty(name string) (float64, jms20subset.JMS
 	isSpecialProp, value, err := msg.getSpecialPropertyValue(name)
 
 	if !isSpecialProp {
+
+		// Lock the context while we are making calls to the queue manager so that it
+		// doesn't conflict with the finalizer we use to delete unused MessageHandles.
+		msg.ctxLock.Lock()
+		defer msg.ctxLock.Unlock()
+
 		// If not then look for a user property
 		_, value, err = msg.msgHandle.InqMP(impo, pd, name)
 	}
@@ -818,6 +853,11 @@ func (msg *MessageImpl) SetBooleanProperty(name string, value bool) jms20subset.
 		return retErr
 	}
 
+	// Lock the context while we are making calls to the queue manager so that it
+	// doesn't conflict with the finalizer we use to delete unused MessageHandles.
+	msg.ctxLock.Lock()
+	defer msg.ctxLock.Unlock()
+
 	linkedErr = msg.msgHandle.SetMP(smpo, name, pd, value)
 
 	if linkedErr != nil {
@@ -875,6 +915,12 @@ func (msg *MessageImpl) GetBooleanProperty(name string) (bool, jms20subset.JMSEx
 	isSpecialProp, value, err := msg.getSpecialPropertyValue(name)
 
 	if !isSpecialProp {
+
+		// Lock the context while we are making calls to the queue manager so that it
+		// doesn't conflict with the finalizer we use to delete unused MessageHandles.
+		msg.ctxLock.Lock()
+		defer msg.ctxLock.Unlock()
+
 		// If not then look for a user property
 		_, value, err = msg.msgHandle.InqMP(impo, pd, name)
 	}
@@ -951,6 +997,11 @@ func (msg *MessageImpl) getPropertiesInternal(name string) (bool, []string, jms2
 	pd := ibmmq.NewMQPD()
 	propNames := []string{}
 
+	// Lock the context while we are making calls to the queue manager so that it
+	// doesn't conflict with the finalizer we use to delete unused MessageHandles.
+	msg.ctxLock.Lock()
+	defer msg.ctxLock.Unlock()
+
 	impo.Options = ibmmq.MQIMPO_CONVERT_VALUE | ibmmq.MQIMPO_INQ_FIRST
 	for propsToRead := true; propsToRead; {
 
@@ -997,6 +1048,11 @@ func (msg *MessageImpl) ClearProperties() jms20subset.JMSException {
 	if jmsErr == nil {
 
 		dmpo := ibmmq.NewMQDMPO()
+
+		// Lock the context while we are making calls to the queue manager so that it
+		// doesn't conflict with the finalizer we use to delete unused MessageHandles.
+		msg.ctxLock.Lock()
+		defer msg.ctxLock.Unlock()
 
 		for _, propName := range allPropNames {
 

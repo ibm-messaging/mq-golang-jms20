@@ -129,6 +129,7 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 				MessageImpl: MessageImpl{
 					mqmd:      getmqmd,
 					msgHandle: &thisMsgHandle,
+					ctxLock:   consumer.ctx.ctxLock,
 				},
 			}
 
@@ -146,6 +147,7 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 				MessageImpl: MessageImpl{
 					mqmd:      getmqmd,
 					msgHandle: &thisMsgHandle,
+					ctxLock:   consumer.ctx.ctxLock,
 				},
 			}
 		}
@@ -404,6 +406,12 @@ func applySelector(selector string, getmqmd *ibmmq.MQMD, gmo *ibmmq.MQGMO) error
 func (consumer ConsumerImpl) Close() {
 
 	if (ibmmq.MQObject{}) != consumer.qObject {
+
+		// Lock the context while we are making calls to the queue manager so that it
+		// doesn't conflict with the finalizer we use (below) to delete unused MessageHandles.
+		consumer.ctx.ctxLock.Lock()
+		defer consumer.ctx.ctxLock.Unlock()
+
 		consumer.qObject.Close(0)
 	}
 

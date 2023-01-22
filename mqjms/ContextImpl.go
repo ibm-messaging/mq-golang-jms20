@@ -68,7 +68,7 @@ func (ctx ContextImpl) CreateConsumer(dest jms20subset.Destination) (jms20subset
 func (ctx ContextImpl) CreateConsumerWithSelector(dest jms20subset.Destination, selector string) (jms20subset.JMSConsumer, jms20subset.JMSException) {
 
 	// Lock the context while we are making calls to the queue manager so that it
-	// doesn't conflict with the finalizer we use (below) to delete unused MessageHandles.
+	// doesn't conflict with the finalizer we use to delete unused MessageHandles.
 	ctx.ctxLock.Lock()
 	defer ctx.ctxLock.Unlock()
 
@@ -126,7 +126,7 @@ func (ctx ContextImpl) CreateConsumerWithSelector(dest jms20subset.Destination, 
 func (ctx ContextImpl) CreateBrowser(dest jms20subset.Destination) (jms20subset.QueueBrowser, jms20subset.JMSException) {
 
 	// Lock the context while we are making calls to the queue manager so that it
-	// doesn't conflict with the finalizer we use (below) to delete unused MessageHandles.
+	// doesn't conflict with the finalizer we use to delete unused MessageHandles.
 	ctx.ctxLock.Lock()
 	defer ctx.ctxLock.Unlock()
 
@@ -177,11 +177,6 @@ func (ctx ContextImpl) CreateBrowser(dest jms20subset.Destination) (jms20subset.
 // CreateTextMessage is a JMS standard mechanism for creating a TextMessage.
 func (ctx ContextImpl) CreateTextMessage() jms20subset.TextMessage {
 
-	// Lock the context while we are making calls to the queue manager so that it
-	// doesn't conflict with the finalizer we use (below) to delete unused MessageHandles.
-	ctx.ctxLock.Lock()
-	defer ctx.ctxLock.Unlock()
-
 	var bodyStr *string
 	thisMsgHandle := ctx.createMsgHandle(ctx.qMgr)
 
@@ -189,6 +184,7 @@ func (ctx ContextImpl) CreateTextMessage() jms20subset.TextMessage {
 		bodyStr: bodyStr,
 		MessageImpl: MessageImpl{
 			msgHandle: &thisMsgHandle,
+			ctxLock:   ctx.ctxLock,
 		},
 	}
 }
@@ -196,6 +192,11 @@ func (ctx ContextImpl) CreateTextMessage() jms20subset.TextMessage {
 // createMsgHandle creates a new message handle object that can be used to
 // store and retrieve message properties.
 func (ctx ContextImpl) createMsgHandle(qMgr ibmmq.MQQueueManager) ibmmq.MQMessageHandle {
+
+	// Lock the context while we are making calls to the queue manager so that it
+	// doesn't conflict with the finalizer we use to delete unused MessageHandles.
+	ctx.ctxLock.Lock()
+	defer ctx.ctxLock.Unlock()
 
 	cmho := ibmmq.NewMQCMHO()
 	thisMsgHandle, err := qMgr.CrtMH(cmho)
@@ -220,17 +221,13 @@ func (ctx ContextImpl) createMsgHandle(qMgr ibmmq.MQQueueManager) ibmmq.MQMessag
 // and initialise it with the chosen text string.
 func (ctx ContextImpl) CreateTextMessageWithString(txt string) jms20subset.TextMessage {
 
-	// Lock the context while we are making calls to the queue manager so that it
-	// doesn't conflict with the finalizer we use (below) to delete unused MessageHandles.
-	ctx.ctxLock.Lock()
-	defer ctx.ctxLock.Unlock()
-
 	thisMsgHandle := ctx.createMsgHandle(ctx.qMgr)
 
 	msg := &TextMessageImpl{
 		bodyStr: &txt,
 		MessageImpl: MessageImpl{
 			msgHandle: &thisMsgHandle,
+			ctxLock:   ctx.ctxLock,
 		},
 	}
 
@@ -240,11 +237,6 @@ func (ctx ContextImpl) CreateTextMessageWithString(txt string) jms20subset.TextM
 // CreateBytesMessage is a JMS standard mechanism for creating a BytesMessage.
 func (ctx ContextImpl) CreateBytesMessage() jms20subset.BytesMessage {
 
-	// Lock the context while we are making calls to the queue manager so that it
-	// doesn't conflict with the finalizer we use (below) to delete unused MessageHandles.
-	ctx.ctxLock.Lock()
-	defer ctx.ctxLock.Unlock()
-
 	var thisBodyBytes *[]byte
 	thisMsgHandle := ctx.createMsgHandle(ctx.qMgr)
 
@@ -252,6 +244,7 @@ func (ctx ContextImpl) CreateBytesMessage() jms20subset.BytesMessage {
 		bodyBytes: thisBodyBytes,
 		MessageImpl: MessageImpl{
 			msgHandle: &thisMsgHandle,
+			ctxLock:   ctx.ctxLock,
 		},
 	}
 }
@@ -259,17 +252,13 @@ func (ctx ContextImpl) CreateBytesMessage() jms20subset.BytesMessage {
 // CreateBytesMessageWithBytes is a JMS standard mechanism for creating a BytesMessage.
 func (ctx ContextImpl) CreateBytesMessageWithBytes(bytes []byte) jms20subset.BytesMessage {
 
-	// Lock the context while we are making calls to the queue manager so that it
-	// doesn't conflict with the finalizer we use (below) to delete unused MessageHandles.
-	ctx.ctxLock.Lock()
-	defer ctx.ctxLock.Unlock()
-
 	thisMsgHandle := ctx.createMsgHandle(ctx.qMgr)
 
 	return &BytesMessageImpl{
 		bodyBytes: &bytes,
 		MessageImpl: MessageImpl{
 			msgHandle: &thisMsgHandle,
+			ctxLock:   ctx.ctxLock,
 		},
 	}
 }
@@ -277,14 +266,15 @@ func (ctx ContextImpl) CreateBytesMessageWithBytes(bytes []byte) jms20subset.Byt
 // Commit confirms all messages that were sent under this transaction.
 func (ctx ContextImpl) Commit() jms20subset.JMSException {
 
-	// Lock the context while we are making calls to the queue manager so that it
-	// doesn't conflict with the finalizer we use (below) to delete unused MessageHandles.
-	ctx.ctxLock.Lock()
-	defer ctx.ctxLock.Unlock()
-
 	var retErr jms20subset.JMSException
 
 	if (ibmmq.MQQueueManager{}) != ctx.qMgr {
+
+		// Lock the context while we are making calls to the queue manager so that it
+		// doesn't conflict with the finalizer we use to delete unused MessageHandles.
+		ctx.ctxLock.Lock()
+		defer ctx.ctxLock.Unlock()
+
 		err := ctx.qMgr.Cmit()
 
 		if err != nil {
@@ -336,14 +326,15 @@ func (ctx ContextImpl) Commit() jms20subset.JMSException {
 // Rollback releases all messages that were sent under this transaction.
 func (ctx ContextImpl) Rollback() jms20subset.JMSException {
 
-	// Lock the context while we are making calls to the queue manager so that it
-	// doesn't conflict with the finalizer we use (below) to delete unused MessageHandles.
-	ctx.ctxLock.Lock()
-	defer ctx.ctxLock.Unlock()
-
 	var retErr jms20subset.JMSException
 
 	if (ibmmq.MQQueueManager{}) != ctx.qMgr {
+
+		// Lock the context while we are making calls to the queue manager so that it
+		// doesn't conflict with the finalizer we use to delete unused MessageHandles.
+		ctx.ctxLock.Lock()
+		defer ctx.ctxLock.Unlock()
+
 		err := ctx.qMgr.Back()
 
 		if err != nil {
@@ -370,7 +361,7 @@ func (ctx ContextImpl) Close() {
 	if (ibmmq.MQQueueManager{}) != ctx.qMgr {
 
 		// Lock the context while we are making calls to the queue manager so that it
-		// doesn't conflict with the finalizer we use (below) to delete unused MessageHandles.
+		// doesn't conflict with the finalizer we use to delete unused MessageHandles.
 		ctx.ctxLock.Lock()
 		defer ctx.ctxLock.Unlock()
 

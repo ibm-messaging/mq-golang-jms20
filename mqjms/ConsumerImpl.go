@@ -11,8 +11,11 @@ package mqjms
 
 import (
 	"errors"
+	"fmt"
+	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
 	ibmmq "github.com/ibm-messaging/mq-golang/v5/ibmmq"
@@ -57,6 +60,11 @@ func (consumer ConsumerImpl) Receive(waitMillis int32) (jms20subset.Message, jms
 // of receive.
 func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Message, jms20subset.JMSException) {
 
+	// Lock the context while we are making calls to the queue manager so that it
+	// doesn't conflict with the finalizer we use (below) to delete unused MessageHandles.
+	consumer.ctx.ctxLock.Lock()
+	defer consumer.ctx.ctxLock.Unlock()
+
 	// Prepare objects to be used in receiving the message.
 	var msg jms20subset.Message
 	var jmsErr jms20subset.JMSException
@@ -99,6 +107,11 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 
 	if err == nil {
 
+		// Set a finalizer on the message handle to allow it to be deleted
+		// when it is no longer referenced by an active object, to reduce/prevent
+		// memory leaks.
+		setMessageHandlerFinalizer(thisMsgHandle, consumer.ctx.ctxLock)
+
 		// Message received successfully (without error).
 		// Determine on the basis of the format field what sort of message to create.
 
@@ -116,6 +129,7 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 				MessageImpl: MessageImpl{
 					mqmd:      getmqmd,
 					msgHandle: &thisMsgHandle,
+					ctxLock:   consumer.ctx.ctxLock,
 				},
 			}
 
@@ -133,6 +147,7 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 				MessageImpl: MessageImpl{
 					mqmd:      getmqmd,
 					msgHandle: &thisMsgHandle,
+					ctxLock:   consumer.ctx.ctxLock,
 				},
 			}
 		}
@@ -141,6 +156,11 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 
 		// Error code was returned from MQ call.
 		mqret := err.(*ibmmq.MQReturn)
+
+		// Delete the message handle object in-line here now that it is no longer required,
+		// to avoid memory leak
+		dmho := ibmmq.NewMQDMHO()
+		gmo.MsgHandle.DltMH(dmho)
 
 		if mqret.MQRC == ibmmq.MQRC_NO_MSG_AVAILABLE {
 
@@ -162,6 +182,36 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 	}
 
 	return msg, jmsErr
+}
+
+/*
+ * Set a finalizer on the message handle to allow it to be deleted
+ * when it is no longer referenced by an active object, to reduce/prevent
+ * memory leaks.
+ */
+func setMessageHandlerFinalizer(thisMsgHandle ibmmq.MQMessageHandle, ctxLock *sync.Mutex) {
+
+	runtime.SetFinalizer(&thisMsgHandle, func(msgHandle *ibmmq.MQMessageHandle) {
+		ctxLock.Lock()
+		defer ctxLock.Unlock()
+
+		dmho := ibmmq.NewMQDMHO()
+		err := msgHandle.DltMH(dmho)
+		if err != nil {
+
+			mqret := err.(*ibmmq.MQReturn)
+
+			if mqret.MQRC == ibmmq.MQRC_HCONN_ERROR {
+				// Expected if the connection is closed before the finalizer executes
+				// (at which point it should get tidied up automatically by the connection)
+			} else {
+				fmt.Println("DltMH finalizer", err)
+			}
+
+		}
+
+	})
+
 }
 
 // ReceiveStringBodyNoWait implements the IBM MQ logic necessary to receive a
@@ -356,6 +406,12 @@ func applySelector(selector string, getmqmd *ibmmq.MQMD, gmo *ibmmq.MQGMO) error
 func (consumer ConsumerImpl) Close() {
 
 	if (ibmmq.MQObject{}) != consumer.qObject {
+
+		// Lock the context while we are making calls to the queue manager so that it
+		// doesn't conflict with the finalizer we use (below) to delete unused MessageHandles.
+		consumer.ctx.ctxLock.Lock()
+		defer consumer.ctx.ctxLock.Unlock()
+
 		consumer.qObject.Close(0)
 	}
 

@@ -12,6 +12,7 @@ package mqjms
 import (
 	"fmt"
 	"strconv"
+	"sync"
 
 	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
 	ibmmq "github.com/ibm-messaging/mq-golang/v5/ibmmq"
@@ -21,6 +22,7 @@ import (
 // connection to an IBM MQ queue manager.
 type ContextImpl struct {
 	qMgr              ibmmq.MQQueueManager
+	ctxLock           *sync.Mutex // Mutex to synchronize MQRC calls to the queue manager
 	sessionMode       int
 	receiveBufferSize int
 	sendCheckCount    int
@@ -64,6 +66,11 @@ func (ctx ContextImpl) CreateConsumer(dest jms20subset.Destination) (jms20subset
 // CreateConsumerWithSelector creates a consumer object that allows an application to
 // receive messages that match the specified selector from the given Destination.
 func (ctx ContextImpl) CreateConsumerWithSelector(dest jms20subset.Destination, selector string) (jms20subset.JMSConsumer, jms20subset.JMSException) {
+
+	// Lock the context while we are making calls to the queue manager so that it
+	// doesn't conflict with the finalizer we use to delete unused MessageHandles.
+	ctx.ctxLock.Lock()
+	defer ctx.ctxLock.Unlock()
 
 	// First validate the selector string format (we don't make use of it at
 	// runtime until the receive is called)
@@ -118,6 +125,11 @@ func (ctx ContextImpl) CreateConsumerWithSelector(dest jms20subset.Destination, 
 // an application can look at messages without removing them.
 func (ctx ContextImpl) CreateBrowser(dest jms20subset.Destination) (jms20subset.QueueBrowser, jms20subset.JMSException) {
 
+	// Lock the context while we are making calls to the queue manager so that it
+	// doesn't conflict with the finalizer we use to delete unused MessageHandles.
+	ctx.ctxLock.Lock()
+	defer ctx.ctxLock.Unlock()
+
 	// Set up the necessary objects to open the queue
 	mqod := ibmmq.NewMQOD()
 	var openOptions int32
@@ -166,22 +178,33 @@ func (ctx ContextImpl) CreateBrowser(dest jms20subset.Destination) (jms20subset.
 func (ctx ContextImpl) CreateTextMessage() jms20subset.TextMessage {
 
 	var bodyStr *string
-	thisMsgHandle := createMsgHandle(ctx.qMgr)
+	thisMsgHandle := ctx.createMsgHandle(ctx.qMgr)
 
 	return &TextMessageImpl{
 		bodyStr: bodyStr,
 		MessageImpl: MessageImpl{
 			msgHandle: &thisMsgHandle,
+			ctxLock:   ctx.ctxLock,
 		},
 	}
 }
 
 // createMsgHandle creates a new message handle object that can be used to
 // store and retrieve message properties.
-func createMsgHandle(qMgr ibmmq.MQQueueManager) ibmmq.MQMessageHandle {
+func (ctx ContextImpl) createMsgHandle(qMgr ibmmq.MQQueueManager) ibmmq.MQMessageHandle {
+
+	// Lock the context while we are making calls to the queue manager so that it
+	// doesn't conflict with the finalizer we use to delete unused MessageHandles.
+	ctx.ctxLock.Lock()
+	defer ctx.ctxLock.Unlock()
 
 	cmho := ibmmq.NewMQCMHO()
 	thisMsgHandle, err := qMgr.CrtMH(cmho)
+
+	// Set a finalizer on the message handle to allow it to be deleted
+	// when it is no longer referenced by an active object, to reduce/prevent
+	// memory leaks.
+	setMessageHandlerFinalizer(thisMsgHandle, ctx.ctxLock)
 
 	if err != nil {
 		// No easy way to pass this error back to the application without
@@ -198,12 +221,13 @@ func createMsgHandle(qMgr ibmmq.MQQueueManager) ibmmq.MQMessageHandle {
 // and initialise it with the chosen text string.
 func (ctx ContextImpl) CreateTextMessageWithString(txt string) jms20subset.TextMessage {
 
-	thisMsgHandle := createMsgHandle(ctx.qMgr)
+	thisMsgHandle := ctx.createMsgHandle(ctx.qMgr)
 
 	msg := &TextMessageImpl{
 		bodyStr: &txt,
 		MessageImpl: MessageImpl{
 			msgHandle: &thisMsgHandle,
+			ctxLock:   ctx.ctxLock,
 		},
 	}
 
@@ -214,12 +238,13 @@ func (ctx ContextImpl) CreateTextMessageWithString(txt string) jms20subset.TextM
 func (ctx ContextImpl) CreateBytesMessage() jms20subset.BytesMessage {
 
 	var thisBodyBytes *[]byte
-	thisMsgHandle := createMsgHandle(ctx.qMgr)
+	thisMsgHandle := ctx.createMsgHandle(ctx.qMgr)
 
 	return &BytesMessageImpl{
 		bodyBytes: thisBodyBytes,
 		MessageImpl: MessageImpl{
 			msgHandle: &thisMsgHandle,
+			ctxLock:   ctx.ctxLock,
 		},
 	}
 }
@@ -227,12 +252,13 @@ func (ctx ContextImpl) CreateBytesMessage() jms20subset.BytesMessage {
 // CreateBytesMessageWithBytes is a JMS standard mechanism for creating a BytesMessage.
 func (ctx ContextImpl) CreateBytesMessageWithBytes(bytes []byte) jms20subset.BytesMessage {
 
-	thisMsgHandle := createMsgHandle(ctx.qMgr)
+	thisMsgHandle := ctx.createMsgHandle(ctx.qMgr)
 
 	return &BytesMessageImpl{
 		bodyBytes: &bytes,
 		MessageImpl: MessageImpl{
 			msgHandle: &thisMsgHandle,
+			ctxLock:   ctx.ctxLock,
 		},
 	}
 }
@@ -243,6 +269,12 @@ func (ctx ContextImpl) Commit() jms20subset.JMSException {
 	var retErr jms20subset.JMSException
 
 	if (ibmmq.MQQueueManager{}) != ctx.qMgr {
+
+		// Lock the context while we are making calls to the queue manager so that it
+		// doesn't conflict with the finalizer we use to delete unused MessageHandles.
+		ctx.ctxLock.Lock()
+		defer ctx.ctxLock.Unlock()
+
 		err := ctx.qMgr.Cmit()
 
 		if err != nil {
@@ -297,6 +329,12 @@ func (ctx ContextImpl) Rollback() jms20subset.JMSException {
 	var retErr jms20subset.JMSException
 
 	if (ibmmq.MQQueueManager{}) != ctx.qMgr {
+
+		// Lock the context while we are making calls to the queue manager so that it
+		// doesn't conflict with the finalizer we use to delete unused MessageHandles.
+		ctx.ctxLock.Lock()
+		defer ctx.ctxLock.Unlock()
+
 		err := ctx.qMgr.Back()
 
 		if err != nil {
@@ -321,6 +359,12 @@ func (ctx ContextImpl) Close() {
 	ctx.Rollback()
 
 	if (ibmmq.MQQueueManager{}) != ctx.qMgr {
+
+		// Lock the context while we are making calls to the queue manager so that it
+		// doesn't conflict with the finalizer we use to delete unused MessageHandles.
+		ctx.ctxLock.Lock()
+		defer ctx.ctxLock.Unlock()
+
 		ctx.qMgr.Disc()
 	}
 

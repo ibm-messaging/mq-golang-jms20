@@ -12,7 +12,7 @@ by providing a client library that implements a subset of the JMS 2.0 programmin
 straightforward as shown in the samples below, and allows you to make use of the existing documentation and collateral
 for developing applications in JMS 2.0.
 
-If you're not familiar with IBM MQ then you'll also find the [MQ Essentials tutorial](https://developer.ibm.com/messaging/learn-mq/mq-tutorials/getting-started-mq/) on the [Learn MQ](https://developer.ibm.com/messaging/learn-mq/) site important to understand how IBM MQ solves key problems for your application solution.
+If you're not familiar with IBM MQ then you'll also find the [MQ Essentials tutorial](https://developer.ibm.com/learningpaths/ibm-mq-badge/) on the [Learn MQ](https://developer.ibm.com/components/ibm-mq/) site as it is important to understand how IBM MQ solves key problems for your application solution.
 
 Note for experienced MQ / JMS developers: This repository provides a JMS style programming interface, but there is no use of Java as part of the implementation. It also does not use the IBM MQ Java client, or IBM MQ JMS client. The implementation is written in Golang and builds upon the [mq-golang](https://github.com/ibm-messaging/mq-golang) module, which itself uses Cgo to invoke the MQ C client library and communicate with the queue manager.
 

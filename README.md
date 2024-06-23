@@ -173,14 +173,14 @@ JMS_IBM_Last_Msg_In_Group     msg.GetBooleanProperty("JMS_IBM_Last_Msg_In_Group"
 ## Getting started
 
 ### Installing the pre-requisites
-The IBM MQ client on which this library depends is supported on Linux and Windows, and is [now available for development use on MacOS](https://developer.ibm.com/components/ibm-mq/tutorials/mq-macos-dev/)).
+The IBM MQ client on which this library depends is supported on Linux and Windows, and is [now available for development use on MacOS](https://developer.ibm.com/tutorials/mq-macos-dev/).
 
 1. Install Golang
-    - This library has been validated with Golang v1.13.11. If you don't have Golang installed on your system you can [download it here](https://golang.org/doc/install) for MacOS, Linux or Windows
+    - This library has been validated with Golang v1.19.1. If you don't have Golang installed on your system you can [download it here](https://golang.org/doc/install) for MacOS, Linux or Windows
 
 3. Install the MQ Client library
     - If you have a full MQ server with a queue manager installed on your machine then you already have the client library
-    - If you don't have a queue manager installed on your machine then you can download the "redistributable client" library for IBM MQ 9.1.1 CD or higher for [Linux](https://www14.software.ibm.com/cgi-bin/weblap/lap.pl?popup=Y&li_formnum=L-APIG-BM7GDH&accepted_url=https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist/9.1.5.0-IBM-MQC-Redist-LinuxX64.tar.gz), [Windows](https://www14.software.ibm.com/cgi-bin/weblap/lap.pl?popup=Y&li_formnum=L-APIG-BM7GDH&accepted_url=https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist/9.1.5.0-IBM-MQC-Redist-Win64.zip) or [MacOS](https://ibm.biz/mqdevmacclient)
+    - If you don't have a queue manager installed on your machine then you can download the ["redistributable IBM MQ client"](https://www.ibm.com/docs/en/ibm-mq/9.4?topic=overview-redistributable-mq-clients) library for  for [Linux or Windows](https://ibm.biz/mq94redistclients), or [MacOS](https://ibm.biz/mqdevmacclient)
       - Simply unzip the archive and make a note of the installation location. For ease of configuration you may wish to unzip the archive into the default install IBM MQ location for your platform
       - Note that v9.1.1 (CD) or higher of the MQ client library is required as it includes header files that are not present in v9.1.0 LTS or below.
 4. Git clone this project to download this JMS style implementation onto your workstation
@@ -213,7 +213,7 @@ export CGO_LDFLAGS_ALLOW="-Wl,-rpath.*"
 
 **If your client install is not located in the default installation location**, for example `/opt/mqm` then you also need to set the follow environment variables to point at your installation location. For example on Linux or MacOS;
 ```bash
-export MQ_INSTALLATION_PATH=$HOME/9.2.0.0-IBM-MQC-Redist-LinuxX64
+export MQ_INSTALLATION_PATH=$HOME/9.4.0.0-IBM-MQC-Redist-LinuxX64
 export CGO_CFLAGS="-I$MQ_INSTALLATION_PATH/inc"
 export CGO_LDFLAGS="-L$MQ_INSTALLATION_PATH/lib64 -Wl,-rpath,$MQ_INSTALLATION_PATH/lib64"
 ```

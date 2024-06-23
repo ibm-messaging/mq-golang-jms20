@@ -82,7 +82,8 @@ func TestPropertySpecialStringGet(t *testing.T) {
 	assert.NotNil(t, gotPropValue)
 	assert.Equal(t, 8, len(*gotPropValue)) // HHMMSSTH
 
-	expectedTime := unixTimestamp.Format("150405")
+	utc, _ := time.LoadLocation("UTC") // Fix testcase to work correctly during daylight savings time
+	expectedTime := unixTimestamp.In(utc).Format("150405")
 	assert.Equal(t, expectedTime, (*gotPropValue)[0:6]) // skip the tenths for the check
 
 	// Check the Format

@@ -1,4 +1,4 @@
- FROM golang:1.15 as builder
+ FROM golang:1.21.1 as builder
  ENV APP_HOME /go/src/openshift-app-sample
  RUN mkdir -p /opt/mqm \
    && chmod a+rx /opt/mqm
@@ -22,7 +22,7 @@
  COPY src/ .
  RUN go build -o openshift-app-sample
 
- FROM golang:1.15
+ FROM golang:1.21.1
  ENV APP_HOME /go/src/openshift-app-sample
  # Create the directories the client expects to be present
  RUN mkdir -p $APP_HOME \

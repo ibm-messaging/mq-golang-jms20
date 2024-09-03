@@ -422,6 +422,15 @@ func (msg *MessageImpl) setSpecialIntPropertyValue(name string, value int) (bool
 	case "JMS_IBM_Encoding":
 		msg.mqmd.Encoding = int32(value)
 
+	case "JMS_IBM_Feedback":
+		msg.mqmd.Feedback = int32(value)
+
+	case "JMS_IBM_Report_COA":
+		msg.mqmd.Report |= int32(value) // bitwise merge (OR) the COA value
+
+	case "JMS_IBM_Report_COD":
+		msg.mqmd.Report |= int32(value) // bitwise merge (OR) the COD value
+
 	case "JMS_IBM_Character_Set":
 		msg.mqmd.CodedCharSetId = int32(value)
 
@@ -481,6 +490,21 @@ func (msg *MessageImpl) getSpecialPropertyValue(name string) (bool, interface{},
 	case "JMS_IBM_MQMD_Format": // same as JMS_IBM_Format
 		if msg.mqmd != nil && msg.mqmd.Format != ibmmq.MQFMT_NONE {
 			value = msg.mqmd.Format
+		}
+
+	case "JMS_IBM_Feedback":
+		if msg.mqmd != nil && msg.mqmd.Feedback != ibmmq.MQFB_NONE {
+			value = msg.mqmd.Feedback
+		}
+
+	case "JMS_IBM_Report_COA":
+		if msg.mqmd != nil && msg.mqmd.Report != ibmmq.MQRO_NONE {
+			value = msg.mqmd.Report & ibmmq.MQRO_COA_WITH_FULL_DATA // bitwise retrieve just the COA data
+		}
+
+	case "JMS_IBM_Report_COD":
+		if msg.mqmd != nil && msg.mqmd.Report != ibmmq.MQRO_NONE {
+			value = msg.mqmd.Report & ibmmq.MQRO_COD_WITH_FULL_DATA // bitwise retrieve just the COD data
 		}
 
 	case "JMSXAppID":

@@ -16,6 +16,7 @@ import (
 
 	"github.com/ibm-messaging/mq-golang-jms20/jms20subset"
 	"github.com/ibm-messaging/mq-golang-jms20/mqjms"
+	"github.com/ibm-messaging/mq-golang/v5/ibmmq"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -423,5 +424,128 @@ func TestPropertySpecialIntGet(t *testing.T) {
 	gotPropValue, propErr = rcvMsg.GetIntProperty("JMS_IBM_MQMD_MsgType")
 	assert.Nil(t, propErr)
 	assert.Equal(t, msgType2, gotPropValue)
+
+}
+
+/*
+ * Test the retrieval of the JMS_IBM_Feedback, JMS_IBM_Report_COA and JMS_IBM_Report_COD properties.
+ */
+func TestPropertyReportCOACOD(t *testing.T) {
+
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
+	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
+	assert.Nil(t, cfErr)
+
+	// Creates a connection to the queue manager, using defer to close it automatically
+	// at the end of the function (if it was created successfully)
+	context, ctxErr := cf.CreateContext()
+	assert.Nil(t, ctxErr)
+	if context != nil {
+		defer context.Close()
+	}
+
+	// Create a BytesMessage and check that we can populate it
+	sendMsg := context.CreateBytesMessage()
+
+	// Set the special properties.
+	feedbackVal := int(ibmmq.MQFB_APPL_FIRST + 20) // after the MQFB_APPL_FIRST range
+	sendMsg.SetIntProperty("JMS_IBM_Feedback", feedbackVal)
+	reportCOAVal := int(ibmmq.MQRO_COA_WITH_DATA)
+	sendMsg.SetIntProperty("JMS_IBM_Report_COA", reportCOAVal)
+	reportCODVal := int(ibmmq.MQRO_COD_WITH_DATA)
+	sendMsg.SetIntProperty("JMS_IBM_Report_COD", reportCODVal)
+
+	// Set up objects for send/receive
+	queue := context.CreateQueue("DEV.QUEUE.1")
+	consumer, errCons := context.CreateConsumer(queue)
+	if consumer != nil {
+		defer consumer.Close()
+	}
+	assert.Nil(t, errCons)
+
+	replyQueue := context.CreateQueue("DEV.QUEUE.2")
+	replyConsumer, errCons := context.CreateConsumer(replyQueue)
+	if replyConsumer != nil {
+		defer replyConsumer.Close()
+	}
+	assert.Nil(t, errCons)
+
+	// Check no messages on the reply queue to before we start.
+	rcvMsg, errRvc := replyConsumer.ReceiveNoWait()
+	assert.Nil(t, errRvc)
+	assert.Nil(t, rcvMsg) // no message should be present (haven't started the test yet)
+
+	sendMsg.SetJMSReplyTo(replyQueue)
+
+	// Now send the message and get it back again, to check that it roundtripped.
+	ttlMillis := 20000
+	errSend := context.CreateProducer().SetTimeToLive(ttlMillis).Send(queue, sendMsg)
+	assert.Nil(t, errSend)
+
+	// Check the COA notification has been created (but not COD)
+	coaMsg, errRvc := replyConsumer.ReceiveNoWait()
+	assert.Nil(t, errRvc)
+	assert.NotNil(t, coaMsg) // COA message should have been created.  When this check fails, see below.
+	// When the COA message is not received it's quite likely because the COA message has ended up on the DEAD.LETTER.QUEUE
+	// because the sending application does not have permissions to copy the messageID.
+	//
+	// Look in the queue manager logs for an error like this (and then add that permission to the user record)
+	//
+	// AMQ8077W: Entity 'myapp2' has insufficient authority to access object DEV.QUEUE.2 [queue].
+	// EXPLANATION:
+	// The specified entity is not authorized to access the required object. The
+	// following requested permissions are unauthorized: passid
+	//
+	assert.Equal(t, sendMsg.GetJMSMessageID(), coaMsg.GetJMSCorrelationID())
+	coaFeedback, coaFeedbackErr := coaMsg.GetIntProperty("JMS_IBM_Feedback")
+	assert.Nil(t, coaFeedbackErr)
+	assert.Equal(t, int(ibmmq.MQFB_COA), coaFeedback)
+
+	// Check no more report messages yet.
+	secondReportMsg, errRvc := replyConsumer.ReceiveNoWait()
+	assert.Nil(t, errRvc)
+	assert.Nil(t, secondReportMsg)
+
+	// -------
+	// Now receive the original message back from the queue.
+	rcvMsg, errRvc = consumer.ReceiveNoWait()
+	assert.Nil(t, errRvc)
+	assert.NotNil(t, rcvMsg)
+
+	switch msg := rcvMsg.(type) {
+	case jms20subset.BytesMessage:
+		assert.Equal(t, 0, msg.GetBodyLength())
+	default:
+		assert.Fail(t, "Got something other than a bytes message")
+	}
+
+	// Check the properties came back as expected (on the normal message that was received back)
+	gotPropValue, propErr := rcvMsg.GetIntProperty("JMS_IBM_Feedback")
+	assert.Nil(t, propErr)
+	assert.Equal(t, feedbackVal, gotPropValue)
+
+	gotPropValue, propErr = rcvMsg.GetIntProperty("JMS_IBM_Report_COA")
+	assert.Nil(t, propErr)
+	assert.Equal(t, reportCOAVal, gotPropValue)
+
+	gotPropValue, propErr = rcvMsg.GetIntProperty("JMS_IBM_Report_COD")
+	assert.Nil(t, propErr)
+	assert.Equal(t, reportCODVal, gotPropValue)
+
+	// ------
+
+	// COD notification should now have been created, since the request message has been consumed.
+	codMsg, errRvc := replyConsumer.ReceiveNoWait()
+	assert.Nil(t, errRvc)
+	assert.NotNil(t, codMsg) // COD message should have been created.
+	assert.Equal(t, sendMsg.GetJMSMessageID(), codMsg.GetJMSCorrelationID())
+	codFeedback, codFeedbackErr := codMsg.GetIntProperty("JMS_IBM_Feedback")
+	assert.Nil(t, codFeedbackErr)
+	assert.Equal(t, int(ibmmq.MQFB_COD), codFeedback)
+
+	// Check no more report messages.
+	thirdReportMsg, errRvc := replyConsumer.ReceiveNoWait()
+	assert.Nil(t, errRvc)
+	assert.Nil(t, thirdReportMsg)
 
 }

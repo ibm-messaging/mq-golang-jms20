@@ -166,6 +166,12 @@ JMSXAppID                     msg.GetStringProperty("JMSXAppID")                
 JMSXGroupID                   msg.GetStringProperty("JMSXGroupID")
 JMSXGroupSeq                  msg.GetIntProperty("JMSXGroupSeq")
 JMS_IBM_Last_Msg_In_Group     msg.GetBooleanProperty("JMS_IBM_Last_Msg_In_Group")
+JMS_IBM_Feedback              msg.SetIntProperty("JMS_IBM_Encoding", 65600)
+                              msg.GetIntProperty("JMS_IBM_Encoding")              
+JMS_IBM_Report_COA            msg.SetIntProperty("JMS_IBM_Report_COA", ibmmq.MQRO_COA_WITH_DATA)
+                              msg.GetIntProperty("JMS_IBM_Report_COA")
+JMS_IBM_Report_COD            msg.SetIntProperty("JMS_IBM_Report_COD", ibmmq.MQRO_COD_WITH_DATA)
+                              msg.GetIntProperty("JMS_IBM_Report_COD")
 ```
 
 

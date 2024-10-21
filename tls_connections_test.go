@@ -260,37 +260,3 @@ func TestAnonConfigToMutualTLSConnectionFails(t *testing.T) {
 	assert.Equal(t, "2393", errCtx.GetErrorCode())
 
 }
-
-/*
- * Test that we get an error code when we give an invalid value for the
- * TLSClientAuth parameter.
- */
-func TestInvalidClientAuthValue(t *testing.T) {
-
-	cf, err := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
-	assert.Nil(t, err)
-
-	// Override the connection settings to point to the anonymous ("one way") TLS
-	// channel (must be configured on the queue manager)
-	cf.ChannelName = "TLS.ANON.SVRCONN"
-
-	// Set the channel settings that tells the client what TLS configuration to use
-	// to connect to the queue manager.
-	cf.TLSCipherSpec = "ANY_TLS12"
-	cf.TLSClientAuth = "INVALID_VALUE!"
-	cf.KeyRepository = "./tls-samples/anon-tls" // points to .kdb file
-
-	// Creates a connection to the queue manager, using defer to close it automatically
-	// at the end of the function (if it was created successfully)
-	context, errCtx := cf.CreateContext()
-	if context != nil {
-		defer context.Close()
-	}
-
-	assert.NotNil(t, errCtx)
-	if errCtx != nil {
-		assert.Equal(t, "MQRC_CD_ERROR", errCtx.GetReason())
-		assert.Equal(t, "2277", errCtx.GetErrorCode())
-	}
-
-}

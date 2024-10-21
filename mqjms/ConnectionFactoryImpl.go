@@ -144,7 +144,7 @@ func (cf ConnectionFactoryImpl) CreateContextWithSessionMode(sessionMode int, mq
 	// queue manager.
 	qMgr, err := ibmmq.Connx(cf.QMName, cno)
 
-	if err == nil {
+	if (qMgr != ibmmq.MQQueueManager{}) {
 
 		// Initialize the countInc value to 1 so that if CheckCount is enabled (>0)
 		// then an error check will be made after the first message - to catch any
@@ -163,7 +163,9 @@ func (cf ConnectionFactoryImpl) CreateContextWithSessionMode(sessionMode int, mq
 			sendCheckCountInc: countInc,
 		}
 
-	} else {
+	}
+
+	if err != nil {
 
 		// The underlying MQI call returned an error, so extract the relevant
 		// details and pass it back to the caller as a JMSException

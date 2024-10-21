@@ -11,9 +11,11 @@ package main
 
 import (
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/ibm-messaging/mq-golang-jms20/mqjms"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 // This test file contains tests that demonstrate how to create TLS connections
@@ -63,6 +65,75 @@ func TestAnonymousTLSConnection(t *testing.T) {
 
 	// This connection should have been created successfully.
 	assert.Nil(t, errCtx)
+
+}
+
+/*
+ * Test that we can connect successfully if we provide the correct anonymous
+ * ("ony way") TLS configuration.
+ */
+func TestTLSAlreadyInitialized(t *testing.T) {
+
+	cf, err := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
+	assert.Nil(t, err)
+
+	// Override the connection settings to point to the anonymous ("one way") TLS
+	// channel (must be configured on the queue manager)
+	cf.ChannelName = "TLS.ANON.SVRCONN"
+
+	// Set the channel settings that tells the client what TLS configuration to use
+	// to connect to the queue manager.
+	cf.TLSCipherSpec = "TLS_RSA_WITH_AES_128_CBC_SHA256" // ANY_TLS12
+	cf.KeyRepository = "./tls-samples/anon-tls"          // points to .kdb file
+
+	// Creates a connection to the queue manager, using defer to close it automatically
+	// at the end of the function (if it was created successfully)
+	context, errCtx := cf.CreateContext()
+	if context != nil {
+		defer context.Close()
+	}
+
+	if errCtx != nil && (errCtx.GetReason() == "MQRC_UNKNOWN_CHANNEL_NAME" ||
+		errCtx.GetReason() == "MQRC_CHANNEL_CONFIG_ERROR") {
+		// See ./tls-samples/README.md for details on how to configure the required channel.
+		fmt.Println("Skipping TestTLSAlreadyInitialized as required channel is not defined.")
+		return
+	}
+
+	if errCtx != nil && errCtx.GetReason() == "MQRC_NOT_AUTHORIZED" {
+		// See ./tls-samples/README.md for details on how to configure the required channel.
+		fmt.Println("TLS connection was successfully negotiated, but client was blocked from connecting.")
+		// Allow test to fail below.
+	}
+
+	// This connection should have been created successfully.
+	assert.Nil(t, errCtx)
+
+	// Above this is just to create a standard TLS connection to the queue manager.
+
+	// Now try to set up a connection using different connection parameters
+	// We are aiming to trigger an MQRC_SSL_ALREADY_INITIALIZED response, which is a Warning that <also>
+	// returns a valid connection.
+	cf2, err2 := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
+	assert.Nil(t, err2)
+	cf2.ChannelName = "TLS.ANON.SVRCONN"
+	cf2.TLSCipherSpec = "ANY_TLS12"
+	cf2.TLSClientAuth = mqjms.TLSClientAuth_REQUIRED
+	cf2.CertificateLabel = "SampleClientA"         // point to the client certificate
+	cf2.KeyRepository = "./tls-samples/mutual-tls" // points to .kdb file
+
+	context2, errCtx2 := cf2.CreateContext()
+	if context2 != nil {
+		defer context2.Close()
+	}
+
+	assert.NotNil(t, errCtx2)
+	if errCtx2 != nil {
+		assert.Equal(t, "MQRC_SSL_ALREADY_INITIALIZED", errCtx2.GetReason())
+	}
+
+	assert.NotNil(t, context2) // should ALSO get a connection back.
+	time.Sleep(time.Second)
 
 }
 

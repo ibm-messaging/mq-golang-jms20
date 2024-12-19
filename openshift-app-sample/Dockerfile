@@ -1,5 +1,6 @@
- FROM golang:1.21.1 as builder
- ENV APP_HOME /go/src/openshift-app-sample
+ FROM registry.access.redhat.com/ubi8/go-toolset:1.21 AS builder
+ ENV APP_HOME=/go/src/openshift-app-sample
+ USER 0
  RUN mkdir -p /opt/mqm \
    && chmod a+rx /opt/mqm
  # Location of the downloadable MQ client package \
@@ -22,9 +23,10 @@
  COPY src/ .
  RUN go build -o openshift-app-sample
 
- FROM golang:1.21.1
- ENV APP_HOME /go/src/openshift-app-sample
+ FROM registry.access.redhat.com/ubi8/go-toolset:1.21
+ ENV APP_HOME=/go/src/openshift-app-sample
  # Create the directories the client expects to be present
+ USER 0
  RUN mkdir -p $APP_HOME \
    && mkdir -p /IBM/MQ/data/errors \
    && mkdir -p /.mqm \

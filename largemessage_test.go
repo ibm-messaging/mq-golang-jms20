@@ -134,7 +134,7 @@ func TestLargeReceiveStringBodyTextMessage(t *testing.T) {
 
 	// The message is still left on the queue since it failed to be received successfully.
 
-	// Since the buffer size is configured using the ConnectionFactoy we will
+	// Since the buffer size is configured using the ConnectionFactory we will
 	// create a second connection in order to successfully retrieve the message.
 	cf.ReceiveBufferSize = len(txtOver32kb) + 50
 
@@ -292,6 +292,80 @@ func TestLargeReceiveBytesBodyBytesMessage(t *testing.T) {
 	rcvBytes2, errRcv2 := consumer2.ReceiveBytesBodyNoWait()
 	assert.Nil(t, errRcv2)
 	assert.Equal(t, &bytesOver32kb, rcvBytes2)
+
+}
+
+/*
+ * Test receiving a truncated message, where the body of the message is larger than the receive buffer.
+ */
+func TestTruncatedTextMessage(t *testing.T) {
+
+	// Loads CF parameters from connection_info.json and applicationApiKey.json in the Downloads directory
+	cf, cfErr := mqjms.CreateConnectionFactoryFromDefaultJSONFiles()
+	cf.ReceiveBufferSize = 1024
+	// TODO - set parameter to allow receive of truncated message
+	assert.Nil(t, cfErr)
+
+	// Creates a connection to the queue manager, using defer to close it automatically
+	// at the end of the function (if it was created successfully)
+	context, ctxErr := cf.CreateContext()
+	assert.Nil(t, ctxErr)
+	if context != nil {
+		defer context.Close()
+	}
+
+	// Get a long text string over 32kb in length
+	txtOver32kb := getStringOver32kb()
+
+	// Create a TextMessage with it
+	msg := context.CreateTextMessageWithString(txtOver32kb)
+
+	// Now send the message and get it back again.
+	queue := context.CreateQueue("DEV.QUEUE.1")
+	errSend := context.CreateProducer().SetTimeToLive(5000).Send(queue, msg)
+	assert.Nil(t, errSend)
+
+	consumer, errCons := context.CreateConsumer(queue) // with 1kb buffer size as applied at the beginning of this test
+	assert.Nil(t, errCons)
+	if consumer != nil {
+		defer consumer.Close()
+	}
+
+	// This will fail because the default buffer size when receiving a
+	// message is 32kb.
+	truncMsg, errRcv := consumer.ReceiveNoWait()
+	assert.NotNil(t, errRcv)
+	assert.Equal(t, "MQRC_TRUNCATED_MSG_ACCEPTED", errRcv.GetReason())
+	assert.Equal(t, "2079", errRcv.GetErrorCode())
+
+	assert.NotNil(t, truncMsg) // We have received the message, but it is truncated.
+
+	switch txtTruncMsg := truncMsg.(type) {
+	case jms20subset.TextMessage:
+		receivedTxt := txtTruncMsg.GetText()
+		assert.Equal(t, cf.ReceiveBufferSize, len(*receivedTxt))
+	default:
+		assert.Fail(t, "Got something other than a text message")
+	}
+
+	// Make sure we tidy up in case the previous part of the test failed.
+	cf.ReceiveBufferSize = len(txtOver32kb) + 50
+
+	context2, ctxErr2 := cf.CreateContext()
+	assert.Nil(t, ctxErr2)
+	if context2 != nil {
+		defer context2.Close()
+	}
+
+	consumer2, errCons2 := context2.CreateConsumer(queue)
+	assert.Nil(t, errCons2)
+	if consumer2 != nil {
+		defer consumer2.Close()
+	}
+
+	rcvMsg2, errRcv2 := consumer2.ReceiveNoWait()
+	assert.Nil(t, errRcv2)
+	assert.NotNil(t, rcvMsg2)
 
 }
 

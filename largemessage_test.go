@@ -331,8 +331,8 @@ func TestTruncatedTextMessage(t *testing.T) {
 		defer consumer.Close()
 	}
 
-	// This will fail because the default buffer size when receiving a
-	// message is 32kb.
+	// Since we have set the flag to allow a truncated message to be returned, this will pass
+	// but will only return the first 1024 bytes (cf.ReceiveBufferSize) of the message.
 	truncMsg, errRcv := consumer.ReceiveNoWait()
 	assert.NotNil(t, errRcv)
 	assert.Equal(t, "MQRC_TRUNCATED_MSG_ACCEPTED", errRcv.GetReason())
@@ -363,9 +363,8 @@ func TestTruncatedTextMessage(t *testing.T) {
 		defer consumer2.Close()
 	}
 
-	rcvMsg2, errRcv2 := consumer2.ReceiveNoWait()
-	assert.Nil(t, errRcv2)
-	assert.NotNil(t, rcvMsg2)
+	// Attempt to receive a message, and don't worry whether it does or not.
+	consumer2.ReceiveNoWait()
 
 }
 

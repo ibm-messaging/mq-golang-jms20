@@ -71,13 +71,13 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 
 	getmqmd := ibmmq.NewMQMD()
 
-	myBufferSize := 32768
+	bufferSize := 32768
 
 	if consumer.ctx.receiveBufferSize > 0 {
-		myBufferSize = consumer.ctx.receiveBufferSize
+		bufferSize = consumer.ctx.receiveBufferSize
 	}
 
-	buffer := make([]byte, myBufferSize)
+	buffer := make([]byte, bufferSize)
 
 	// Calculate the syncpoint value
 	syncpointSetting := ibmmq.MQGMO_NO_SYNCPOINT
@@ -88,6 +88,7 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 	// Set the GMO (get message options)
 	gmo.Options |= syncpointSetting
 	gmo.Options |= ibmmq.MQGMO_FAIL_IF_QUIESCING
+	gmo.Options |= ibmmq.MQGMO_ACCEPT_TRUNCATED_MSG
 
 	// Include the message properties in the msgHandle
 	gmo.Options |= ibmmq.MQGMO_PROPERTIES_IN_HANDLE
@@ -105,7 +106,24 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 	// Use the prepared objects to ask for a message from the queue.
 	datalen, err := consumer.qObject.Get(getmqmd, gmo, buffer)
 
-	if err == nil {
+	// Establish the read length so that it does not exceed the size of the buffer.
+	readLength := datalen
+	if datalen > bufferSize {
+		readLength = bufferSize
+	}
+
+	// Check whether this is a truncated message.
+	isTruncatedMessage := false
+	if err != nil && ((err.(*ibmmq.MQReturn)).MQRC == ibmmq.MQRC_TRUNCATED_MSG_ACCEPTED) {
+		isTruncatedMessage = true
+
+		// In the truncated message case we want to return the warning object as well as the message
+		// so that the application can tell that some of the data is missing.
+		jmsErr = CreateJMSExceptionFromMQReturn(err)
+	}
+
+	// Golden path - typically a message was received without error.
+	if err == nil || isTruncatedMessage {
 
 		// Set a finalizer on the message handle to allow it to be deleted
 		// when it is no longer referenced by an active object, to reduce/prevent
@@ -119,8 +137,8 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 
 			var msgBodyStr *string
 
-			if datalen > 0 {
-				strContent := string(buffer[:datalen])
+			if readLength > 0 {
+				strContent := string(buffer[:readLength])
 				msgBodyStr = &strContent
 			}
 
@@ -135,11 +153,11 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 
 		} else {
 
-			if datalen == 0 {
+			if readLength == 0 {
 				buffer = []byte{}
 			}
 
-			trimmedBuffer := buffer[0:datalen]
+			trimmedBuffer := buffer[0:readLength]
 
 			// Not a string, so fall back to BytesMessage
 			msg = &BytesMessageImpl{
@@ -172,11 +190,7 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 
 			// Parse the details of the error and return it to the caller as
 			// a JMSException
-			rcInt := int(mqret.MQRC)
-			errCode := strconv.Itoa(rcInt)
-			reason := ibmmq.MQItoString("RC", rcInt)
-
-			jmsErr = jms20subset.CreateJMSException(reason, errCode, err)
+			jmsErr = CreateJMSExceptionFromMQReturn(err)
 		}
 
 	}
@@ -416,4 +430,21 @@ func (consumer ConsumerImpl) Close() {
 	}
 
 	return
+}
+
+func CreateJMSExceptionFromMQReturn(mqretError error) jms20subset.JMSException {
+
+	// Assumes this error code was returned from MQ call.
+	mqret := mqretError.(*ibmmq.MQReturn)
+
+	// Parse the details of the error and return it to the caller as
+	// a JMSException
+	rcInt := int(mqret.MQRC)
+	errCode := strconv.Itoa(rcInt)
+	reason := ibmmq.MQItoString("RC", rcInt)
+
+	jmsErr := jms20subset.CreateJMSException(reason, errCode, mqretError)
+
+	return jmsErr
+
 }

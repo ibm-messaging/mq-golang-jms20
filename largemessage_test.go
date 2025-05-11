@@ -420,8 +420,10 @@ func TestTruncatedTextMessage(t *testing.T) {
 		defer consumer2.Close()
 	}
 
-	// Attempt to receive a message, and don't worry whether it does or not.
-	consumer2.ReceiveNoWait()
+	// If the first part of this text was successful then there should be no message to receive.
+	tidyMsg, tidyErr := consumer2.ReceiveNoWait()
+	assert.Nil(t, tidyErr)
+	assert.Nil(t, tidyMsg)
 
 }
 

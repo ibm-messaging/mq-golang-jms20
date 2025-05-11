@@ -123,7 +123,7 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 
 		// In the truncated message case we want to return the warning object as well as the message
 		// so that the application can tell that some of the data is missing.
-		jmsErr = CreateJMSExceptionFromMQReturn(err)
+		jmsErr = CreateJMSExceptionFromMQReturn(err, datalen)
 	}
 
 	// Golden path - typically a message was received without error.
@@ -194,7 +194,7 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 
 			// Parse the details of the error and return it to the caller as
 			// a JMSException
-			jmsErr = CreateJMSExceptionFromMQReturn(err)
+			jmsErr = CreateJMSExceptionFromMQReturn(err, datalen)
 		}
 
 	}
@@ -436,7 +436,7 @@ func (consumer ConsumerImpl) Close() {
 	return
 }
 
-func CreateJMSExceptionFromMQReturn(mqretError error) jms20subset.JMSException {
+func CreateJMSExceptionFromMQReturn(mqretError error, datalen int) jms20subset.JMSException {
 
 	// Assumes this error code was returned from MQ call.
 	mqret := mqretError.(*ibmmq.MQReturn)
@@ -447,7 +447,7 @@ func CreateJMSExceptionFromMQReturn(mqretError error) jms20subset.JMSException {
 	errCode := strconv.Itoa(rcInt)
 	reason := ibmmq.MQItoString("RC", rcInt)
 
-	jmsErr := jms20subset.CreateJMSException(reason, errCode, mqretError)
+	jmsErr := jms20subset.CreateJMSExceptionWithExtraParams(reason, errCode, mqretError, datalen)
 
 	return jmsErr
 

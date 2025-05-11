@@ -62,9 +62,20 @@ func TestLargeTextMessage(t *testing.T) {
 
 	// The message is still left on the queue since it failed to be received successfully.
 
-	// Since the buffer size is configured using the ConnectionFactoy we will
-	// create a second connection in order to successfully retrieve the message.
-	cf.ReceiveBufferSize = len(txtOver32kb) + 50
+	// Use a special attribute of the returned exception to look up what the actual length of the
+	// message is, so that we can correctly increase the buffer size in order to receive the message.
+	switch jmsExc := errRcv.(type) {
+	case jms20subset.JMSExceptionImpl:
+		realMessageLength := jmsExc.GetMessageLength()
+		assert.Equal(t, len(txtOver32kb), realMessageLength) // check it matches the original (long) length
+
+		// Since the buffer size is configured using the ConnectionFactory we will
+		// create a second connection in order to successfully retrieve the message.
+		cf.ReceiveBufferSize = realMessageLength
+
+	default:
+		assert.Fail(t, "Got something other than a JMSExceptionImpl")
+	}
 
 	context2, ctxErr2 := cf.CreateContext()
 	assert.Nil(t, ctxErr2)
@@ -78,7 +89,7 @@ func TestLargeTextMessage(t *testing.T) {
 		defer consumer2.Close()
 	}
 
-	rcvMsg2, errRcv2 := consumer2.ReceiveNoWait()
+	rcvMsg2, errRcv2 := consumer2.ReceiveNoWait() // receive the message using the correct (larger) buffer size
 	assert.Nil(t, errRcv2)
 	assert.NotNil(t, rcvMsg2)
 
@@ -134,9 +145,20 @@ func TestLargeReceiveStringBodyTextMessage(t *testing.T) {
 
 	// The message is still left on the queue since it failed to be received successfully.
 
-	// Since the buffer size is configured using the ConnectionFactory we will
-	// create a second connection in order to successfully retrieve the message.
-	cf.ReceiveBufferSize = len(txtOver32kb) + 50
+	// Use a special attribute of the returned exception to look up what the actual length of the
+	// message is, so that we can correctly increase the buffer size in order to receive the message.
+	switch jmsExc := errRcv.(type) {
+	case jms20subset.JMSExceptionImpl:
+		realMessageLength := jmsExc.GetMessageLength()
+		assert.Equal(t, len(txtOver32kb), realMessageLength) // check it matches the original (long) length
+
+		// Since the buffer size is configured using the ConnectionFactory we will
+		// create a second connection in order to successfully retrieve the message.
+		cf.ReceiveBufferSize = realMessageLength
+
+	default:
+		assert.Fail(t, "Got something other than a JMSExceptionImpl")
+	}
 
 	context2, ctxErr2 := cf.CreateContext()
 	assert.Nil(t, ctxErr2)
@@ -200,9 +222,20 @@ func TestLargeBytesMessage(t *testing.T) {
 
 	// The message is still left on the queue since it failed to be received successfully.
 
-	// Since the buffer size is configured using the ConnectionFactoy we will
-	// create a second connection in order to successfully retrieve the message.
-	cf.ReceiveBufferSize = len(bytesOver32kb) + 50
+	// Use a special attribute of the returned exception to look up what the actual length of the
+	// message is, so that we can correctly increase the buffer size in order to receive the message.
+	switch jmsExc := errRcv.(type) {
+	case jms20subset.JMSExceptionImpl:
+		realMessageLength := jmsExc.GetMessageLength()
+		assert.Equal(t, len(txtOver32kb), realMessageLength) // check it matches the original (long) length
+
+		// Since the buffer size is configured using the ConnectionFactory we will
+		// create a second connection in order to successfully retrieve the message.
+		cf.ReceiveBufferSize = realMessageLength
+
+	default:
+		assert.Fail(t, "Got something other than a JMSExceptionImpl")
+	}
 
 	context2, ctxErr2 := cf.CreateContext()
 	assert.Nil(t, ctxErr2)
@@ -273,9 +306,20 @@ func TestLargeReceiveBytesBodyBytesMessage(t *testing.T) {
 
 	// The message is still left on the queue since it failed to be received successfully.
 
-	// Since the buffer size is configured using the ConnectionFactoy we will
-	// create a second connection in order to successfully retrieve the message.
-	cf.ReceiveBufferSize = len(bytesOver32kb) + 50
+	// Use a special attribute of the returned exception to look up what the actual length of the
+	// message is, so that we can correctly increase the buffer size in order to receive the message.
+	switch jmsExc := errRcv.(type) {
+	case jms20subset.JMSExceptionImpl:
+		realMessageLength := jmsExc.GetMessageLength()
+		assert.Equal(t, len(txtOver32kb), realMessageLength) // check it matches the original (long) length
+
+		// Since the buffer size is configured using the ConnectionFactory we will
+		// create a second connection in order to successfully retrieve the message.
+		cf.ReceiveBufferSize = realMessageLength
+
+	default:
+		assert.Fail(t, "Got something other than a JMSExceptionImpl")
+	}
 
 	context2, ctxErr2 := cf.CreateContext()
 	assert.Nil(t, ctxErr2)
@@ -348,8 +392,21 @@ func TestTruncatedTextMessage(t *testing.T) {
 		assert.Fail(t, "Got something other than a text message")
 	}
 
-	// Make sure we tidy up in case the previous part of the test failed.
-	cf.ReceiveBufferSize = len(txtOver32kb) + 50
+	// Use a special attribute of the returned exception to look up what the actual length of the
+	// message is, so that we can tidy up the message (read successfully) in the event the previous
+	// step failed.
+	switch jmsExc := errRcv.(type) {
+	case jms20subset.JMSExceptionImpl:
+		realMessageLength := jmsExc.GetMessageLength()
+		assert.Equal(t, len(txtOver32kb), realMessageLength) // check it matches the original (long) length
+
+		// Since the buffer size is configured using the ConnectionFactory we will
+		// create a second connection in order to successfully retrieve the message.
+		cf.ReceiveBufferSize = realMessageLength
+
+	default:
+		assert.Fail(t, "Got something other than a JMSExceptionImpl")
+	}
 
 	context2, ctxErr2 := cf.CreateContext()
 	assert.Nil(t, ctxErr2)

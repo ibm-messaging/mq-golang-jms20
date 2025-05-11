@@ -48,6 +48,9 @@ type ConnectionFactoryImpl struct {
 	// Controls the size of the buffer used when receiving a message (default is 32kb if not set)
 	ReceiveBufferSize int
 
+	// Controls whether a message should be returned if the body will be truncated (because the body is larger than the ReceiveBufferSize)
+	AcceptTruncatedMessage bool
+
 	// SetCheckCount defines the number of messages that will be asynchronously put using
 	// this Context between checks for errors. For example a value of 10 will cause an error
 	// check to be triggered once for every 10 messages.
@@ -155,12 +158,13 @@ func (cf ConnectionFactoryImpl) CreateContextWithSessionMode(sessionMode int, mq
 		// Connection was created successfully, so we wrap the MQI object into
 		// a new ContextImpl and return it to the caller.
 		ctx = ContextImpl{
-			qMgr:              qMgr,
-			ctxLock:           &sync.Mutex{},
-			sessionMode:       sessionMode,
-			receiveBufferSize: cf.ReceiveBufferSize,
-			sendCheckCount:    cf.SendCheckCount,
-			sendCheckCountInc: countInc,
+			qMgr:                   qMgr,
+			ctxLock:                &sync.Mutex{},
+			sessionMode:            sessionMode,
+			receiveBufferSize:      cf.ReceiveBufferSize,
+			acceptTruncatedMessage: cf.AcceptTruncatedMessage,
+			sendCheckCount:         cf.SendCheckCount,
+			sendCheckCountInc:      countInc,
 		}
 
 	}

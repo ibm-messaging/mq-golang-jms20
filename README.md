@@ -128,6 +128,7 @@ your own error handling or logging.
 * Handle error codes returned by the queue manager - [sample_errorhandling_test.go](sample_errorhandling_test.go)
 * Set the application name (ApplName) on connections - [applname_test.go](applname_test.go)
 * Receive messages over 32kb in size by setting the receive buffer size - [largemessage_test.go](largemessage_test.go)
+* Receive a truncated message body for the case where the body is larger than the allowed buffer size - [largemessage_test.go#301](largemessage_test.go#301)
 * Asynchronous put - [asyncput_test.go](asyncput_test.go)
 * Special header properties such as JMS_IBM_Format - [specialproperties_test.go](specialproperties_test.go)
 

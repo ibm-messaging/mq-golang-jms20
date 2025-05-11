@@ -88,7 +88,11 @@ func (consumer ConsumerImpl) receiveInternal(gmo *ibmmq.MQGMO) (jms20subset.Mess
 	// Set the GMO (get message options)
 	gmo.Options |= syncpointSetting
 	gmo.Options |= ibmmq.MQGMO_FAIL_IF_QUIESCING
-	gmo.Options |= ibmmq.MQGMO_ACCEPT_TRUNCATED_MSG
+
+	// Allow a truncated message to be returned if the user has requested it (default is to return an error on get)
+	if consumer.ctx.acceptTruncatedMessage {
+		gmo.Options |= ibmmq.MQGMO_ACCEPT_TRUNCATED_MSG
+	}
 
 	// Include the message properties in the msgHandle
 	gmo.Options |= ibmmq.MQGMO_PROPERTIES_IN_HANDLE

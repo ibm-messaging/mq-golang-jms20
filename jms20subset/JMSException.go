@@ -24,9 +24,10 @@ type JMSException interface {
 
 // JMSExceptionImpl is a struct that implements the JMSException interface
 type JMSExceptionImpl struct {
-	reason    string
-	errorCode string
-	linkedErr error
+	reason        string
+	errorCode     string
+	linkedErr     error
+	messageLength int
 }
 
 // GetReason returns the provider-specific reason string describing the error.
@@ -51,6 +52,15 @@ func (ex JMSExceptionImpl) GetLinkedError() error {
 
 }
 
+// GetMessageLength gives the data length that was returned by a Receive (GET) call,
+// for example if the message was truncated, or could not be read because the receive
+// buffer was too small.
+func (ex JMSExceptionImpl) GetMessageLength() int {
+
+	return ex.messageLength
+
+}
+
 // Error allows the JMSExceptionImpl struct to be treated as a Golang error,
 // while also returning a human readable string representation of the error.
 func (ex JMSExceptionImpl) Error() string {
@@ -66,11 +76,17 @@ func (ex JMSExceptionImpl) Error() string {
 
 // CreateJMSException is a helper function for creating a JMSException
 func CreateJMSException(reason string, errorCode string, linkedErr error) JMSException {
+	return CreateJMSExceptionWithExtraParams(reason, errorCode, linkedErr, 0)
+}
+
+// CreateJMSException is a helper function for creating a JMSException
+func CreateJMSExceptionWithExtraParams(reason string, errorCode string, linkedErr error, messageLength int) JMSException {
 
 	ex := JMSExceptionImpl{
-		reason:    reason,
-		errorCode: errorCode,
-		linkedErr: linkedErr,
+		reason:        reason,
+		errorCode:     errorCode,
+		linkedErr:     linkedErr,
+		messageLength: messageLength,
 	}
 
 	return ex

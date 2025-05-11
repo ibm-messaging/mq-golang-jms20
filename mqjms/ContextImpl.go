@@ -21,12 +21,13 @@ import (
 // ContextImpl encapsulates the objects necessary to maintain an active
 // connection to an IBM MQ queue manager.
 type ContextImpl struct {
-	qMgr              ibmmq.MQQueueManager
-	ctxLock           *sync.Mutex // Mutex to synchronize MQRC calls to the queue manager
-	sessionMode       int
-	receiveBufferSize int
-	sendCheckCount    int
-	sendCheckCountInc *int // Internal counter to keep track of async-put messages sent
+	qMgr                   ibmmq.MQQueueManager
+	ctxLock                *sync.Mutex // Mutex to synchronize MQRC calls to the queue manager
+	sessionMode            int
+	acceptTruncatedMessage bool
+	receiveBufferSize      int
+	sendCheckCount         int
+	sendCheckCountInc      *int // Internal counter to keep track of async-put messages sent
 }
 
 // CreateQueue implements the logic necessary to create a provider-specific
